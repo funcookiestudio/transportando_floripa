@@ -45,6 +45,7 @@ function trfSndMk(){const g=AC.createGain(),lp=AC.createBiquadFilter(),o1=AC.cre
 function trfSnd(v,dt){if(!AC||!A.m)return;if(!v.snd)v.snd=trfSndMk();const n=v.snd,t=AC.currentTime,rx=v.x-pos.x,rz=v.z-pos.z,d=Math.hypot(rx,rz)||1,
  vx=v.vx,vz=v.vz,vc=((vx-vel.x)*rx+(vz-vel.z)*rz)/d,dop=343/(343+vc),f0=(34+v.sp*1.5)*(v.car?1.6:1)*dop,
  att=Math.pow(Math.max(0,1-d/230),2),pan=Math.max(-1,Math.min(1,(rx*Math.cos(hd)-rz*Math.sin(hd))/45));
+ if(!isFinite(f0+att+pan+v.sp))return; // valor não finito derrubava o quadro inteiro (AudioParam recusa NaN/Infinity)
  n.o1.frequency.setTargetAtTime(f0,t,.08);n.o2.frequency.setTargetAtTime(f0*2.01,t,.08);n.g.gain.setTargetAtTime(muted?0:att*(v.car?.12:.22),t,.08);n.ng.gain.setTargetAtTime(Math.min(1,v.sp/20)*.5,t,.1);if(n.pn)n.pn.pan.setTargetAtTime(pan,t,.05)}
 function trfSndOff(v){const n=v.snd;if(!n)return;try{n.o1.stop();n.o2.stop();n.g.disconnect()}catch(e){}v.snd=null}
 function trfKill(i){const v=TRF[i];trfSndOff(v);scene.remove(v.g);if(v.t&&v.t.userData.cg)v.t.userData.cg.userData.dispose();for(const d of v.disp)d.dispose();TRF.splice(i,1);ocx=1e9}
