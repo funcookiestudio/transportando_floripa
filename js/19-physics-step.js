@@ -12,7 +12,7 @@ function phys(dt){
  if(cruiseS===2&&!K.up){cruiseI=Math.max(0,Math.min(.6,cruiseI+(cruiseV-vf)*dt*.25));if(vf>cruiseV+1.5)vf-=Math.min(2,(vf-cruiseV-1)*.8)*dt}
  thrS+=((K.up&&vf>=-.5?(K.ta||1):(cruiseS===2?Math.max(0,Math.min(1,(cruiseV-vf)*.5+cruiseI)):0))-thrS)*Math.min(1,dt*3);if(K.up&&vf<-.5)vf+=brakeCap(onRoad)*dt;vf+=powertrain(vf,dt,nit,thrS,onRoad)*dt;
  let brkA=0;const bT=K.down&&vf>.5?(K.ba||1):0;brkP+=(bT-brkP)*Math.min(1,dt*(bT>brkP?5:9)); // freio de ar: pressão sobe/solta com atraso
- if(K.down&&vf<=.5){vf-=revAccel(Math.max(0,-vf),dt,thrR=(K.ba||1),onRoad)*dt;if(vf>-.5)thrS*=.9}
+ if(K.down&&vf<=.5&&engineOn&&engCrank<=0){vf-=revAccel(Math.max(0,-vf),dt,thrR=(K.ba||1),onRoad)*dt;if(vf>-.5)thrS*=.9}
  else if(brkP>.01){brkA=brkP*brakeCap(onRoad);vf-=Math.min(Math.max(0,vf),brkA*dt)} // ABS: limita a 92% do atrito
  const rr=dragA(Math.abs(vf),onRoad)*dt;vf-=Math.sign(vf)*Math.min(Math.abs(vf),rr);
  vf-=9.8*Math.sin(pitch)*dt*.8;

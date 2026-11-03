@@ -53,7 +53,7 @@ function seedGo(t){try{saveG();localStorage.setItem('fh16seed',t)}catch(e){}cons
 function tpTrevo(){let b=null,bd=1e18;const k0=Math.floor(curS/IC_D);for(let i=k0-5;i<=k0+5;i++){const f=icGet(i);if(f){const d=Math.abs(f.s-curS);if(d<bd){bd=d;b=f}}}
  if(!b){msg('Nenhum trevo por perto');return}
  gfxClose();const s0=b.s-350;ensureRoad(s0-200,b.s+500);roadPt(s0,4.4);const o=samp(Math.round(s0/RDS));
- pos.x=RPx;pos.z=RPz;hd=o.h;th=hd;camH=hd;curS=s0;vel.x=vel.z=0;steer=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;yawKick=0;gear=0;eRpm=650;shiftT=0;thrS=0;brkP=0;hb=null;tcx=1e9;ocx=1e9;rbI=1e9;closeCm();saveG();
+ pos.x=RPx;pos.z=RPz;hd=o.h;th=hd;camH=hd;curS=s0;vel.x=vel.z=0;steer=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;yawKick=0;gear=0;eRpm=650;engineOn=true;engCrank=0;shiftT=0;thrS=0;brkP=0;hb=null;tcx=1e9;ocx=1e9;rbI=1e9;closeCm();saveG();
  msg('🧭 Trevo a 350 m · '+(bd/1000).toFixed(1)+' km de onde estava')}
 function seedAct(a){const i=$('gwi');if(a==='seedic')tpTrevo();else if(a==='seedgo')seedGo(i.value.trim());else if(a==='seedcl')seedGo('');else if(a==='seedrnd')i.value=Math.random().toString(36).slice(2,8);
  else if(a==='seedcp'){const u=new URL(location.href);u.search='';if(WSEED.txt)u.searchParams.set('seed',WSEED.txt);const url=u.toString();try{navigator.clipboard.writeText(url).then(()=>msg('Link copiado'),()=>msg(url))}catch(e){msg(url)}}}

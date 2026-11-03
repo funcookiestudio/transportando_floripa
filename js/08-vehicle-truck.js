@@ -5,13 +5,13 @@ const spots=[-.8,.8].map(x=>{const s=new THREE.SpotLight(0xfff2d0,0,90,.55,.5);s
 const GL=new THREE.MeshStandardMaterial({color:C(0x0b1218),roughness:.04,metalness:.6,transparent:true,opacity:.62,depthWrite:false,side:THREE.DoubleSide}),
 HL=new THREE.MeshStandardMaterial({color:C(0xffffff),emissive:C(0xfff0c8),emissiveIntensity:.25,roughness:.2}),
 TL=new THREE.MeshStandardMaterial({color:C(0x550000),emissive:C(0xff1408),emissiveIntensity:.4,roughness:.3}),
-AM=new THREE.MeshStandardMaterial({color:C(0x663300),emissive:C(0xff8000),emissiveIntensity:.5,roughness:.3});
-function splitMesh(mesh){const g=mesh.geometry,uv=g.attributes.uv,ps=g.attributes.position,ix=g.index;if(!uv||!ix)return;const b=mesh.material,a=ix.array,cl=[[],[],[],[],[],[]];
- for(let i=0;i<a.length;i+=3){let u=0,v=0,z=0;for(let k=0;k<3;k++){u+=uv.getX(a[i+k]);v+=uv.getY(a[i+k]);z+=ps.getZ(a[i+k])}u/=3;v/=3;z=z/3+mesh.position.z;
+AM=new THREE.MeshStandardMaterial({color:C(0x663300),emissive:C(0xff8000),emissiveIntensity:.4,roughness:.3}),AR=AM.clone(); // AM = setas do lado esquerdo · AR = lado direito
+function splitMesh(mesh){const g=mesh.geometry,uv=g.attributes.uv,ps=g.attributes.position,ix=g.index;if(!uv||!ix)return;const b=mesh.material,a=ix.array,cl=[[],[],[],[],[],[],[]];
+ for(let i=0;i<a.length;i+=3){let u=0,v=0,z=0,xs=0;for(let k=0;k<3;k++){u+=uv.getX(a[i+k]);v+=uv.getY(a[i+k]);z+=ps.getZ(a[i+k]);xs+=ps.getX(a[i+k])}u/=3;v/=3;z=z/3+mesh.position.z;xs=xs/3+mesh.position.x;
   const cell=Math.floor(v*8)*8+Math.floor(u*8);let c=0;
-  if(cell==11)c=1;else if(cell==3&&z<-8.3&&/^Cube012/.test(mesh.name))c=2;else if(cell==19)c=3;else if(cell==21)c=4;else if(cell==59)c=5;
+  if(cell==11)c=1;else if(cell==3&&z<-8.3&&/^Cube012/.test(mesh.name))c=2;else if(cell==19)c=3;else if(cell==21)c=xs>0?6:4;else if(cell==59)c=5;
   cl[c].push(a[i],a[i+1],a[i+2])}
- const PM=new THREE.MeshPhysicalMaterial({map:b.map,roughness:.32,metalness:.3,clearcoat:1,clearcoatRoughness:.08,side:THREE.DoubleSide}),mm=[b,GL,HL,TL,AM,PM],out=[];let s=0;g.clearGroups();
+ const PM=new THREE.MeshPhysicalMaterial({map:b.map,roughness:.32,metalness:.3,clearcoat:1,clearcoatRoughness:.08,side:THREE.DoubleSide}),mm=[b,GL,HL,TL,AM,PM,AR],out=[];let s=0;g.clearGroups();
  cl.forEach((arr,k)=>{if(!arr.length)return;g.addGroup(s,arr.length,k);s+=arr.length;for(const q of arr)out.push(q)});
  g.setIndex(new THREE.BufferAttribute(new a.constructor(out),1));mesh.material=mm}
 let fw=[];const V2=new THREE.Vector3();
@@ -51,7 +51,7 @@ function updWheels(){pivot.updateMatrixWorld(true);const sn=Math.sin(hd),cs=Math
  for(const w of wh){const wx=pos.x+w.c.x*cs+w.c.z*sn,wz=pos.z-w.c.x*sn+w.c.z*cs;w.W.position.set(wx,H(wx,wz)+w.c.y,wz);w.W.rotation.set(pitch,hd,0);w.sg.rotation.y=w.front?steer:0;w.sp.rotation.x=spin/w.c.y;
   VA.set(wx-w.side*.6*cs,w.W.position.y+.05,wz+w.side*.6*sn);VB.set(w.side*.6,1.05,w.c.z);pivot.localToWorld(VB);VB.sub(VA);const L2=VB.length()||.01;
   for(const o of[w.coil,w.dmp]){o.position.copy(VA).addScaledVector(VB,.5);o.quaternion.setFromUnitVectors(UP,VB.clone().divideScalar(L2));o.scale.set(1,L2,1)}}}
-function reset(){th=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;fuel=FUELMAX;yawKick=0;gear=0;eRpm=650;shiftT=0;thrS=0;brkP=0;placeStart();vel.x=vel.z=0;steer=0;tcx=1e9;ocx=1e9;newTarget()}
+function reset(){th=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;fuel=FUELMAX;yawKick=0;gear=0;eRpm=650;engineOn=true;engCrank=0;shiftT=0;thrS=0;brkP=0;placeStart();vel.x=vel.z=0;steer=0;tcx=1e9;ocx=1e9;newTarget()}
 /* troca a textura embutida (bufferView -> blob:) por data: URI; alguns ambientes bloqueiam blob: */
 function glbNoBlob(ab){try{const dv=new DataView(ab),jl=dv.getUint32(12,true),J=JSON.parse(new TextDecoder().decode(new Uint8Array(ab,20,jl))),bo=20+jl,bl=dv.getUint32(bo,true),bin=new Uint8Array(ab,bo+8,bl);
  for(const im of J.images||[]){if(im.bufferView==null)continue;const bv=J.bufferViews[im.bufferView],by=bin.subarray(bv.byteOffset||0,(bv.byteOffset||0)+bv.byteLength);let t='';for(let i=0;i<by.length;i+=8192)t+=String.fromCharCode.apply(null,by.subarray(i,i+8192));im.uri='data:'+(im.mimeType||'image/png')+';base64,'+btoa(t);delete im.bufferView}

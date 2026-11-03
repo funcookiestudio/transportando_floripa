@@ -21,7 +21,7 @@ function respawn(){if(!ready){reset();return}
  if(!cost){doRespawn(b,0);return}
  cmShow('Chamar o guincho','Levar o caminhão até '+b.name+' ('+b.city+') · '+km.toFixed(1)+' km',[{html:'<b>Confirmar</b><span>'+money(Math.min(cost,score))+'</span><small>'+(score<cost?'Saldo insuficiente: cobra o que você tem':'Taxa por distância · frete e carreta engatada vão junto')+'</small>',fn:()=>doRespawn(b,cost)},{html:'<b>Cancelar</b><small>Esc</small>',fn:closeCm}],'Taxa: R$ 200 + R$ 120 por km')}
 function doRespawn(b,cost){const paid=Math.min(cost,score);score-=paid;
- const q=b.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(b.cr,-b.sr);camH=hd;curS=b.s;vel.x=vel.z=0;steer=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;yawKick=0;gear=0;eRpm=650;shiftT=0;thrS=0;brkP=0;
+ const q=b.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(b.cr,-b.sr);camH=hd;curS=b.s;vel.x=vel.z=0;steer=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;yawKick=0;gear=0;eRpm=650;engineOn=true;engCrank=0;shiftT=0;thrS=0;brkP=0;
  hb=null;th=hd;autoBoard=!job&&!hitched;tcx=1e9;ocx=1e9;closeCm();saveG();msg((job?'Guincho · frete mantido':'Guincho')+(paid?' · -'+money(paid):''))}
 // restaura posição, carreta, frete e dano salvos (chamado após reset() no boot)
 function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
@@ -106,7 +106,7 @@ function jobFrame(dt){ring.rotation.z+=dt;arrow.visible=false;beacon.visible=fal
   if(job.phase==='deliver'&&job.mode!=='park'){const yc=yardCo();{const b=job.to.board;if(Math.hypot(pos.x-b.x,pos.z-b.z)>7){arrow.position.set(b.x,job.to.y+5.2+Math.sin(performance.now()*.004)*.5,b.z);arrow.rotation.y+=dt*1.5;arrow.visible=true}}if(yc!==job.to)job.asked=false;else if(!job.asked&&!menuOpen&&Math.hypot(vel.x,vel.z)<1){job.asked=true;deliverMenu()}dockT=0}
   else{const ok=pk?hitchOk(c,job.slot):dockOk(c,job.toBay);
    if(!pk){const e=dockErr(c,job.toBay),near=e.ex<4.5&&e.el<3.2&&e.ea<.35;pbFill.material.color.setHex(ok?0x38e06a:near?0xffc400:0xff4a3a);pbEdge.material.color.copy(pbFill.material.color);pbFill.material.opacity=.28+.35*Math.min(1,dockT/.9)}
-   if(ok){if(dockT===0)msg('Mantenha parado…');dockT+=dt;if(dockT>.9)completeDock()}else dockT=0}}
+   if(ok){if(dockT===0)msg(pk?'Alinhado · aperte T para engatar':'Posição certa · aperte T para desengatar');dockT=Math.min(.9,dockT+dt)}else dockT=0}}
  else{if(autoBoard&&!menuOpen){const y0=yardCo();if(y0&&Math.hypot(vel.x,vel.z)<1){autoBoard=false;openBoard()}}
   let b=null,bd=1e18;const k0=Math.floor(curS/CO_D);for(let k=k0-1;k<=k0+2;k++){const c=coGet(k),d=Math.abs(c.s-curS);if(d<bd){bd=d;b=c}}
   if(b){navCo=b;const q=b.loc(0,0);tgt.x=q.x;tgt.z=q.z}dd=Math.hypot(tgt.x-pos.x,tgt.z-pos.z);
@@ -121,3 +121,14 @@ function navPoint(){const r={x:tgt.x,z:tgt.z};const c=navCo;if(!c||dd<70)return 
  const ds=c.s-curS;if(Math.abs(ds)<110)return r;
  roadPt(curS,0);if(Math.hypot(pos.x-RPx,pos.z-RPz)>75)return r;
  roadPt(curS+Math.sign(ds)*70,0);r.x=RPx;r.z=RPz;return r}
+
+/* engate/desengate manual (tecla T ou botão 🔗): só vale com a carreta alinhada e o caminhão parado */
+function hitchKey(){if(menuOpen||!ready)return;
+ if(!job){msg(hitched?'Entregue a carga no destino para desengatar':'Aceite um frete (G) para ter uma carreta para engatar');return}
+ if(job.phase==='pickup'){if(hitchOk(job.from,job.slot))completeDock();else msg('Alinhe a cabine com a carreta (a menos de 3,5 m) e pare para engatar');return}
+ if(job.mode==='park'){if(dockOk(job.to,job.toBay))completeDock();else msg('Posicione a carreta dentro do retângulo para desengatar');return}
+ msg('Leve a carga ao ponto amarelo do destino para desengatar')}
+/* motor: E liga/desliga (partida de ~1 s; parado só com o caminhão sem acelerar) */
+function engineToggle(){if(menuOpen||!ready)return;
+ if(engineOn){engineOn=false;engCrank=0;thrS=0;msg('Motor desligado')}
+ else{if(fuel<=0){msg('Sem combustível');return}engineOn=true;engCrank=.9;msg('Motor ligado')}}

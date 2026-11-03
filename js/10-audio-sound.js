@@ -30,7 +30,7 @@ function thud(v){if(!AC||muted)return;const t=AC.currentTime,r=.8+Math.random()*
  nz(t,.002,.35,Math.min(.5,v*.04),'lowpass',250+Math.random()*250);tn(t,'sine',95*r,38,.003,.3,Math.min(.5,v*.045));
  if(v>6){nz(t+.01,.005,.28,Math.min(.25,v*.02),'highpass',1700);tn(t,'square',170*r,120,.004,.12,.05)}}
 function audioStep(dt,now,vf,thr){if(!AC)return;const t=AC.currentTime,S=(p,v,c=.05)=>p.setTargetAtTime(v,t,c),sp=Math.abs(vf),ld=thrS;
- const rpm=eRpm*(1+(Math.random()-.5)*.012)+Math.sin(now*.011)*6,f=rpm/60*3,rn=Math.max(0,Math.min(1,(rpm-600)/1400)),mul=shiftT>0?.4:1;
+ const rpm=eRpm*(1+(Math.random()-.5)*.012)+Math.sin(now*.011)*6,f=rpm/60*3,rn=Math.max(0,Math.min(1,(rpm-600)/1400)),mul=(shiftT>0?.4:1)*Math.min(1,Math.max(0,(eRpm-80)/450));
  S(A.o1.frequency,f);S(A.o2.frequency,f*2.01);S(A.o3.frequency,f*.5);S(A.lf.frequency,f);S(A.lj.frequency,f*1.5);
  S(A.f1.frequency,150+rpm*.25+ld*220);S(A.f2.frequency,350+rpm*.25+ld*300);
  const e0=(.09+.07*rn)*mul;S(A.g1.gain,e0*(.7+.3*ld));S(A.g2.gain,e0*.5*(.4+ld*.6));S(A.g3.gain,e0*.5*(1-ld*.4));
@@ -44,6 +44,11 @@ function audioStep(dt,now,vf,thr){if(!AC)return;const t=AC.currentTime,S=(p,v,c=
  if(lBrk>.3&&brkP<.12&&!muted)psh(.5,.12);lBrk=brkP;                       // freio de ar solta
  if(K.hb!==lHb){if(!muted)psh(.45,.1,1800);lHb=K.hb}
  if(lUp&&!K.up&&ld>.6&&sp>3&&!muted)psh(.35,.06,3500);lUp=K.up;              // blow-off do turbo
- const ph=Math.floor(now/400);if((K.left||K.right)&&ph!==lPh&&!muted)relay(ph%2);lPh=ph; // relé da seta
+ const ph=Math.floor(now/400);if((sigL||sigR)&&ph!==lPh&&!muted)relay(ph%2);lPh=ph; // relé da seta
  creakCd-=dt;if(Math.abs(sv.h)>1.4&&creakCd<=0&&!muted){creak();creakCd=.8}}
 
+/* aba/janela em segundo plano: o loop de animação para, mas os osciladores continuavam tocando o último som do motor. Suspende o áudio ao esconder e retoma ao voltar */
+function audioPause(on){try{if(!AC)return;if(on&&AC.state==='running')AC.suspend();else if(!on&&AC.state==='suspended')AC.resume()}catch(e){}}
+document.addEventListener('visibilitychange',()=>audioPause(document.hidden));
+addEventListener('pagehide',()=>audioPause(true));addEventListener('pageshow',()=>audioPause(document.hidden));
+addEventListener('blur',()=>{if(document.hidden)audioPause(true)});

@@ -26,7 +26,7 @@ function coFuelMenu(c){const btns=[],need=FUELMAX-fuel,pr=CPRICE.toFixed(2).repl
  cmShow(c.name+' · bomba','Combustível '+Math.round(fuel)+' / '+FUELMAX+' L · '+money(score),btns,'Toque, clique ou tecle 1–'+btns.length)}
 let coPIn=false;
 function stFrame(dt){if(!ready||menuOpen)return;const sp=Math.hypot(vel.x,vel.z);
- fuel=Math.max(0,fuel-dt*(.02+sp*.0011*(1+cargo*.01)+thrS*.05));
+ if(engineOn)fuel=Math.max(0,fuel-dt*(.02+sp*.0011*(1+cargo*.01)+thrS*.05));
  if(fuel<=0){fuelDead=sp<1?fuelDead+dt:0;if(fuelDead>6){fuelDead=0;score=Math.max(0,score-500);fuel=40;saveG();msg('Sem combustível! O guincho trouxe 40 L (-R$ 500)')}}else fuelDead=0;
  if(fuel<45&&fuel>0){fuelWarn-=dt;if(fuelWarn<=0){fuelWarn=40;msg('Combustível baixo — procure um posto')}}
  {const z=stBay();if(z){if(z!==stIn){stIn=z;msg(z.k==='shop'?'Pare e aperte G para a oficina':'Pare e aperte G para abastecer')}}else stIn=false}

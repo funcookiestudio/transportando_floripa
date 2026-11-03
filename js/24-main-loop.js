@@ -18,7 +18,9 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  spin-=vf*dt;updWheels();
  {const sT=Math.sin(th),cT=Math.cos(th),ax=pos.x+TLEN*sT,az=pos.z+TLEN*cT,yk=H(pos.x,pos.z);let tx=pos.x,tz=pos.z;if(hb){hb.t+=dt*2.2;const k=Math.min(1,hb.t),e=k*k*(3-2*k);tx=hb.x+(pos.x-hb.x)*e;tz=hb.z+(pos.z-hb.z)*e;if(hb.t>=1)hb=null}trl.position.set(tx,yk+.1,tz);
   pitchT+=(Math.atan2(yk-H(ax,az),TLEN)-pitchT)*Math.min(1,dt*8);trl.rotation.set(pitchT,th,tipSg*tipS*.28+rollT,'YXZ');gearStep(dt);tS.forEach(o=>{o.sp.rotation.x=spin/o.cy;susp(o,dt,sT,cT,yk)})}
- spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?2.2:0});beamStep();HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);AM.emissiveIntensity=(Math.floor(now/400)%2&&(K.left||K.right))?2.2:.4;
+ spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?2.2:0});beamStep();HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);{const bl=Math.floor(now/400)%2; // setas: < esquerda · > direita (desligam sozinhas depois da curva)
+ if(sigL){if(steer>.22)sigTL=1;else if(sigTL&&steer<.05){sigL=false;sigTL=0}}if(sigR){if(steer<-.22)sigTR=1;else if(sigTR&&steer>-.05){sigR=false;sigTR=0}}
+ AM.emissiveIntensity=bl&&sigL?2.2:.4;AR.emissiveIntensity=bl&&sigR?2.2:.4}
  roadFrame();trfUpd(dt);stFrame(dt);updTerrain();updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
  jobFrame(dt);
  // câmera
