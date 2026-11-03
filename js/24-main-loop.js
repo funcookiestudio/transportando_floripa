@@ -32,7 +32,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  const g=gear,rpm=Math.max(0,Math.min(1,(eRpm-650)/1250));
  audioStep(dt,now,vf,thr);
  // HUD
- $('dm').textContent=Math.round(dmg);$('fl').textContent=Math.round(fuel);$('ps').textContent=stNear;$('cg').textContent=cargo;$('ag').textContent=Math.round(Math.abs(th-hd)*57.3);$('kmh').textContent=Math.round(Math.abs(vf)*3.6);$('gr').textContent=vf<-.5?'R':g+1;$('dst').textContent=Math.round(dd);$('tm').textContent=job&&job.phase==='deliver'?Math.ceil(tLeft):'--';$('jn').textContent=jobLabel();$('sc').textContent=score;$('cn').textContent=deliveries;
+ $('dm').textContent=Math.round(dmg);$('fl').textContent=Math.round(fuel);$('ps').textContent=stNear;$('cg').textContent=cargo;$('ag').textContent=Math.round(Math.abs(th-hd)*57.3);$('kmh').textContent=Math.round(Math.abs(vf)*3.6);$('gr').textContent=(vf<-.5?'R':g+1)+(cruiseS===2?' · PA '+Math.round(cruiseV*3.6)+' km/h':cruiseS===1?' · PA…':'');$('dst').textContent=Math.round(dd);$('tm').textContent=job&&job.phase==='deliver'?Math.ceil(tLeft):'--';$('jn').textContent=jobLabel();$('sc').textContent=score;$('cn').textContent=deliveries;
  const nw=navPoint(),tx2=nw.x-pos.x,tz2=nw.z-pos.z;$('arr').style.transform='rotate('+Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz)+'rad)';
  updLights();updEnv();draw()}
 applyTOD();initFX();setQ(qi);gfxInit();
