@@ -141,7 +141,6 @@ function stRibbons(f){const W=(p,q)=>{roadPt(f.s+p,q);return[RPx,RPz]},hw=f.hw,k
   const gm=(kind,ua,ub,fn)=>{const n=12;for(const ex of[0,1]){const p=new Float32Array(n*5);for(let j=0;j<n;j++){const t=j/(n-1),u=ua+(ub-ua)*(ex?1-t:t),q=ex?dp*50+dp*85*(1-u):-dp*135+dp*85*u,v=fn(u),w=W(q,s2*v[0]);p[j*5]=w[0];p[j*5+1]=w[1];p[j*5+2]=ya(q);p[j*5+3]=0;p[j*5+4]=v[1]/10}rb.push({hw:5,p,n,ki:3,gore:kind})}};
   // asfalto da pista de acesso (uma pista de largura junto à principal), cunha só depois dela, faixa pontilhada na borda da principal
   gm(2,0,u1,u=>{const g=gap(u),k=sm(u/.1);return[aw-1.4*k+(g+2.4*k)/2,g+2.4*k]});
-  gm(1,u0,u1,u=>{const k=sm((u-u0)/.08),g=gap(u)-L+k;return[aw+L-.5*k+(g+k)/2,g+k]});
   gm(3,.03,u1,u=>[aw,.4])}
  return rb}
 function stDeco(f,g,disp){const hw=f.hw,W=(p,q)=>{roadPt(f.s+p,q);return[RPx,RPz]},ya=p=>yR(f.s+p)+.1,
