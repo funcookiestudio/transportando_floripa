@@ -21,8 +21,8 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  jobFrame(dt);
  // câmera
  camH+=wrap(hd-camH)*Math.min(1,dt*3.5);const cfx=-Math.sin(camH+(camMode<2?orbYaw:0)),cfz=-Math.cos(camH+(camMode<2?orbYaw:0)),cx=pos.x+fx*3.2,cz=pos.z+fz*3.2,cy=yr+2;
- cam.fov+=((camMode==2?72:60+Math.abs(vf)*.35)-cam.fov)*Math.min(1,dt*4);cam.updateProjectionMatrix();
- if(camMode==2){V.set(-.45,2.85,-4.6);pivot.localToWorld(V);cam.position.copy(V);cam.quaternion.copy(pivot.quaternion).multiply(QO.setFromEuler(EO.set(-Math.max(-.8,Math.min(.8,orbPitch)),orbYaw,0,'YXZ')))}
+ cam.fov+=((camMode==2?74:60+Math.abs(vf)*.35)-cam.fov)*Math.min(1,dt*4);cam.updateProjectionMatrix();
+ if(camMode==2){V.set(-.45,2.92,-3.95);pivot.localToWorld(V);cam.position.copy(V);cam.quaternion.copy(pivot.quaternion).multiply(QO.setFromEuler(EO.set(-Math.max(-.8,Math.min(.8,orbPitch)),orbYaw,0,'YXZ')))}
  else{let P=camMode==0?.38:.43,P2=Math.max(.04,Math.min(1.45,P+orbPitch)),d=(camMode==0?27+Math.abs(vf)*.08:camMode==1?48:1)*zoom,h=camMode==3?70:d*Math.sin(P2);if(camMode<2)d*=Math.cos(P2);
   const tx=cx-cfx*d+(camMode==3?0:0),tz=cz-cfz*d;cam.position.set(tx,Math.max(cy+h,H(tx,tz)+2),tz);
   if(camMode==3)cam.position.set(cx,cy+70,cz+.01);cam.lookAt(cx+cfx*(camMode==3?0:5),cy+(camMode==3?0:2.2),cz+cfz*(camMode==3?0:5))}
