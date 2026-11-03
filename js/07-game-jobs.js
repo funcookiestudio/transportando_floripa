@@ -7,6 +7,8 @@ let mt=0;function msg(t){const m=$('msg');m.textContent=t;m.style.opacity=1;clea
 
 // ---- fretes ----
 const CARGOS={agro:['Soja','Milho','Fertilizante','Farelo de trigo'],log:['Eletrônicos','Cargas diversas','Paletes','Bebidas'],aco:['Bobinas de aço','Vergalhões de aço','Vigas metálicas','Chapas de aço','Tubos'],comb:['Lubrificantes','Aditivos','Solventes','Parafina'],var:['Eletrodomésticos','Móveis','Alimentos','Roupas'],cons:['Cimento ensacado','Cimento a granel','Areia','Brita','Terra e cascalho','Tijolos','Blocos de concreto','Madeira serrada','Troncos de madeira','Telhas','Tubos de PVC','Estruturas pré-moldadas']};
+/* cargas antigas removidas: cada tipo de empresa oferece só cargas com modelo novo (HEAVY); tipos sem modelo usam as de construção */
+{const hv=n=>typeof HEAVY!=='undefined'&&HEAVY[n];CARGOS.cons=CARGOS.cons.filter(hv);for(const k in CARGOS)if(k!=='cons'){const l=CARGOS[k].filter(hv);CARGOS[k]=l.length?l:CARGOS.cons.slice()}}
 var cargoCol=null,hitched=false,autoBoard=false;let job=null,deliveries=0,dd=0,dockT=0,promptCo=null,boardKeys=null;
 const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/60)+' min '+String(Math.round(t%60)).padStart(2,'0')+' s';
 score=2000;try{const sv=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
