@@ -37,4 +37,4 @@ function homeFrame(dt,now){if(!hpInit){hpInit=true;hpS={th,tv:trl.visible,cb:car
  const[tc,td,tp]=hpAim();if(!hpInit2){hpInit2=true;hpC.copy(tc);hpD=td}const e=Math.min(1,dt*4);hpC.lerp(tc,e);hpD+=(td-hpD)*e;
  if(hpAuto)hpA+=dt*.18;const a=hpA+orbYaw,P=tp+Math.max(-.15,Math.min(.8,orbPitch)),d=hpD*zoom;
  cam.fov=40;{const W=innerWidth,Hh=innerHeight,pn=$('hpan').style.display==='block';if(pn)cam.setViewOffset(W,Hh,W>Hh*1.1?W*.2:0,W>Hh*1.1?0:Hh*.18,W,Hh);else cam.clearViewOffset()}cam.updateProjectionMatrix();
- cam.position.set(hpC.x+Math.sin(a)*d*Math.cos(P),Math.max(hpC.y+d*Math.sin(P),H(hpC.x,hpC.z)+.4),hpC.z+Math.cos(a)*d*Math.cos(P));cam.lookAt(hpC)}
+ cam.position.set(hpC.x+Math.sin(a)*d*Math.cos(P),Math.max(hpC.y+d*Math.sin(P),H(hpC.x,hpC.z)+.4),hpC.z+Math.cos(a)*d*Math.cos(P));cam.lookAt(hpC);if(window.hzFrame)hzFrame(dt,0)}

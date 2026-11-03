@@ -15,7 +15,7 @@ function applyTOD(){const ang=(hour-6)/12*Math.PI,e=Math.sin(ang),a=sstep(e,-.25
  hemi.color.copy(top).lerp(new THREE.Color(0xffffff),.4);hemi.groundColor.setHex(0x4a5a3a).multiplyScalar(.35+.65*b);hemi.intensity=.12+.3*b;
  R.toneMappingExposure=night?1.15:1.05;scene.environment=e>.06?(envCur||envTex):null;
  const eI=.1+.6*sstep(e,.06,.5);scene.traverse(o=>{const m=o.material;if(m&&m.isMeshStandardMaterial)m.envMapIntensity=eI});
- LM.emissiveIntensity=.2+3.3*(1-b);lpool.material.opacity=.55*(1-b);lpool.visible=b<.95;darkK=1-b;roadMesh.material.roughness=.85-.2*(1-b)}
+ LM.emissiveIntensity=.2+3.3*(1-b);lpool.material.opacity=.55*(1-b);lpool.visible=b<.95;darkK=1-b;roadMesh.material.roughness=.85-.2*(1-b);if(window.hzTint)hzTint(hor,b)}
 function todStep(dt){if(hour!==hourT){const d=hourT-hour;hour+=Math.sign(d)*Math.min(Math.abs(d),dt*4);applyTOD()}}
 const bc=document.createElement('canvas');bc.width=bc.height=64;{const g=bc.getContext('2d'),r=g.createRadialGradient(32,32,3,32,32,32);r.addColorStop(0,'rgba(0,0,0,.7)');r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,64,64)}
 const blob=new THREE.Mesh(new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(bc),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-6,polygonOffsetUnits:-6}));

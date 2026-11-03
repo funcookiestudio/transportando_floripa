@@ -1,8 +1,8 @@
 /* ===== Ajustes gráficos (painel) ===== */
 const PRE=[
- {pr:.75,sh:0,spot:false,post:false,bloom:false,msaa:false,grade:false,motion:false,reflex:false,beams:false,lamps:false,pool:0,trees:true,bushes:true,parts:true,view:1,tone:true},
- {pr:1,sh:1024,spot:false,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:2,trees:true,bushes:true,parts:true,view:1,tone:true},
- {pr:1.5,sh:2048,spot:true,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:4,trees:true,bushes:true,parts:true,view:1,tone:true}];
+ {pr:.75,sh:0,spot:false,post:false,bloom:false,msaa:false,grade:false,motion:false,reflex:false,beams:false,lamps:false,pool:0,trees:true,bushes:true,parts:true,view:1,tone:true,hz:false},
+ {pr:1,sh:1024,spot:false,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:2,trees:true,bushes:true,parts:true,view:1,tone:true,hz:true},
+ {pr:1.5,sh:2048,spot:true,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:4,trees:true,bushes:true,parts:true,view:1,tone:true,hz:true}];
 const GS=Object.assign({auto:true,fps:false,preset:1,fov:69},PRE[1]);
 let gfxOpen=false,gfxEl=null,fpsEl=null,fpsRun=false;
 function setQ(i){setQBase(i);Object.assign(GS,PRE[i],{preset:i});GS.auto=qAuto;applyGfx()}
@@ -29,7 +29,7 @@ const GSC=[
  ['Sombras',[{k:'sh',t:'seg',l:'Sombras do sol',o:[['Desligadas',0],['512',512],['1024',1024],['2048',2048]]},{k:'spot',t:'sw',l:'Sombras dos faróis'}]],
  ['Efeitos',[{k:'post',t:'sw',l:'Pós-processamento',h:'Necessário para bloom, suavização, cor e desfoque'},{k:'bloom',t:'sw',l:'Brilho (bloom)',d:1},{k:'msaa',t:'sw',l:'Suavização de bordas (MSAA)',d:1},{k:'motion',t:'sw',l:'Desfoque em alta velocidade',d:1},{k:'reflex',t:'sw',l:'Reflexos dinâmicos',h:'Atualiza o reflexo do cenário na lataria'},{k:'parts',t:'sw',l:'Poeira e fumaça'}]],
  ['Iluminação',[{k:'beams',t:'sw',l:'Feixes e brilho dos faróis'},{k:'lamps',t:'sw',l:'Luzes de freio e de neblina'},{k:'pool',t:'seg',l:'Luzes dos postes',o:[['Nenhuma',0],['2',2],['4',4]]}]],
- ['Cenário',[{k:'trees',t:'sw',l:'Árvores e pedras'},{k:'bushes',t:'sw',l:'Arbustos'}]],
+ ['Cenário',[{k:'trees',t:'sw',l:'Árvores e pedras'},{k:'bushes',t:'sw',l:'Arbustos'},{k:'hz',t:'sw',l:'Horizonte (morros e ilhas)',h:'Camadas distantes com parallax'}]],
  ['Desempenho',[{k:'hudmin',t:'sw',l:'HUD mínimo',h:'Esconde dano, carga, dinheiro e avisos secundários'},{k:'fps',t:'sw',l:'Mostrar FPS na tela'}]]];
 function gfxRender(){const cur=gfxMatch();let h='';
  for(const[sec,items]of GSC){h+='<h3>'+sec+'</h3>';

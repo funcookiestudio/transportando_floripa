@@ -27,6 +27,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
   const tx=cx-cfx*d+(camMode==3?0:0),tz=cz-cfz*d;cam.position.set(tx,Math.max(cy+h,H(tx,tz)+2),tz);
   if(camMode==3)cam.position.set(cx,cy+70,cz+.01);cam.lookAt(cx+cfx*(camMode==3?0:5),cy+(camMode==3?0:2.2),cz+cfz*(camMode==3?0:5))}
  if(shake>0){cam.position.x+=(Math.random()-.5)*shake;cam.position.y+=(Math.random()-.5)*shake;shake=Math.max(0,shake-dt*1.5)}
+ if(window.hzFrame)hzFrame(dt,vf);
  sunFollow();
  // áudio
  const g=gear,rpm=Math.max(0,Math.min(1,(eRpm-650)/1250));
