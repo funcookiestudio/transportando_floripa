@@ -64,9 +64,8 @@ const TAX=[8.8,10.2,11.6],tS=[];
    if(i===0){const fx=ax-R2-.015;bx(.03,.03,depth,M.steel,g,fx,P.tireR+.1,s*.96);bx(.012,.46,depth-.04,M.rubber,g,fx-.012,P.tireR+.1-.245,s*.96);bx(.02,.03,depth-.04,M.steel2,g,fx-.012,P.tireR+.1-.01,s*.96)}}))}
  /* ---- pés de apoio (SEM a travessa de pé / base) ---- */
  {const g=sub(ch),gx=P.gearX;[-1,1].forEach(s=>{const z=s*P.gearZ;
-  bx(.16,.55,.16,M.steel,g,gx,1.075,z);bx(.2,.03,.2,M.plate,g,gx,1.36,z);bx(.11,.74,.11,M.steel2,g,gx,.45,z);bx(.2,.03,.2,M.plate2,g,gx,.065,z);bx(.14,.14,.12,M.plate,g,gx+.12,1,z);cyl(.02,.2,M.zinc,g,gx,1,z,'z',10);
-  beam([gx-.5,1.3,z],[gx,.95,z],.05,.05,M.steel,g);beam([gx+.5,1.3,z],[gx,.95,z],.05,.05,M.steel,g);beam([gx,1.32,s*.5],[gx,1.1,z],.05,.05,M.steel,g)});
-  cyl(.022,2*P.gearZ,M.zinc,g,gx+.12,1,0,'z',10);cyl(.012,.3,M.zinc,g,gx+.12,1,P.gearZ+.12,'z',8);beam([gx+.12,1,P.gearZ+.26],[gx+.12,.8,P.gearZ+.26],.02,.02,M.zinc,g);cyl(.03,.1,M.rubber,g,gx+.12,.76,P.gearZ+.26,'z',10)}
+  bx(.16,.55,.16,M.steel,g,gx,1.075,z);bx(.2,.03,.2,M.plate,g,gx,1.36,z);bx(.14,.14,.12,M.plate,g,gx+.12,1,z);cyl(.02,.2,M.zinc,g,gx,1,z,'z',10);
+  beam([gx-.5,1.3,z],[gx,.95,z],.05,.05,M.steel,g);beam([gx+.5,1.3,z],[gx,.95,z],.05,.05,M.steel,g);beam([gx,1.32,s*.5],[gx,1.1,z],.05,.05,M.steel,g)});}
  /* ---- parafusos ---- */
  {const hex=[],nut=[],web=[],hang=[],inPlate=x=>(x>-5.5&&x<-1.1)||(x>4.5&&x<6.1)||Math.abs(x-3.867)<.45;
   crossXs.forEach(x=>[-1,1].forEach(s=>[-1,1].forEach(d=>hex.push(mat4(x+d*.06,TOP_Y+.006,s*(P.RS/2),0)))));
@@ -89,5 +88,20 @@ const TAX=[8.8,10.2,11.6],tS=[];
    const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(Pp,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));bg.setIndex(new THREE.BufferAttribute(I,1));
    const me=new THREE.Mesh(bg,m);me.castShadow=me.receiveShadow=true;trl.add(me)}
   ch.traverse(o=>{if(o.isMesh)o.geometry.dispose()})}
+ /* ---- partes móveis do apoio: pernas internas, sapatas e eixo de transmissão com manivela (não entram na malha fundida) ---- */
+ {const T=(mx,my,mz)=>[mz,my+CH_Y,CH_Z-mx],gx=P.gearX,legs=[],crank=new THREE.Group(),TRAVEL=.5,TURNS=6; // modelo -> carreta
+  const mkm=(geo,mat,p,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;p.add(m);return m};
+  [-1,1].forEach(s=>{const a=T(gx,.45,0),b=T(gx,.065,0);legs.push([mkm(new THREE.BoxGeometry(.11,.74,.11),M.steel2,trl,s*P.gearZ,a[1],a[2]),a[1]],[mkm(new THREE.BoxGeometry(.2,.03,.2),M.plate2,trl,s*P.gearZ,b[1],b[2]),b[1]])});
+  const c=T(gx+.12,1,0);crank.position.set(0,c[1],c[2]);trl.add(crank);
+  const ax=(r,len,mat,x,seg)=>{const m=mkm(new THREE.CylinderGeometry(r,r,len,seg||10),mat,crank,x,0,0);m.rotation.z=Math.PI/2;return m};
+  ax(.022,2*P.gearZ,M.zinc,0);ax(.012,.3,M.zinc,P.gearZ+.12,8);
+  [-.7,-.2,.35,.7].forEach(x=>mkm(new THREE.BoxGeometry(.03,.1,.03),M.steel,crank,x,.05,0)); // pinos radiais: mostram a rotação do eixo
+  mkm(new THREE.BoxGeometry(.02,.2,.02),M.zinc,crank,P.gearZ+.26,-.1,0);ax(.03,.1,M.rubber,P.gearZ+.26,10).position.y=-.2; // braço e empunhadura
+  /* GEAR.e: 0 = apoio arriado (carreta solta) · 1 = recolhido (engatada). Ao engatar sobe em ~3 s e a manivela dá TURNS voltas */
+  var GEAR={p:0,tgt:0,e:0};
+  var gearSet=e=>{GEAR.e=e;for(const[m,y0]of legs)m.position.y=y0+TRAVEL*e;crank.rotation.x=-e*TURNS*Math.PI*2};
+  var gearStep=dt=>{if(GEAR.p===GEAR.tgt)return;const d=dt/3.2;GEAR.p=GEAR.tgt>GEAR.p?Math.min(GEAR.tgt,GEAR.p+d):Math.max(GEAR.tgt,GEAR.p-d);const k=GEAR.p;gearSet(k*k*(3-2*k))};
+  var gearSnap=v=>{GEAR.p=GEAR.tgt=v;gearSet(v)};
+  var gearHitch=v=>{if(v){GEAR.p=0;GEAR.tgt=1;gearSet(0)}else gearSnap(0)}}
  var TRLM=[M.steel,M.steel2],TRLD=[0x353b41,0x40474e]; // materiais pintáveis da carreta e cores originais
 }

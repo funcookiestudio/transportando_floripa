@@ -28,13 +28,13 @@ function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=
  try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);fuel=typeof sv.fuel==='number'?Math.max(0,Math.min(FUELMAX,sv.fuel)):FUELMAX;tcx=1e9;ocx=1e9;if(typeof sv.y==='number'&&isFinite(sv.y)){HREF=sv.y;RESTY={y:sv.y,t:6}}
   const j=sv.job;if(j&&coGet(j.fk)&&coGet(j.tk)){const f=coGet(j.fk),t=coGet(j.tk);f.nonce=j.nonce|0;job=Object.assign({},j,{from:f,to:t});delete job.fk;delete job.tk;delete job.nonce;
    if(job.phase==='pickup'){f.spawn={slot:job.slot,name:job.name,tons:job.tons};setTargetP(f.slotK[job.slot],f.y);beacon.visible=false}
-   else{setHitched(true);setTrailerCargo(job.name,job.tons);loadCargo(job.tons);tLeft=+sv.tl||job.limit;if(job.mode==='park')setPark(t,job.toBay);else{job.mode='';job.asked=false;setTargetP(t.board,t.y)}}}
+   else{setHitched(true);gearSnap(1);setTrailerCargo(job.name,job.tons);loadCargo(job.tons);tLeft=+sv.tl||job.limit;if(job.mode==='park')setPark(t,job.toBay);else{job.mode='';job.asked=false;setTargetP(t.board,t.y)}}}
   else if(sv.hitched){setHitched(false)}}catch(e){}}
 setInterval(saveG,4000);addEventListener('pagehide',saveG);addEventListener('beforeunload',saveG);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveG()});
 beacon.visible=ring.visible=false;
 function loadCargo(t){cargo=t;MASS=hitched?15000+t*1000:11000;setCont()}
 let hb=null,navCo=null; // acoplamento suave: a carreta mantém a pose parada e só encosta no caminhão aos poucos
-function setHitched(v){hb=null;hitched=v;trl.visible=v;if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?15000+cargo*1000:11000;setCont()}
+function setHitched(v){const was=hitched;hb=null;hitched=v;trl.visible=v;if(v){if(!was)gearHitch(true)}else gearHitch(false);if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?15000+cargo*1000:11000;setCont()}
 function placeStart(){const c=coGet(0),q=c.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(c.cr,-c.sr);th=hd;camH=hd;curS=0;autoBoard=true}
 function setTargetP(q,y){tgt.x=q.x;tgt.z=q.z;tgt.y=y;beacon.position.set(q.x,y+45,q.z);ring.position.set(q.x,y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}
 function setTarget(c,bi){if(!c){beacon.visible=ring.visible=false;return}const q=c.loc(10,c.bays[bi].lz);tgt.x=q.x;tgt.z=q.z;tgt.y=c.y;beacon.position.set(q.x,c.y+45,q.z);ring.position.set(q.x,c.y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}
@@ -61,11 +61,12 @@ function offersFor(c){const n=c.nonce||0,offs=[-3,-2,-1,1,2,3,4],st=Math.floor(h
 // pv (opcional): lista {name,tons,sub} das primeiras N opções; com ela o painel ocupa a tela toda e mostra a carga sobre o chassi (passe o mouse; no toque, 1º toque mostra e 2º aceita)
 function cmShow(t,p,btns,foot,pv){$('cmt').textContent=t;$('cmp').textContent=p;const g=$('cmg');g.innerHTML='';const full=!!(pv&&pv.length&&typeof pvOpen==='function');
  btns.forEach((b,i)=>{const e=document.createElement('button');e.innerHTML=b.html;
-  e.addEventListener('pointerenter',ev=>{if(full&&PV.on&&i<pv.length&&ev.pointerType!=='touch'&&PV.i!==i)pvSet(i)});
-  e.addEventListener('pointerdown',ev=>{audio();ev.preventDefault();if(full&&PV.on&&i<pv.length&&ev.pointerType==='touch'&&PV.i!==i){pvSet(i);return}b.fn()});g.appendChild(e)});
+  e.addEventListener('pointerdown',ev=>{audio();ev.preventDefault();if(full&&PV.on&&i<pv.length){pvSet(i);cmAcc(btns,pv)}else b.fn()});g.appendChild(e)});
  boardKeys=btns.map(b=>b.fn);$('cmf').textContent=foot||'';menuOpen=true;for(const k in K)K[k]=false;$('cm').style.display='flex';
- if(typeof pvClose==='function')pvClose();$('cm').classList.toggle('full',full&&pvOpen(pv))}
-function closeCm(){menuOpen=false;boardKeys=null;$('cm').style.display='none';$('cm').classList.remove('full');if(typeof pvClose==='function')pvClose()}
+ if(typeof pvClose==='function')pvClose();const on=full&&pvOpen(pv);$('cm').classList.toggle('full',on);if(on)cmAcc(btns,pv);else $('cma').style.display='none'}
+/* painel de fretes: clicar na carga só seleciona e mostra a prévia; quem aceita é o botão "Aceitar frete" */
+function cmAcc(btns,pv){const a=$('cma'),o=pv[PV.i];a.style.display='block';a.textContent='✔ Aceitar frete · '+o.name+' ('+o.tons+' t)';a.onpointerdown=ev=>{audio();ev.preventDefault();btns[PV.i].fn()}}
+function closeCm(){$('cma').style.display='none';menuOpen=false;boardKeys=null;$('cm').style.display='none';$('cm').classList.remove('full');if(typeof pvClose==='function')pvClose()}
 function boardKey(i){if(boardKeys&&boardKeys[i])boardKeys[i]()}
 function yardCo(){let b=null,bd=1e9;for(const c of COACT){const d=Math.hypot(pos.x-c.board.x,pos.z-c.board.z);if(d<6.5&&d<bd){bd=d;b=c}}return b}
 function openBoard(){if(Math.hypot(vel.x,vel.z)>1){msg('Pare o caminhão');return}
@@ -75,7 +76,7 @@ function openBoard(){if(Math.hypot(vel.x,vel.z)>1){msg('Pare o caminhão');retur
  const offs=offersFor(c),btns=offs.map(o=>({html:'<b>'+o.name+' · '+o.tons+' t</b><span>'+money(o.reward)+'</span><small>→ '+o.to.name+' ('+o.to.city+') · '+(o.dist/1000).toFixed(1)+' km · '+exitDir(o.from,o.to)+' · prazo '+fmtT(o.limit)+'</small>',fn:()=>acceptJob(o)}));
  if(dmg>1){const cost=Math.round(dmg*30);btns.push({html:'<b>Oficina</b><span>'+money(cost)+'</span><small>Reparar '+Math.round(dmg)+'% de dano</small>',fn:()=>{if(score<cost){msg('Dinheiro insuficiente');return}score-=cost;dmg=0;saveG();closeCm();msg('Caminhão reparado')}})}
  btns.push({html:'<b>Fechar</b><small>Esc</small>',fn:closeCm});
- cmShow(c.name,c.t.label+' · '+c.city+' · '+money(score),btns,'Passe o mouse (ou toque uma vez) para ver a carga · clique (ou toque de novo) para aceitar · tecle 1–'+btns.length,offs.map(o=>({name:o.name,tons:o.tons,sub:'→ '+o.to.name+' ('+o.to.city+')'})))}
+ cmShow(c.name,c.t.label+' · '+c.city+' · '+money(score),btns,'Clique em uma carga para ver a prévia · depois toque em “Aceitar frete” · ou tecle 1–'+btns.length,offs.map(o=>({name:o.name,tons:o.tons,sub:'→ '+o.to.name+' ('+o.to.city+')'})))}
 function acceptJob(o){job=Object.assign({phase:'pickup'},o);{const d=o.from.drop&&o.from.drop[o.slot];if(d){d.visible=false;o.from.drop[o.slot]=null}}o.from.nonce=(o.from.nonce||0)+1;dockT=0;o.from.spawn={slot:o.slot,name:o.name,tons:o.tons};{const gp=COG.get(o.from.k);if(gp){const t=gp.userData.slots[o.slot];t.visible=true;setTrCargo(t,o.name,o.tons)}}setTargetP(o.from.slotK[o.slot],o.from.y);beacon.visible=false;ocx=1e9;closeCm();msg('Frete aceito · dê ré até o anel, cabine virada para fora da carreta')}
 function cancelJob(free){if(!job)return;if(job.phase==='pickup'){const f=job.from;f.spawn=null;const gp=COG.get(f.k);if(gp)gp.userData.slots[job.slot].visible=false}else setHitched(false);endPark();job=null;loadCargo(0);setTarget(null);if(!free)score=Math.max(0,score-300);saveG();closeCm();msg(free?'Frete cancelado':'Frete cancelado · -R$ 300')}
 function jobLabel(){return job?(job.phase==='pickup'?'Engatar '+job.name+' · '+job.from.name:'Entregar '+job.tons+' t · '+job.to.name):'Sem frete · vá a uma empresa'}

@@ -12,7 +12,7 @@ function rimClone(m,hex){const k=m.uuid+'|'+hex;let c=RIMC.get(k);if(!c){c=m.clo
 function trfBuild(po){const g=new THREE.Group();const cab=TRUCKM.clone(true);g.add(cab);const sps=[];
  // o modelo original esconde os pneus (mkWheels os recria à parte): refaz as rodas do cavalo com as mesmas malhas
  for(const w of wh){const gp=new THREE.Group(),sp=new THREE.Group();gp.position.copy(w.c);w.sp.children.forEach(ch=>{let mt=ch.userData.o||ch.material;if(po&&po.rim!=null&&ch.userData.o)mt=ch.material.map(x=>RIMP.includes(x)?rimClone(x,po.rim):x);const me=new THREE.Mesh(ch.geometry,mt);me.castShadow=true;sp.add(me)});gp.add(sp);g.add(gp);sps.push(sp)}
-const t=mkTrailer(g,0,0,1);t.position.z=6.75;trlSwap(t,po?po.trl:null);cabPaint(cab,po?po.cab:pick(TRC));
+const t=mkTrailer(g,0,0,1,true);t.position.z=6.75;trlSwap(t,po?po.trl:null);cabPaint(cab,po?po.cab:pick(TRC));
  if(!po&&Math.random()<.65){const k=Object.keys(CARGOS),L=CARGOS[k[Math.floor(Math.random()*k.length)]];setTrCargo(t,L[Math.floor(Math.random()*L.length)],10+Math.floor(Math.random()*14))}
  return{g,t,disp:[],sps}}
 
