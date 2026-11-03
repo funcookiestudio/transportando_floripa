@@ -1,5 +1,5 @@
 // ---- colisão ----
-const CZ=[.3,-1.9,-3.9,-5.3],TZ=[3.5,7,10.5,13],CR=1.4;let pitchT=0,th=0,tipS=0,tipSg=1,jkMsg=0,skMsg=0,wT=0,rollT=0,vTp=0,decS=0;
+var CZ=[.3,-1.9,-3.9,-5.3],CR=1.4;const TZ=[3.5,7,10.5,13];let pitchT=0,th=0,tipS=0,tipSg=1,jkMsg=0,skMsg=0,wT=0,rollT=0,vTp=0,decS=0;
 function collide(){let hit=0;const pts=[];
  for(const zl of CZ)pts.push([pos.x+zl*Math.sin(hd),pos.z+zl*Math.cos(hd),zl,0]);
  if(hitched)for(const d of TZ)pts.push([pos.x+d*Math.sin(th),pos.z+d*Math.cos(th),d,1]); // semirreboque

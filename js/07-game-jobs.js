@@ -11,7 +11,7 @@ var cargoCol=null,hitched=false,autoBoard=false;let job=null,deliveries=0,dd=0,d
 const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/60)+' min '+String(Math.round(t%60)).padStart(2,'0')+' s';
 score=2000;try{const sv=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
 var RESTY=null;let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch(e){}
-function saveG(){if(typeof ready==='undefined'||!ready)return;try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:Math.round(HREF*100)/100,hd,th,s:curS,hitched,cargo,tl:tLeft};
+function saveG(){if(typeof ready==='undefined'||!ready||VEH.car)return; /* Civic não grava: preserva o jogo da carreta */try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:Math.round(HREF*100)/100,hd,th,s:curS,hitched,cargo,tl:tLeft};
  if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.nonce=job.from.nonce||0;d.job=j}
  localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
 // reiniciar (R/↺): volta à empresa mais próxima mantendo frete e carreta engatada; sem carga, o menu de fretes abre ali
@@ -32,9 +32,9 @@ function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=
   else if(sv.hitched){setHitched(false)}}catch(e){}}
 setInterval(saveG,4000);addEventListener('pagehide',saveG);addEventListener('beforeunload',saveG);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveG()});
 beacon.visible=ring.visible=false;
-function loadCargo(t){cargo=t;MASS=hitched?15000+t*1000:11000;setCont()}
+function loadCargo(t){cargo=t;MASS=hitched?VEH.mh+t*1000:VEH.m0;setCont()}
 let hb=null,navCo=null; // acoplamento suave: a carreta mantém a pose parada e só encosta no caminhão aos poucos
-function setHitched(v){const was=hitched;hb=null;hitched=v;trl.visible=v;if(v){if(!was)gearHitch(true)}else gearHitch(false);if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?15000+cargo*1000:11000;setCont()}
+function setHitched(v){const was=hitched;hb=null;hitched=v;trl.visible=v;if(v){if(!was)gearHitch(true)}else gearHitch(false);if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?VEH.mh+cargo*1000:VEH.m0;setCont()}
 function placeStart(){const c=coGet(0),q=c.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(c.cr,-c.sr);th=hd;camH=hd;curS=0;autoBoard=true}
 function setTargetP(q,y){tgt.x=q.x;tgt.z=q.z;tgt.y=y;beacon.position.set(q.x,y+45,q.z);ring.position.set(q.x,y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}
 function setTarget(c,bi){if(!c){beacon.visible=ring.visible=false;return}const q=c.loc(10,c.bays[bi].lz);tgt.x=q.x;tgt.z=q.z;tgt.y=c.y;beacon.position.set(q.x,c.y+45,q.z);ring.position.set(q.x,c.y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}
@@ -69,7 +69,7 @@ function cmAcc(btns,pv){const a=$('cma'),o=pv[PV.i];a.style.display='block';a.te
 function closeCm(){$('cma').style.display='none';menuOpen=false;boardKeys=null;$('cm').style.display='none';$('cm').classList.remove('full');if(typeof pvClose==='function')pvClose()}
 function boardKey(i){if(boardKeys&&boardKeys[i])boardKeys[i]()}
 function yardCo(){let b=null,bd=1e9;for(const c of COACT){const d=Math.hypot(pos.x-c.board.x,pos.z-c.board.z);if(d<6.5&&d<bd){bd=d;b=c}}return b}
-function openBoard(){if(Math.hypot(vel.x,vel.z)>1){msg('Pare o caminhão');return}
+function openBoard(){if(VEH.car){msg('O Civic não faz fretes · recarregue a página e escolha a carreta');return}if(Math.hypot(vel.x,vel.z)>1){msg('Pare o caminhão');return}
  const c=yardCo();if(!c){msg('Pare no ponto amarelo entre os cones');return}
  if(job&&job.phase==='deliver'&&job.mode!=='park'&&c===job.to){deliverMenu();return}
  if(job){cmShow('Frete em andamento',job.name+' · '+job.tons+' t · '+job.from.name+' → '+job.to.name,[{html:'<b>Continuar</b>',fn:closeCm},{html:'<b>Cancelar frete</b><span>-R$ 300</span><small>Perde a carga</small>',fn:()=>cancelJob(false)}],'');return}
@@ -123,7 +123,7 @@ function navPoint(){const r={x:tgt.x,z:tgt.z};const c=navCo;if(!c||dd<70)return 
  roadPt(curS+Math.sign(ds)*70,0);r.x=RPx;r.z=RPz;return r}
 
 /* engate/desengate manual (tecla T ou botão 🔗): só vale com a carreta alinhada e o caminhão parado */
-function hitchKey(){if(menuOpen||!ready)return;
+function hitchKey(){if(menuOpen||!ready)return;if(VEH.car){msg('O Civic não engata carreta');return}
  if(!job){msg(hitched?'Entregue a carga no destino para desengatar':'Aceite um frete (G) para ter uma carreta para engatar');return}
  if(job.phase==='pickup'){if(hitchOk(job.from,job.slot))completeDock();else msg('Alinhe a cabine com a carreta (a menos de 3,5 m) e pare para engatar');return}
  if(job.mode==='park'){if(dockOk(job.to,job.toBay))completeDock();else msg('Posicione a carreta dentro do retângulo para desengatar');return}

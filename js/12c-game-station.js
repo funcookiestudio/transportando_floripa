@@ -12,8 +12,8 @@ function stMenu(f,mode){const btns=[],need=FUELMAX-fuel,shop=mode==='shop';
  btns.push({html:'<b>Fechar</b><small>Esc</small>',fn:closeCm});
  cmShow(f.name+(shop?' · oficina':' · bomba'),'Combustível '+Math.round(fuel)+' / '+FUELMAX+' L · '+money(score),btns,'Toque, clique ou tecle 1–'+btns.length)}
 function stPaint(f){const sw=h=>'<span style="display:inline-block;width:1em;height:1em;border-radius:3px;background:#'+h.toString(16).padStart(6,'0')+';border:1px solid #fff8;vertical-align:-.15em;margin-right:.4em"></span>',
- btns=PAINTS.map(([n,h])=>({html:'<b>'+sw(h)+n+'</b><span>'+money(PAINT_COST)+'</span>',fn:()=>{if(score<PAINT_COST){msg('Dinheiro insuficiente');return}score-=PAINT_COST;cabPaint(TRUCKP,h);paintSave(h);saveG();msg('Cabine pintada');stMenu(f,'shop')}}));
- btns.push({html:'<b>Cor original</b><span>'+money(PAINT_COST)+'</span>',fn:()=>{if(score<PAINT_COST){msg('Dinheiro insuficiente');return}score-=PAINT_COST;cabPaint(TRUCKP,null);paintSave(null);saveG();msg('Cor original');stMenu(f,'shop')}},{html:'<b>Voltar</b>',fn:()=>stMenu(f,'shop')});
+ btns=PAINTS.map(([n,h])=>({html:'<b>'+sw(h)+n+'</b><span>'+money(PAINT_COST)+'</span>',fn:()=>{if(score<PAINT_COST){msg('Dinheiro insuficiente');return}score-=PAINT_COST;paintCab(h);saveG();msg('Cabine pintada');stMenu(f,'shop')}}));
+ btns.push({html:'<b>Cor original</b><span>'+money(PAINT_COST)+'</span>',fn:()=>{if(score<PAINT_COST){msg('Dinheiro insuficiente');return}score-=PAINT_COST;paintCab(null);saveG();msg('Cor original');stMenu(f,'shop')}},{html:'<b>Voltar</b>',fn:()=>stMenu(f,'shop')});
  cmShow('Pintar a cabine',f.name+' · '+money(score),btns,'')}
 // bomba das empresas: vaga amarela no canto do pátio; combustível mais caro (CPRICE) que nos postos
 const CPRICE=FPRICE*1.6;
@@ -26,7 +26,7 @@ function coFuelMenu(c){const btns=[],need=FUELMAX-fuel,pr=CPRICE.toFixed(2).repl
  cmShow(c.name+' · bomba','Combustível '+Math.round(fuel)+' / '+FUELMAX+' L · '+money(score),btns,'Toque, clique ou tecle 1–'+btns.length)}
 let coPIn=false;
 function stFrame(dt){if(!ready||menuOpen)return;const sp=Math.hypot(vel.x,vel.z);
- if(engineOn)fuel=Math.max(0,fuel-dt*(.02+sp*.0011*(1+cargo*.01)+thrS*.05));
+ if(engineOn)fuel=Math.max(0,fuel-VEH.fc*dt*(.02+sp*.0011*(1+cargo*.01)+thrS*.05*(1+(VEH.car?boost*.7+wsp*.5:0)))*(VEH.car&&thrS<.05&&sp>5?.35:1));
  if(fuel<=0){fuelDead=sp<1?fuelDead+dt:0;if(fuelDead>6){fuelDead=0;score=Math.max(0,score-500);fuel=40;saveG();msg('Sem combustível! O guincho trouxe 40 L (-R$ 500)')}}else fuelDead=0;
  if(fuel<45&&fuel>0){fuelWarn-=dt;if(fuelWarn<=0){fuelWarn=40;msg('Combustível baixo — procure um posto')}}
  {const z=stBay();if(z){if(z!==stIn){stIn=z;msg(z.k==='shop'?'Pare e aperte G para a oficina':'Pare e aperte G para abastecer')}}else stIn=false}

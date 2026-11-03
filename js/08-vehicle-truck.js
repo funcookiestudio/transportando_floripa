@@ -1,5 +1,5 @@
 // ---- caminhão ----
-const L=3.98,pos={x:0,z:0},vel={x:0,z:0};let yrP=0,yvP=0,hz=0;const sv={p:0,r:0,h:0};let hd=0,steer=0,pitch=0,roll=0,xp=0,xr=0,prevVf=0,acc=0,shake=0,camH=0,camMode=0,lightsOn=false,night=false,muted=false,ready=false;
+var L=3.98;const pos={x:0,z:0},vel={x:0,z:0};let yrP=0,yvP=0,hz=0;const sv={p:0,r:0,h:0};let hd=0,steer=0,pitch=0,roll=0,xp=0,xr=0,prevVf=0,acc=0,shake=0,camH=0,camMode=0,lightsOn=false,night=false,muted=false,ready=false;
 const pivot=new THREE.Group();scene.add(pivot);let wF,wR;
 const spots=[-.8,.8].map(x=>{const s=new THREE.SpotLight(0xfff2d0,0,90,.55,.5);s.position.set(x,1.3,-5.6);const t=new THREE.Object3D();t.position.set(x*.5,.5,-40);pivot.add(s,t);s.target=t;return s});
 const GL=new THREE.MeshStandardMaterial({color:C(0x0b1218),roughness:.04,metalness:.6,transparent:true,opacity:.62,depthWrite:false,side:THREE.DoubleSide}),

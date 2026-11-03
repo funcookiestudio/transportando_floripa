@@ -7,6 +7,8 @@ function audio(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudio
  const G=(v=0)=>{const g=AC.createGain();g.gain.value=v;g.connect(m);return g},F=(t,f,q)=>{const x=AC.createBiquadFilter();x.type=t;x.frequency.value=f;if(q)x.Q.value=q;return x},
  O=(t,f=50)=>{const o=AC.createOscillator();o.type=t;o.frequency.value=f;o.start();return o},
  chain=(src,...n)=>{let p=src;for(const x of n){p.connect(x);p=x}return p};
+ // turbo (apito) e pneus (patinagem/ABS/derrapagem)
+ A.tw=O('sine',2400);A.twg=G();chain(A.tw,A.twg);A.sq=O('sawtooth',900);A.sqf=F('bandpass',1500,4);A.sqg=G();chain(A.sq,A.sqf,A.sqg);
  // motor diesel: fundamental + harmônico + sub + chacoalhar das injeções
  A.o1=O('sawtooth');A.f1=F('lowpass',300);A.g1=G();chain(A.o1,A.f1,A.g1);
  A.o2=O('sawtooth');A.f2=F('lowpass',650);A.g2=G();chain(A.o2,A.f2,A.g2);
@@ -29,15 +31,20 @@ const creak=()=>{const t=AC.currentTime,f=110+Math.random()*70;tn(t,'sawtooth',f
 function thud(v){if(!AC||muted)return;const t=AC.currentTime,r=.8+Math.random()*.4;
  nz(t,.002,.35,Math.min(.5,v*.04),'lowpass',250+Math.random()*250);tn(t,'sine',95*r,38,.003,.3,Math.min(.5,v*.045));
  if(v>6){nz(t+.01,.005,.28,Math.min(.25,v*.02),'highpass',1700);tn(t,'square',170*r,120,.004,.12,.05)}}
+var civLdP=0;
 function audioStep(dt,now,vf,thr){if(!AC)return;const t=AC.currentTime,S=(p,v,c=.05)=>p.setTargetAtTime(v,t,c),sp=Math.abs(vf),ld=thrS;
- const rpm=eRpm*(1+(Math.random()-.5)*.012)+Math.sin(now*.011)*6,f=rpm/60*3,rn=Math.max(0,Math.min(1,(rpm-600)/1400)),mul=(shiftT>0?.4:1)*Math.min(1,Math.max(0,(eRpm-80)/450));
+ const rpm=eRpm*(1+(Math.random()-.5)*.012)+Math.sin(now*.011)*6,f=rpm/60*(VEH.car?2:3),rn=Math.max(0,Math.min(1,(rpm-VEH.idle+50)/VEH.span)),mul=(shiftT>0?.4:1)*Math.min(1,Math.max(0,(eRpm-80)/450));
  S(A.o1.frequency,f);S(A.o2.frequency,f*2.01);S(A.o3.frequency,f*.5);S(A.lf.frequency,f);S(A.lj.frequency,f*1.5);
- S(A.f1.frequency,150+rpm*.25+ld*220);S(A.f2.frequency,350+rpm*.25+ld*300);
- const e0=(.09+.07*rn)*mul;S(A.g1.gain,e0*(.7+.3*ld));S(A.g2.gain,e0*.5*(.4+ld*.6));S(A.g3.gain,e0*.5*(1-ld*.4));
+ const cb=VEH.car?650:0;S(A.f1.frequency,150+cb+rpm*.25+ld*220);S(A.f2.frequency,350+cb*1.6+rpm*.25+ld*300);
+ const lmt=VEH.car&&rpm>VEH.limN-120&&ld>.5?(Math.sin(now*.09)>0?.3:1):1,e0=(.09+.07*rn)*mul*lmt; /* corte de giro: o som "pica" no limitador */
+ if(VEH.car&&engineOn&&ld<.05&&civLdP>.4&&rpm>3500)nz(t,.002,.1,.14,'bandpass',950,2); /* estouro ao tirar o pé */
+ civLdP=ld;S(A.g1.gain,e0*(.7+.3*ld));S(A.g2.gain,e0*.5*(.4+ld*.6));S(A.g3.gain,e0*.5*(1-ld*.4));
  const lc=(.02+.05*ld+.02*rn)*mul;S(A.gc.gain,lc*.5);S(A.lfg.gain,lc*.5);
  S(A.ot.frequency,1400+rpm*1.7*(.35+ld));S(A.gt.gain,Math.max(0,ld*(rpm-900)/1000)*.016*mul);
- const eb=(ld<.1&&sp>1&&shiftT<=0)?Math.min(1,rpm/1900):0;S(A.gj.gain,eb*.07);S(A.ljg.gain,eb*.05);
- const cabin=camMode==2;S(A.gw.gain,Math.pow(sp/30,2)*.16*(cabin?.4:1));S(A.fw.frequency,300+sp*25);
+ const eb=(ld<.1&&sp>1&&shiftT<=0)?Math.min(1,rpm/VEH.lim):0;S(A.gj.gain,eb*.07);S(A.ljg.gain,eb*.05);
+ S(A.tw.frequency,2200+boost*3600);S(A.twg.gain,VEH.car&&engineOn?boost*(.2+.8*ld)*.012*Math.min(1,eRpm/2500):0);
+ const sqv=VEH.car?Math.max(wsp*.8,absOn*.35,(K.hb&&sp>6?.5:0),Math.min(1,Math.abs(slipS)/4)*.6):0;S(A.sq.frequency,780+sp*9+wsp*200);S(A.sqg.gain,sqv*.02);
+ const cabin=camMode==2;S(A.gw.gain,Math.pow(sp/30,2)*.16*(cabin?.4:1)*(VEH.car?1.5:1));S(A.fw.frequency,300+sp*25);
  S(A.gr.gain,Math.min(1.4,sp/30)*(onRoad?.05:.11));S(A.fr.frequency,onRoad?260+sp*8:700+sp*12);
  S(A.hg.gain,K.horn?.07:0,.03);S(A.m.gain,muted?0:1,.03);S(A.cab.frequency,cabin?1600:9000,.15);
  if(gear!==lGear){if(!muted)clunk();lGear=gear}

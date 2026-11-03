@@ -117,3 +117,5 @@ body.home .p,body.home .ctl,body.home .tb,body.home #gbtn,body.home #vig,body.ho
 #cm .cma{margin-top:10px;width:100%;padding:14px;font:700 16px/1.2 inherit;border:0;border-radius:10px;background:var(--ac);color:#10131a;cursor:pointer}
 #cm .cma:active{filter:brightness(.9)}
 #cm .cmg button.sel{outline:2px solid var(--ac)}
+
+#hmain{flex-wrap:wrap;align-items:center}#hveh{flex:1 1 100%;display:flex;gap:10px;justify-content:center}#hmain #hveh button{font-size:15px;padding:8px 18px}#hmain #hveh button.on{background:var(--ac);color:#000;border-color:var(--ac)}
