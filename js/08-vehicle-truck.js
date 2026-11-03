@@ -43,7 +43,7 @@ function updWheels(){pivot.updateMatrixWorld(true);const sn=Math.sin(hd),cs=Math
  for(const w of wh){const wx=pos.x+w.c.x*cs+w.c.z*sn,wz=pos.z-w.c.x*sn+w.c.z*cs;w.W.position.set(wx,H(wx,wz)+w.c.y,wz);w.W.rotation.set(pitch,hd,0);w.sg.rotation.y=w.front?steer:0;w.sp.rotation.x=spin/w.c.y;
   VA.set(wx-w.side*.6*cs,w.W.position.y+.05,wz+w.side*.6*sn);VB.set(w.side*.6,1.05,w.c.z);pivot.localToWorld(VB);VB.sub(VA);const L2=VB.length()||.01;
   for(const o of[w.coil,w.dmp]){o.position.copy(VA).addScaledVector(VB,.5);o.quaternion.setFromUnitVectors(UP,VB.clone().divideScalar(L2));o.scale.set(1,L2,1)}}}
-function reset(){th=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;yawKick=0;gear=0;eRpm=650;shiftT=0;thrS=0;brkP=0;placeStart();vel.x=vel.z=0;steer=0;tcx=1e9;ocx=1e9;newTarget()}
+function reset(){th=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;fuel=FUELMAX;yawKick=0;gear=0;eRpm=650;shiftT=0;thrS=0;brkP=0;placeStart();vel.x=vel.z=0;steer=0;tcx=1e9;ocx=1e9;newTarget()}
 /* troca a textura embutida (bufferView -> blob:) por data: URI; alguns ambientes bloqueiam blob: */
 function glbNoBlob(ab){try{const dv=new DataView(ab),jl=dv.getUint32(12,true),J=JSON.parse(new TextDecoder().decode(new Uint8Array(ab,20,jl))),bo=20+jl,bl=dv.getUint32(bo,true),bin=new Uint8Array(ab,bo+8,bl);
  for(const im of J.images||[]){if(im.bufferView==null)continue;const bv=J.bufferViews[im.bufferView],by=bin.subarray(bv.byteOffset||0,(bv.byteOffset||0)+bv.byteLength);let t='';for(let i=0;i<by.length;i+=8192)t+=String.fromCharCode.apply(null,by.subarray(i,i+8192));im.uri='data:'+(im.mimeType||'image/png')+';base64,'+btoa(t);delete im.bufferView}

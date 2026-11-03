@@ -13,7 +13,7 @@ const Hb=(x,z)=>{const d=Math.hypot(x,z),f=Math.min(1,Math.max(0,(d-30)/70)),s=f
 const wrap=a=>{while(a>Math.PI)a-=6.2832;while(a<-Math.PI)a+=6.2832;return a};
 const R=new THREE.WebGLRenderer({antialias:!(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)||(navigator.hardwareConcurrency||8)<=4),powerPreference:"high-performance"});R.setPixelRatio(Math.min(devicePixelRatio,1.5));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
 document.body.prepend(R.domElement);
-const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(62,1,.1,600);
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(62,1,.1,900);
 const DAY={bg:0x9ed0f0,hemi:.5,sun:1.0},NIGHT={bg:0x070b18,hemi:.1,sun:.12};
 const C=h=>new THREE.Color(h).convertSRGBToLinear();scene.fog=new THREE.Fog(C(0x9ed0f0),90,260);scene.background=C(0x9ed0f0);
 const hemi=new THREE.HemisphereLight(0xffffff,0x4a5a3a,.5);scene.add(hemi);

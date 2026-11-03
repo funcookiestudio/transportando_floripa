@@ -9,7 +9,7 @@ const sstep=THREE.MathUtils.smoothstep,sunOff=new THREE.Vector3(60,90,40),HOURS=
 let hourT=16.3,hour=16.3,hi=2;
 function applyTOD(){const ang=(hour-6)/12*Math.PI,e=Math.sin(ang),a=sstep(e,-.25,.12),b=sstep(e,.1,.55),U=dome.material.uniforms,night=e<.03;
  const mix=A=>A[0].clone().lerp(A[1],a).lerp(A[2],b),top=mix(PAL.top),hor=mix(PAL.hor);
- U.top.value.copy(top);U.hor.value.copy(hor);U.day.value=b;scene.fog.color.copy(hor);scene.background.copy(hor);scene.fog.near=(45+45*b)*GS.view;scene.fog.far=(170+90*b)*GS.view;
+ U.top.value.copy(top);U.hor.value.copy(hor);U.day.value=b;scene.fog.color.copy(hor);scene.background.copy(hor);scene.fog.near=(45+45*b)*GS.view*(1+RDL*.33);scene.fog.far=(170+90*b)*GS.view*(1+RDL*.33);
  sunOff.set(-Math.cos(ang)*100,night?60:Math.max(e*100,14),night?-40:40);U.sd.value.copy(sunOff).normalize();U.sc.value.setHex(night?0x9fb4e0:0xffdca8).multiplyScalar(night?.3:1);
  if(night){sun.color.setHex(0x7f9bd8);sun.intensity=.14}else{sun.color.setHex(0xff9a55).lerp(new THREE.Color(0xfff4e0),b);sun.intensity=.1+1.4*sstep(e,.02,.4)}
  hemi.color.copy(top).lerp(new THREE.Color(0xffffff),.4);hemi.groundColor.setHex(0x4a5a3a).multiplyScalar(.35+.65*b);hemi.intensity=.12+.3*b;

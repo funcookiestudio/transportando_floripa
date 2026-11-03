@@ -5,7 +5,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  let vf=vel.x*fx+vel.z*fz,vl=vel.x*rx+vel.z*rz;
  fx=-Math.sin(hd);fz=-Math.cos(hd);rx=Math.cos(hd);rz=-Math.sin(hd);vf=vel.x*fx+vel.z*fz;
  acc+=((vf-prevVf)/Math.max(dt,.001)-acc)*Math.min(1,dt*5);prevVf=vf;
- const yr=H(pos.x,pos.z),yf=H(pos.x+fx*L,pos.z+fz*L),mx=pos.x+fx*2,mz=pos.z+fz*2,hr=H(mx+rx*1.1,mz+rz*1.1),hl=H(mx-rx*1.1,mz-rz*1.1);
+ const yr=H(pos.x,pos.z);HREF=yr;const yf=H(pos.x+fx*L,pos.z+fz*L),mx=pos.x+fx*2,mz=pos.z+fz*2,hr=H(mx+rx*1.1,mz+rz*1.1),hl=H(mx-rx*1.1,mz-rz*1.1);
  pitch+=(Math.atan2(yf-yr,L)-pitch)*Math.min(1,dt*10);roll+=(Math.atan2(hr-hl,2.2)-roll)*Math.min(1,dt*10);
  const lat=yawS*vf;{const tp=Math.max(-.015,Math.min(.015,acc*.0012)),tr=Math.max(-.07,Math.min(.07,-lat*.003));
  const yv=(yr-yrP)/Math.max(dt,.001),ya=(yv-yvP)/Math.max(dt,.001);yrP=yr;yvP=yv;
@@ -17,7 +17,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  {const sT=Math.sin(th),cT=Math.cos(th),ax=pos.x+TLEN*sT,az=pos.z+TLEN*cT,yk=H(pos.x,pos.z);let tx=pos.x,tz=pos.z;if(hb){hb.t+=dt*2.2;const k=Math.min(1,hb.t),e=k*k*(3-2*k);tx=hb.x+(pos.x-hb.x)*e;tz=hb.z+(pos.z-hb.z)*e;if(hb.t>=1)hb=null}trl.position.set(tx,yk+.1,tz);
   pitchT+=(Math.atan2(yk-H(ax,az),TLEN)-pitchT)*Math.min(1,dt*8);trl.rotation.set(pitchT,th,tipSg*tipS*.28+rollT,'YXZ');tS.forEach(o=>{o.sp.rotation.x=spin/o.cy;susp(o,dt,sT,cT,yk)})}
  spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?2.2:0});beamStep();HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);AM.emissiveIntensity=(Math.floor(now/400)%2&&(K.left||K.right))?2.2:.4;
- roadFrame();updTerrain();updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
+ roadFrame();trfUpd(dt);stFrame(dt);updTerrain();updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
  jobFrame(dt);
  // câmera
  camH+=wrap(hd-camH)*Math.min(1,dt*3.5);const cfx=-Math.sin(camH+(camMode<2?orbYaw:0)),cfz=-Math.cos(camH+(camMode<2?orbYaw:0)),cx=pos.x+fx*3.2,cz=pos.z+fz*3.2,cy=yr+2;
@@ -32,7 +32,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  const g=gear,rpm=Math.max(0,Math.min(1,(eRpm-650)/1250));
  audioStep(dt,now,vf,thr);
  // HUD
- $('dm').textContent=Math.round(dmg);$('cg').textContent=cargo;$('ag').textContent=Math.round(Math.abs(th-hd)*57.3);$('kmh').textContent=Math.round(Math.abs(vf)*3.6);$('gr').textContent=vf<-.5?'R':g+1;$('dst').textContent=Math.round(dd);$('tm').textContent=job&&job.phase==='deliver'?Math.ceil(tLeft):'--';$('jn').textContent=jobLabel();$('sc').textContent=score;$('cn').textContent=deliveries;
+ $('dm').textContent=Math.round(dmg);$('fl').textContent=Math.round(fuel);$('ps').textContent=stNear;$('cg').textContent=cargo;$('ag').textContent=Math.round(Math.abs(th-hd)*57.3);$('kmh').textContent=Math.round(Math.abs(vf)*3.6);$('gr').textContent=vf<-.5?'R':g+1;$('dst').textContent=Math.round(dd);$('tm').textContent=job&&job.phase==='deliver'?Math.ceil(tLeft):'--';$('jn').textContent=jobLabel();$('sc').textContent=score;$('cn').textContent=deliveries;
  const nw=navPoint(),tx2=nw.x-pos.x,tz2=nw.z-pos.z;$('arr').style.transform='rotate('+Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz)+'rad)';
  updLights();updEnv();draw()}
 applyTOD();initFX();setQ(qi);gfxInit();

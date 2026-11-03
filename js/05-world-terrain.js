@@ -1,5 +1,5 @@
 // ---- terreno ----
-const SEG=100,STEP=3,tg=new THREE.PlaneGeometry(SEG*STEP,SEG*STEP,SEG,SEG);tg.rotateX(-Math.PI/2);
+const RDL=(()=>{let v=0;try{v=+localStorage.getItem('fh16rd')||0}catch(e){}return v>=0&&v<=2?v:0})(),SEG=100,STEP=[3,4,5][RDL],tg=new THREE.PlaneGeometry(SEG*STEP,SEG*STEP,SEG,SEG);tg.rotateX(-Math.PI/2);
 const tp=tg.attributes.position,bx=Float32Array.from(tp.array.filter((_,i)=>i%3==0)),bz=Float32Array.from(tp.array.filter((_,i)=>i%3==2));
 const tc=new Float32Array(tp.count*3);tg.setAttribute('color',new THREE.BufferAttribute(tc,3));
 // textura procedural de grama (tileável): lâminas + manchas, aplicada em coordenadas de mundo sobre a cor por vértice
