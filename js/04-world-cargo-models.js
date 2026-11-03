@@ -21,9 +21,9 @@ function cargoModel(name,tons){const sp=CARGO_KIND[name]||['pal',0xb08a5a,1.5,0]
  g.userData.dispose=()=>disp.forEach(d=>d.dispose());return g}
 function setTrCargo(t,name,tons){if(t.userData.cg){t.remove(t.userData.cg);t.userData.cg.userData.dispose();t.userData.cg=null}if(!name)return;const sg=t.userData.sgn||1,cg=cargoModel(name,tons);cg.position.set(0,1.9,sg*.35);cg.rotation.y=sg>0?0:Math.PI;t.add(cg);t.userData.cg=cg}
 function setTrailerCargo(name,tons){if(trl.userData.cg){trl.remove(trl.userData.cg);trl.userData.cg.userData.dispose();trl.userData.cg=null}if(!name)return;const cg=cargoModel(name,tons);cg.position.set(0,1.9,7.1);trl.add(cg);trl.userData.cg=cg}
-function leaveTrailer(c){const gp=COG.get(c.k);if(!gp)return;const cx=pos.x+7.4*Math.sin(th),cz=pos.z+7.4*Math.cos(th),dx=cx-c.x,dz=cz-c.z,cr=Math.cos(c.rot),sr=Math.sin(c.rot);const t=mkTrailer(gp,dx*cr-dz*sr,dx*sr+dz*cr,1);t.rotation.y=th-c.rot}
+function leaveTrailer(c){const gp=COG.get(c.k);if(!gp)return;const cx=pos.x+7.4*Math.sin(th),cz=pos.z+7.4*Math.cos(th),dx=cx-c.x,dz=cz-c.z,cr=Math.cos(c.rot),sr=Math.sin(c.rot);const t=mkTrailer(gp,dx*cr-dz*sr,dx*sr+dz*cr,1);t.rotation.y=th-c.rot;return t}
 function disposeCo(g){g.traverse(o=>{if(o.userData&&o.userData.dispose)o.userData.dispose()});for(const d of g.userData.disp)d.dispose()}
-function coFrame(){const k0=Math.floor((curS-700)/CO_D),k1=Math.ceil((curS+700)/CO_D),want=[];
+function coFrame(){if(!ready)return;const k0=Math.floor((curS-700)/CO_D),k1=Math.ceil((curS+700)/CO_D),want=[];
  for(let k=k0;k<=k1;k++){const c=coGet(k);if(Math.abs(c.s-curS)<650)want.push(c)}
  const sig=want.map(c=>c.k).join();
  if(sig!==coSig){coSig=sig;for(const[k,gp]of COG)if(!want.some(c=>c.k===k)){scene.remove(gp);disposeCo(gp);COG.delete(k)}

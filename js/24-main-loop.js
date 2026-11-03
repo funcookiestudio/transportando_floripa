@@ -14,7 +14,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  const bob=hz-xp*2+Math.sin(now*.02)*.01*Math.min(1,Math.abs(vf)/10);
  pivot.position.set(pos.x,yr+bob,pos.z);pivot.rotation.set(pitch+xp,hd,roll+xr+tipSg*tipS*.28,'YXZ');
  spin-=vf*dt;updWheels();
- {const sT=Math.sin(th),cT=Math.cos(th),ax=pos.x+TLEN*sT,az=pos.z+TLEN*cT,yk=H(pos.x,pos.z);trl.position.set(pos.x,yk+.1,pos.z);
+ {const sT=Math.sin(th),cT=Math.cos(th),ax=pos.x+TLEN*sT,az=pos.z+TLEN*cT,yk=H(pos.x,pos.z);let tx=pos.x,tz=pos.z;if(hb){hb.t+=dt*2.2;const k=Math.min(1,hb.t),e=k*k*(3-2*k);tx=hb.x+(pos.x-hb.x)*e;tz=hb.z+(pos.z-hb.z)*e;if(hb.t>=1)hb=null}trl.position.set(tx,yk+.1,tz);
   pitchT+=(Math.atan2(yk-H(ax,az),TLEN)-pitchT)*Math.min(1,dt*8);trl.rotation.set(pitchT,th,tipSg*tipS*.28+rollT,'YXZ');tS.forEach(o=>{o.sp.rotation.x=spin/o.cy;susp(o,dt,sT,cT,yk)})}
  spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?2.2:0});beamStep();HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);AM.emissiveIntensity=(Math.floor(now/400)%2&&(K.left||K.right))?2.2:.4;
  roadFrame();updTerrain();updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
@@ -33,7 +33,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  audioStep(dt,now,vf,thr);
  // HUD
  $('dm').textContent=Math.round(dmg);$('cg').textContent=cargo;$('ag').textContent=Math.round(Math.abs(th-hd)*57.3);$('kmh').textContent=Math.round(Math.abs(vf)*3.6);$('gr').textContent=vf<-.5?'R':g+1;$('dst').textContent=Math.round(dd);$('tm').textContent=job&&job.phase==='deliver'?Math.ceil(tLeft):'--';$('jn').textContent=jobLabel();$('sc').textContent=score;$('cn').textContent=deliveries;
- const tx2=tgt.x-pos.x,tz2=tgt.z-pos.z;$('arr').style.transform='rotate('+Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz)+'rad)';
+ const nw=navPoint(),tx2=nw.x-pos.x,tz2=nw.z-pos.z;$('arr').style.transform='rotate('+Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz)+'rad)';
  updLights();updEnv();draw()}
 applyTOD();initFX();setQ(qi);gfxInit();
 requestAnimationFrame(frame);

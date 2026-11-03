@@ -27,7 +27,7 @@ const hexCss=h=>'#'+h.toString(16).padStart(6,'0');
 function signTex(name,bg,fg){const cv=document.createElement('canvas');cv.width=512;cv.height=128;const g=cv.getContext('2d');g.fillStyle=hexCss(bg);g.fillRect(0,0,512,128);g.fillStyle=hexCss(fg);g.fillRect(0,0,512,8);g.fillRect(0,120,512,8);
  let fs=54;g.font='bold '+fs+'px system-ui,sans-serif';while(g.measureText(name).width>470&&fs>18){fs-=2;g.font='bold '+fs+'px system-ui,sans-serif'}g.textAlign='center';g.textBaseline='middle';g.fillText(name,256,66);
  const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t}
-const BZ_X=-29,SLOT_X=[-11,-16,-11,-16],SLOT_Z=[-22,-22,22,22],PCOL=[0x1f5fa8,0xb3261e,0x2e7d32,0xd9822b,0x4a5560,0x7a3b8c,0xc9b037],DECOR=[[29.5,-8,1],[29.5,8,0]];
+const BZ_X=-29,PBW=13.6,PBH=2.6,PREAR=11.5,PCEN=PREAR-PBW/2+.1,PCOL=[0x1f5fa8,0xb3261e,0x2e7d32,0xd9822b,0x4a5560,0x7a3b8c,0xc9b037],DECOR=[[29.5,-8,1],[29.5,8,0]];
 const slotCol=(c,i)=>Math.floor(hh(c.k,(c.nonce||0)*4+i,24)*PCOL.length);
 function coGet(k){let c=COM.get(k);if(c)return c;const s=k===0?0:k*CO_D+(hh(k,1,7)-.5)*500,side=k===0?1:hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)];
  ensureRoad(s-60,s+60);roadPt(s,side*46);const o=samp(Math.round(s/RDS));
@@ -37,8 +37,9 @@ function coGet(k){let c=COM.get(k);if(c)return c;const s=k===0?0:k*CO_D+(hh(k,1,
  c.board=c.loc(BZ_X,0);for(const lz of[-13,-6.5,0,6.5,13]){const q=c.loc(19.5,lz);c.cols.push({x:q.x,z:q.z,r:6.4,k:1})}
  for(const lz of[-10,0,10]){const q=c.loc(12,lz);c.bays.push({x:q.x,z:q.z,lz})}
  c.slotK=[];c.slotCols=[];c.taken={};
- for(let i=0;i<4;i++){const x=SLOT_X[i],zc=SLOT_Z[i],bd=Math.sign(zc),Kz=zc-bd*6.75,cl=[];c.slotK.push(c.loc(x,Kz));
-  for(const o of[3,6,9,12]){const q=c.loc(x,Kz+bd*o),e={x:q.x,z:q.z,r:1.5,k:1,off:true};cl.push(e);c.cols.push(e)}c.slotCols.push(cl)}
+ // cargas ficam nas vagas das docas (3 baias), com a ponta (pino) voltada para a pista
+ for(let i=0;i<3;i++){const lz=c.bays[i].lz,Kx=PCEN-6.75,cl=[];c.slotK.push(c.loc(Kx,lz));
+  for(const o of[3,6,9,12]){const q=c.loc(Kx+o,lz),e={x:q.x,z:q.z,r:1.5,k:1,off:true};cl.push(e);c.cols.push(e)}c.slotCols.push(cl)}
  for(const[dx,dz]of DECOR)for(const o of[-5,0,5]){const q=c.loc(dx,dz+o);c.cols.push({x:q.x,z:q.z,r:1.5,k:1})}
  if(t.id==='agro'||t.id==='comb')for(const lz of[-23,23]){const q=c.loc(17.5,lz);c.cols.push({x:q.x,z:q.z,r:t.id==='agro'?3:4.3,k:1})}
  COM.set(k,c);return c}
@@ -68,14 +69,22 @@ function buildCo(c){const g=new THREE.Group(),T=c.t,W=mat(T.col),A=mat(T.acc),DK
 
  const mkTr=(x,zc,sgn)=>mkTrailer(g,x,zc,sgn);
  g.userData.slots=[];
- for(let i=0;i<4;i++){const t=mkTr(SLOT_X[i],SLOT_Z[i],Math.sign(SLOT_Z[i]));t.visible=!!(c.spawn&&c.spawn.slot===i);if(t.visible)setTrCargo(t,c.spawn.name,c.spawn.tons);g.userData.slots.push(t)}
+ for(let i=0;i<3;i++){const t=mkTr(PCEN,c.bays[i].lz,1);t.rotation.y=Math.PI/2;t.visible=!!(c.spawn&&c.spawn.slot===i);if(t.visible)setTrCargo(t,c.spawn.name,c.spawn.tons);g.userData.slots.push(t)}
  DECOR.forEach(([dx,dz,full],i)=>{const t=mkTr(dx,dz,1);if(full){const L=CARGOS[T.id];setTrCargo(t,L[Math.floor(hh(c.k,i,31)*L.length)],18)}});
  flushBatch(g,disp);scene.add(g);return g}
-function mkTrailer(g,x,zc,sgn){const t=new THREE.Group(),Y=mat(0xe8a317),K=mat(0x15181c),WL=mat(0x111214),Z=zt=>sgn*(zt-6.75);t.position.set(x,0,zc);t.userData.batch=[];t.userData.sgn=sgn;
- for(const s of[-1,1])cBx(t,Y,s,1.29,Z(7.25),.14,.38,12.5);
- for(let zt=2;zt<13;zt+=1.1)cBx(t,Y,0,1.4,Z(zt),2,.1,.14);
- cBx(t,Y,0,1.35,Z(13.5),2.44,.3,.16);cBx(t,K,0,1.15,Z(.2),1.3,.2,2.4);
- for(const s of[-1,1]){cBx(t,Y,s*.9,.56,Z(3.9),.12,.67,.12);cBx(t,K,s*.9,.52,Z(3.9),.4,.05,.3)}
- for(const zt of[1,13.2])for(const s of[-1,1])cBx(t,K,s*1.12,1.72,Z(zt),.24,.18,.26);
- for(const zt of[8.8,10.2,11.6]){cBx(t,K,0,1.02,Z(zt),2,.2,.2);for(const s of[-1,1])for(const dx of[-.17,.17])put(t,CYG,WL,s*.93+dx,.5,Z(zt),.5,.3,.5,0,0,Math.PI/2)}
- flushBatch(t,g.userData.disp);g.add(t);return t}
+// carretas estacionadas usam EXATAMENTE o mesmo modelo da carreta engatada (trl): malhas fundidas por material, geometria compartilhada
+let TPL=null;
+function trailerTpl(){if(TPL)return TPL;trl.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(trl.matrixWorld).invert(),by=new Map(),skip=trl.userData.cg;
+ const add=(m,e)=>{let a=by.get(m);if(!a)by.set(m,a=[]);a.push(e)};
+ trl.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.attributes.position)return;for(let p=o;p&&p!==trl;p=p.parent)if(p===skip||!p.visible)return;const g=o.geometry,tot=g.index?g.index.count:g.attributes.position.count;
+  if(Array.isArray(o.material)){for(const gr of g.groups){const m=o.material[gr.materialIndex];if(m)add(m,{o,s:gr.start,n:Math.min(gr.count,tot-gr.start)})}}else add(o.material,{o,s:0,n:tot})});
+ const mx=new THREE.Matrix4(),nm=new THREE.Matrix3(),v=new THREE.Vector3();TPL=[];
+ for(const[m,list]of by){let nv=0,ni=0;for(const e of list){nv+=e.o.geometry.attributes.position.count;ni+=e.n}
+  const P=new Float32Array(nv*3),N=new Float32Array(nv*3),U=new Float32Array(nv*2),I=new Uint32Array(ni);let vo=0,io=0;
+  for(const e of list){const o=e.o,g=o.geometry,pa=g.attributes.position,na=g.attributes.normal,ua=g.attributes.uv,cnt=pa.count;mx.multiplyMatrices(inv,o.matrixWorld);nm.getNormalMatrix(mx);const flip=mx.determinant()<0,ix=g.index;
+   for(let k=0;k<cnt;k++){v.fromBufferAttribute(pa,k).applyMatrix4(mx);P[(vo+k)*3]=v.x;P[(vo+k)*3+1]=v.y;P[(vo+k)*3+2]=v.z;if(na){v.fromBufferAttribute(na,k).applyMatrix3(nm).normalize();N[(vo+k)*3]=v.x;N[(vo+k)*3+1]=v.y;N[(vo+k)*3+2]=v.z}if(ua){U[(vo+k)*2]=ua.getX(k);U[(vo+k)*2+1]=ua.getY(k)}}
+   for(let k=0;k<e.n;k+=3){const q=e.s+k,a=ix?ix.getX(q):q,b=ix?ix.getX(q+1):q+1,c=ix?ix.getX(q+2):q+2;I[io+k]=a+vo;I[io+k+1]=(flip?c:b)+vo;I[io+k+2]=(flip?b:c)+vo}io+=e.n;vo+=cnt}
+  const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));bg.setAttribute('uv',new THREE.BufferAttribute(U,2));bg.setIndex(new THREE.BufferAttribute(I,1));TPL.push([bg,m])}
+ return TPL}
+function mkTrailer(g,x,zc,sgn){const t=new THREE.Group(),inn=new THREE.Group();t.position.set(x,0,zc);t.userData.sgn=sgn;inn.position.set(0,.1,-sgn*6.75);inn.rotation.y=sgn>0?0:Math.PI;
+ for(const[bg,m]of trailerTpl()){const o=new THREE.Mesh(bg,m);o.receiveShadow=true;inn.add(o)}t.add(inn);g.add(t);return t}
