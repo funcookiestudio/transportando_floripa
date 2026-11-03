@@ -10,7 +10,18 @@ const CARGOS={agro:['Soja','Milho','Fertilizante','Farelo de trigo'],log:['Eletr
 var cargoCol=null,hitched=false,autoBoard=false;let job=null,deliveries=0,dd=0,dockT=0,promptCo=null,boardKeys=null;
 const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/60)+' min '+String(Math.round(t%60)).padStart(2,'0')+' s';
 score=2000;try{const sv=JSON.parse(localStorage.getItem('fh16save')||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
-function saveG(){try{localStorage.setItem('fh16save',JSON.stringify({money:score,deliveries}))}catch(e){}}
+let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem('fh16save')||'null')}catch(e){}
+function saveG(){if(typeof ready==='undefined'||!ready)return;try{const d={money:score,deliveries,dmg,x:pos.x,z:pos.z,hd,th,s:curS,hitched,cargo,tl:tLeft};
+ if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.nonce=job.from.nonce||0;d.job=j}
+ localStorage.setItem('fh16save',JSON.stringify(d))}catch(e){}}
+// restaura posição, carreta, frete e dano salvos (chamado após reset() no boot)
+function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
+ try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);tcx=1e9;ocx=1e9;
+  const j=sv.job;if(j&&coGet(j.fk)&&coGet(j.tk)){const f=coGet(j.fk),t=coGet(j.tk);f.nonce=j.nonce|0;job=Object.assign({},j,{from:f,to:t});delete job.fk;delete job.tk;delete job.nonce;
+   if(job.phase==='pickup'){f.spawn={slot:job.slot,name:job.name,tons:job.tons};setTargetP(f.slotK[job.slot],f.y)}
+   else{setHitched(true);setTrailerCargo(job.name,job.tons);loadCargo(job.tons);tLeft=+sv.tl||job.limit;setTarget(t,job.toBay)}}
+  else if(sv.hitched){setHitched(false)}}catch(e){}}
+setInterval(saveG,4000);addEventListener('pagehide',saveG);addEventListener('beforeunload',saveG);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveG()});
 beacon.visible=ring.visible=false;
 function loadCargo(t){cargo=t;MASS=hitched?16000+t*1000:11000;setCont()}
 function setHitched(v){hitched=v;trl.visible=v;if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?16000+cargo*1000:11000;setCont()}
