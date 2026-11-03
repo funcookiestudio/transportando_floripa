@@ -36,7 +36,7 @@ function buildOverpass(o){const g=new THREE.Group(),disp=[];g.userData.batch=[];
  for(let u=-L;u<=L;u+=2.5){const x=o.x0+o.nx*u,z=o.z0+o.nz*u,gy=Hx(x,z,0),au=Math.abs(u),t=sm((au-(hw+9))/(L-hw-9)),y=top*(1-t)+(gy+.5)*t;
   put(g,BXG,AS,x,y-.4,z,2.6,.8,W,0,o.h,0);for(const sd of[-1,1])put(g,BXG,CON,x+o.tx*sd*(W/2),y+.45,z+o.tz*sd*(W/2),2.6,.9,.35,0,o.h,0);
   if(au>hw+9&&y-.8-gy>.4)put(g,BXG,CD,x,gy+(y-.8-gy)/2,z,2.6,y-.8-gy,W-.6,0,o.h,0)}
- for(const sd of[-1,1]){const u=sd*(hw+3.4),x=o.x0+o.nx*u,z=o.z0+o.nz*u,gy=Hx(x,z,0),ph=top-.9-gy;if(ph>.4){put(g,CYG,CD,x,gy+ph/2,z,1.1,ph,1.1);put(g,BXG,CD,x,top-1.1,z,2.8,.5,W-.5,0,o.h,0)}o.cols.push({x,z,r:1.4,k:1})}
+ for(const sd of[-1,1]){const u=sd*(hw+3.4),x=o.x0+o.nx*u,z=o.z0+o.nz*u,gy=Hx(x,z,0),ph=top-.9-gy;if(ph>.4){put(g,CYG,CD,x,gy+ph/2,z,1.1,ph,1.1);put(g,BXG,CD,x,top-1.1,z,2.8,.5,W-.5,0,o.h,0)}o.cols.push({x,z,r:1.4,k:1,h:top-2.5})}
  flushBatch(g,disp);scene.add(g);return g}
 let featFull=false;
 // postos mexem no terreno só ao redor deles (recalculo local); rios e trevos pedem reconstrução completa
@@ -102,14 +102,14 @@ function icNear(x,z){let best=1e9,found=false;for(let k=0;k<ICA.length;k++){cons
  return found}
 function icPull(x,z,r,phys){if(!icNear(x,z))return r;if(ICb&&!(phys&&HREF>ICy-2.5))return r;const bl=10+2.2*Math.abs(ICy-r),e=ICd-ICh-1;if(e>=bl)return r;const w=e<=0?1:sm(1-e/bl);return r+(ICy-r)*w}
 function icBlock(x,z,m){return icNear(x,z)&&ICd<ICh+m}
-function buildIC(f){const g=new THREE.Group(),disp=[];g.userData.batch=[];g.userData.disp=disp;const CON=mat(0x9d9d98),CD=mat(0x7b7c78),RM=rMat.clone();RM.map=rMat.map;RM.side=THREE.DoubleSide;f.cols.length=0;
+function buildIC(f){const g=new THREE.Group(),disp=[];g.userData.batch=[];g.userData.disp=disp;const CON=mat(0x9d9d98),CD=mat(0x7b7c78),RM=rMat.clone();if(!rMatClean)rMatClean=mkRoadAtlas(true);RM.map=rMatClean;RM.side=THREE.DoubleSide;f.cols.length=0;
  for(const r of f.rb){const n=r.n,P=r.p,pos=new Float32Array(n*6),uv=new Float32Array(n*4),idx=[],uL=r.gore?0:(r.ki*512+1)/2048,uR=r.gore?1:((r.ki+1)*512-1)/2048,vs=r.gore?9:24;let acc=0;
   for(let j=0;j<n;j++){const a=Math.max(0,j-1),b=Math.min(n-1,j+1);let dx=P[b*5]-P[a*5],dz=P[b*5+1]-P[a*5+1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
    if(j)acc+=Math.hypot(P[j*5]-P[j*5-5],P[j*5+1]-P[j*5-4]);const lx=-dz,lz=dx,y=P[j*5+2]+.03;
    const hj=r.hw*P[j*5+4];pos.set([P[j*5]-lx*hj,y,P[j*5+1]-lz*hj,P[j*5]+lx*hj,y,P[j*5+1]+lz*hj],j*6);uv.set([uL,acc/vs,uR,acc/vs],j*4);
    // guarda-corpo em trechos altos; laje em trechos sobre a rodovia
    const gy=Hb(P[j*5],P[j*5+1]),h=P[j*5+2]-gy,th=Math.atan2(dx,dz);
-   if(f.kind!=='st'&&j%2==0&&h>1.5&&j<n-1&&P[j*5+4]>.95)for(const sd of[-1,1])put(g,BXG,CON,P[j*5]+lx*sd*(r.hw+.25),P[j*5+2]+.45,P[j*5+1]+lz*sd*(r.hw+.25),.4,.9,5.2,0,th,0);
+   if(f.kind!=='st'&&h>.5&&j<n-1&&P[j*5+4]>.2&&P[j*5+9]>.2){const wj=r.hw*(P[j*5+4]+P[j*5+9])/2;const ex=P[j*5+5]-P[j*5],ez=P[j*5+6]-P[j*5+1],sl=Math.hypot(ex,ez)||1,sh=Math.atan2(ex,ez),mx=(P[j*5]+P[j*5+5])/2,mz=(P[j*5+1]+P[j*5+6])/2,my=(P[j*5+2]+P[j*5+7])/2,nx=-ez/sl,nz=ex/sl;for(const sd of[-1,1]){const rx=mx+nx*sd*(wj+.25),rz=mz+nz*sd*(wj+.25);let ok=true;for(const q of f.rb){if(q===r||q.gore)continue;const lim=q.hw+2.5;for(let k=0;k<q.n;k++){const dx=q.p[k*5]-rx,dz=q.p[k*5+1]-rz;if(dx*dx+dz*dz<lim*lim&&Math.abs(q.p[k*5+2]-my)<2.5){ok=false;break}}if(!ok)break}if(ok)put(g,BXG,CON,rx,my+.45,rz,.4,.9,sl+.35,0,sh,0)}}
    if(P[j*5+3]>0){put(g,BXG,CON,P[j*5],P[j*5+2]-.55,P[j*5+1],2*r.hw+1.1,1.1,6.4,0,th,0);put(g,BXG,CD,P[j*5],P[j*5+2]-1.3,P[j*5+1],2*r.hw*.8,.5,6.4,0,th,0)}}
   for(let j=0;j<n-1;j++){const a=j*2,b=j*2+1,c=j*2+2,d=j*2+3;idx.push(a,b,c,b,d,c)}
   const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.BufferAttribute(pos,3));ge.setAttribute('uv',new THREE.BufferAttribute(uv,2));ge.setIndex(idx);ge.computeVertexNormals();
@@ -117,7 +117,7 @@ function buildIC(f){const g=new THREE.Group(),disp=[];g.userData.batch=[];g.user
   const m=new THREE.Mesh(ge,r.gore?goreMat(r.gore):RM);m.receiveShadow=true;m.frustumCulled=false;g.add(m);disp.push(ge)}
  if(f.kind==='st'){stDeco(f,g,disp);flushBatch(g,disp);scene.add(g);return g}
  // pilares ao lado da rodovia principal sob a pista secundária
- for(const sd of[-1,1]){const q=sd*(f.hw+3.4),x=f.x0+f.nx*q,z=f.z0+f.nz*q,top=f.y0+IC_H,ph=top-1-f.y0;put(g,CYG,CD,x,f.y0+ph/2,z,1.1,ph,1.1);put(g,BXG,CD,x,top-1.1,z,2.8,.5,2*7.5,0,f.h,0);f.cols.push({x,z,r:1.4,k:1})}
+ for(const sd of[-1,1]){const q=sd*(f.hw+3.4),x=f.x0+f.nx*q,z=f.z0+f.nz*q,top=f.y0+IC_H,ph=top-1-f.y0;put(g,CYG,CD,x,f.y0+ph/2,z,1.1,ph,1.1);put(g,BXG,CD,x,top-1.1,z,2.8,.5,2*7.5,0,f.h,0);f.cols.push({x,z,r:1.4,k:1,h:top-2.5})}
  // pórticos nas duas pontas da rodovia que cruza: placa de saída para outra região + barreira no fim
  {const r0=f.rb[0],hwC=7.5;for(const sd of[-1,1]){const q=sd*470,j=Math.round((520+q)/1040*(r0.n-1)),y=r0.p[j*5+2],x=f.x0+f.nx*q,z=f.z0+f.nz*q,CO2=mat(0x8d9096);
    for(const tt of[-1,1]){const px=x+f.tx*tt*(hwC+1.6),pz=z+f.tz*tt*(hwC+1.6);put(g,BXG,CON,px,y+3.5,pz,1.1,7,1.1,0,f.h,0);f.cols.push({x:px,z:pz,r:1.4,k:1})}

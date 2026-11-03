@@ -10,8 +10,8 @@ const CARGOS={agro:['Soja','Milho','Fertilizante','Farelo de trigo'],log:['Eletr
 var cargoCol=null,hitched=false,autoBoard=false;let job=null,deliveries=0,dd=0,dockT=0,promptCo=null,boardKeys=null;
 const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/60)+' min '+String(Math.round(t%60)).padStart(2,'0')+' s';
 score=2000;try{const sv=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
-let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch(e){}
-function saveG(){if(typeof ready==='undefined'||!ready)return;try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,hd,th,s:curS,hitched,cargo,tl:tLeft};
+var RESTY=null;let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch(e){}
+function saveG(){if(typeof ready==='undefined'||!ready)return;try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:Math.round(HREF*100)/100,hd,th,s:curS,hitched,cargo,tl:tLeft};
  if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.nonce=job.from.nonce||0;d.job=j}
  localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
 // reiniciar (R/↺): volta à empresa mais próxima mantendo frete e carreta engatada; sem carga, o menu de fretes abre ali
@@ -25,16 +25,16 @@ function doRespawn(b,cost){const paid=Math.min(cost,score);score-=paid;
  hb=null;th=hd;autoBoard=!job&&!hitched;tcx=1e9;ocx=1e9;closeCm();saveG();msg((job?'Guincho · frete mantido':'Guincho')+(paid?' · -'+money(paid):''))}
 // restaura posição, carreta, frete e dano salvos (chamado após reset() no boot)
 function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
- try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);fuel=typeof sv.fuel==='number'?Math.max(0,Math.min(FUELMAX,sv.fuel)):FUELMAX;tcx=1e9;ocx=1e9;
+ try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);fuel=typeof sv.fuel==='number'?Math.max(0,Math.min(FUELMAX,sv.fuel)):FUELMAX;tcx=1e9;ocx=1e9;if(typeof sv.y==='number'&&isFinite(sv.y)){HREF=sv.y;RESTY={y:sv.y,t:6}}
   const j=sv.job;if(j&&coGet(j.fk)&&coGet(j.tk)){const f=coGet(j.fk),t=coGet(j.tk);f.nonce=j.nonce|0;job=Object.assign({},j,{from:f,to:t});delete job.fk;delete job.tk;delete job.nonce;
    if(job.phase==='pickup'){f.spawn={slot:job.slot,name:job.name,tons:job.tons};setTargetP(f.slotK[job.slot],f.y);beacon.visible=false}
    else{setHitched(true);setTrailerCargo(job.name,job.tons);loadCargo(job.tons);tLeft=+sv.tl||job.limit;if(job.mode==='park')setPark(t,job.toBay);else{job.mode='';job.asked=false;setTargetP(t.board,t.y)}}}
   else if(sv.hitched){setHitched(false)}}catch(e){}}
 setInterval(saveG,4000);addEventListener('pagehide',saveG);addEventListener('beforeunload',saveG);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveG()});
 beacon.visible=ring.visible=false;
-function loadCargo(t){cargo=t;MASS=hitched?16000+t*1000:11000;setCont()}
+function loadCargo(t){cargo=t;MASS=hitched?15000+t*1000:11000;setCont()}
 let hb=null,navCo=null; // acoplamento suave: a carreta mantém a pose parada e só encosta no caminhão aos poucos
-function setHitched(v){hb=null;hitched=v;trl.visible=v;if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?16000+cargo*1000:11000;setCont()}
+function setHitched(v){hb=null;hitched=v;trl.visible=v;if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?15000+cargo*1000:11000;setCont()}
 function placeStart(){const c=coGet(0),q=c.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(c.cr,-c.sr);th=hd;camH=hd;curS=0;autoBoard=true}
 function setTargetP(q,y){tgt.x=q.x;tgt.z=q.z;tgt.y=y;beacon.position.set(q.x,y+45,q.z);ring.position.set(q.x,y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}
 function setTarget(c,bi){if(!c){beacon.visible=ring.visible=false;return}const q=c.loc(10,c.bays[bi].lz);tgt.x=q.x;tgt.z=q.z;tgt.y=c.y;beacon.position.set(q.x,c.y+45,q.z);ring.position.set(q.x,c.y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}

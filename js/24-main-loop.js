@@ -5,7 +5,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  let vf=vel.x*fx+vel.z*fz,vl=vel.x*rx+vel.z*rz;
  fx=-Math.sin(hd);fz=-Math.cos(hd);rx=Math.cos(hd);rz=-Math.sin(hd);vf=vel.x*fx+vel.z*fz;
  acc+=((vf-prevVf)/Math.max(dt,.001)-acc)*Math.min(1,dt*5);prevVf=vf;
- const yr=H(pos.x,pos.z);HREF=yr;const yf=H(pos.x+fx*L,pos.z+fz*L),mx=pos.x+fx*2,mz=pos.z+fz*2,hr=H(mx+rx*1.1,mz+rz*1.1),hl=H(mx-rx*1.1,mz-rz*1.1);
+ if(RESTY){HREF=RESTY.y;RESTY.t-=dt}const yr=H(pos.x,pos.z);if(RESTY&&(Math.abs(yr-RESTY.y)<1.2||RESTY.t<=0))RESTY=null;HREF=RESTY?RESTY.y:yr;const yf=H(pos.x+fx*L,pos.z+fz*L),mx=pos.x+fx*2,mz=pos.z+fz*2,hr=H(mx+rx*1.1,mz+rz*1.1),hl=H(mx-rx*1.1,mz-rz*1.1);
  pitch+=(Math.atan2(yf-yr,L)-pitch)*Math.min(1,dt*10);roll+=(Math.atan2(hr-hl,2.2)-roll)*Math.min(1,dt*10);
  const lat=yawS*vf;{const tp=Math.max(-.015,Math.min(.015,acc*.0012)),tr=Math.max(-.07,Math.min(.07,-lat*.003));
  const yv=(yr-yrP)/Math.max(dt,.001),ya=(yv-yvP)/Math.max(dt,.001);yrP=yr;yvP=yv;

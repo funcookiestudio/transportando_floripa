@@ -4,7 +4,7 @@ function collide(){let hit=0;const pts=[];
  for(const zl of CZ)pts.push([pos.x+zl*Math.sin(hd),pos.z+zl*Math.cos(hd),zl,0]);
  if(hitched)for(const d of TZ)pts.push([pos.x+d*Math.sin(th),pos.z+d*Math.cos(th),d,1]); // semirreboque
  for(const[cx,cz,zl,tr]of pts){
-  for(const o of obs){if(o.off)continue;const dx=cx-o.x,dz=cz-o.z,rr=CR+o.r,d2=dx*dx+dz*dz;if(d2<rr*rr&&d2>1e-6){const d=Math.sqrt(d2),nx=dx/d,nz=dz/d,pen=rr-d;pos.x+=nx*pen;pos.z+=nz*pen;const vn=vel.x*nx+vel.z*nz;if(vn<0){const e=o.k?.05:.15,sp=-vn; // quase inelástico: o impacto mata a velocidade normal
+  for(const o of obs){if(o.off||(o.h!==undefined&&HREF>o.h)||(o.y!==undefined&&Math.abs(HREF-o.y)>3))continue;const dx=cx-o.x,dz=cz-o.z,rr=CR+o.r,d2=dx*dx+dz*dz;if(d2<rr*rr&&d2>1e-6){const d=Math.sqrt(d2),nx=dx/d,nz=dz/d,pen=rr-d;pos.x+=nx*pen;pos.z+=nz*pen;const vn=vel.x*nx+vel.z*nz;if(vn<0){const e=o.k?.05:.15,sp=-vn; // quase inelástico: o impacto mata a velocidade normal
    vel.x-=vn*nx*(1+e);vel.z-=vn*nz*(1+e);
    const vn2=vel.x*nx+vel.z*nz,tx=vel.x-vn2*nx,tz=vel.z-vn2*nz;vel.x-=tx*.2;vel.z-=tz*.2; // atrito de raspão
    if(!tr)yawKick=Math.max(-1.5,Math.min(1.5,yawKick+zl*(-vn*(1+e))*(nx*Math.cos(hd)-nz*Math.sin(hd))/7)); // impacto fora do centro gira o caminhão

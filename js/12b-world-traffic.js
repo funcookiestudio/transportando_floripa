@@ -53,9 +53,9 @@ function trfKill(i){const v=TRF[i];trfSndOff(v);scene.remove(v.g);if(v.t&&v.t.us
 function trfBrain(v,dt){if(v.fx===undefined)return;const c0=v.v0||(v.v0=v.sp),fx=v.fx,fz=v.fz;let vt=c0,seen=0,ld=1e9,lv=0;
  const chk=(x,z,vo,hw)=>{const rx=x-v.x,rz=z-v.z,al=rx*fx+rz*fz;if(al<=0||al>90)return;const la=Math.abs(rx*fz-rz*fx);if(la>1.3+hw)return;
   const g=al-v.fr,sf=Math.sqrt(2*3.2*Math.max(0,g-3.5))+Math.max(0,vo);if(sf<vt)vt=sf;seen=1;if(g<ld){ld=g;lv=vo}};
- const sh=Math.sin(hd),ch=Math.cos(hd),vfp=-(vel.x*sh+vel.z*ch);
- for(const d of[4.2,1,-3])chk(pos.x-sh*d,pos.z-ch*d,vfp*(-fx*sh-fz*ch>0?1:-1),1.35);
- if(hitched){const st=Math.sin(th),ct=Math.cos(th);for(let t=2;t<=TLEN+1.5;t+=2.2)chk(pos.x+st*t,pos.z+ct*t,0,1.45)}
+ const sh=Math.sin(hd),ch=Math.cos(hd),vfp=-(vel.x*sh+vel.z*ch),same=Math.abs(HREF-v.g.position.y)<3; // jogador em outro nível (viaduto) não bloqueia
+ if(same)for(const d of[4.2,1,-3])chk(pos.x-sh*d,pos.z-ch*d,vfp*(-fx*sh-fz*ch>0?1:-1),1.35);
+ if(same&&hitched){const st=Math.sin(th),ct=Math.cos(th);for(let t=2;t<=TLEN+1.5;t+=2.2)chk(pos.x+st*t,pos.z+ct*t,0,1.45)}
  for(const o of TRF){if(o===v||o.dir!==v.dir)continue;for(const k of o.cols)chk(k.x,k.z,o.sp,1.35)}
  if(typeof NET!=='undefined')for(const p of NET.peers.values())if(p.cols)for(const k of p.cols)chk(k.x,k.z,p.sp||0,1.4);
  v.ld=ld;v.lv=lv;
@@ -65,7 +65,7 @@ function trfOut(v){return v.car?!!v.lane:!v.lane}
 function trfFree(v,out,a,b){const o=samp(Math.round(v.s/RDS)),lat=trfLat(o,v.dir,out);
  for(let k=a;k<=b;k+=6){roadPt(v.s+v.dir*k,lat);const px=RPx,pz=RPz;
   for(const q of TRF){if(q===v||q.dir!==v.dir)continue;for(const c of q.cols)if(Math.hypot(c.x-px,c.z-pz)<3.4)return false}
-  if(Math.hypot(pos.x-px,pos.z-pz)<3.8)return false;if(hitched){const st=Math.sin(th),ct=Math.cos(th);for(let u=3;u<=TLEN+2;u+=3.5)if(Math.hypot(pos.x+st*u-px,pos.z+ct*u-pz)<3.8)return false}}
+  if(Math.abs(HREF-v.g.position.y)<3){if(Math.hypot(pos.x-px,pos.z-pz)<3.8)return false;if(hitched){const st=Math.sin(th),ct=Math.cos(th);for(let u=3;u<=TLEN+2;u+=3.5)if(Math.hypot(pos.x+st*u-px,pos.z+ct*u-pz)<3.8)return false}}}
  return true}
 function trfLane(v){const o=samp(Math.round(v.s/RDS)),oa=samp(Math.round((v.s+v.dir*140)/RDS));
  if(o.kd===1||oa.kd===1){v.lane=0;return}
@@ -74,6 +74,6 @@ function trfLane(v){const o=samp(Math.round(v.s/RDS)),oa=samp(Math.round((v.s+v.
 function trfUpd(dt){if(!ready)return;
  for(let i=TRF.length-1;i>=0;i--){const v=TRF[i];if(Math.abs(v.s-curS)>950){trfKill(i);continue}
   v.lt-=dt;if(v.lt<=0){v.lt=.5;ensureRoad(v.s-160,v.s+160);trfLane(v)}trfBrain(v,dt);v.s+=v.dir*v.sp*dt;ensureRoad(v.s-30,v.s+30);v.lat+=(trfLat(samp(Math.round(v.s/RDS)),v.dir,trfOut(v))-v.lat)*Math.min(1,dt*1.5);roadPt(v.s,v.lat);const x=RPx,z=RPz;roadPt(v.s+v.dir*6,v.lat);const dx=RPx-x,dz=RPz-z;
-  v.g.position.set(x,H(x,z),z);v.x=x;v.z=z;v.g.rotation.y=Math.atan2(-dx,-dz);const l=Math.hypot(dx,dz)||1,fx=dx/l,fz=dz/l;v.fx=fx;v.fz=fz;if(v.car){for(const q of v.sps)q.n.rotation.y+=q.s*v.sp*dt/.29}else for(const q of v.sps)q.rotation.x-=v.sp*dt/.55;v.vx=fx*v.sp;v.vz=fz*v.sp;trfSnd(v,dt);
-  v.co.forEach((d,k)=>{const c=v.cols[k];c.x=x+fx*d;c.z=z+fz*d})}
+  v.g.position.set(x,Hx(x,z,0),z);v.x=x;v.z=z;v.g.rotation.y=Math.atan2(-dx,-dz);const l=Math.hypot(dx,dz)||1,fx=dx/l,fz=dz/l;v.fx=fx;v.fz=fz;if(v.car){for(const q of v.sps)q.n.rotation.y+=q.s*v.sp*dt/.29}else for(const q of v.sps)q.rotation.x-=v.sp*dt/.55;v.vx=fx*v.sp;v.vz=fz*v.sp;trfSnd(v,dt);
+  v.co.forEach((d,k)=>{const c=v.cols[k];c.x=x+fx*d;c.z=z+fz*d;c.y=v.g.position.y})}
  trfT-=dt;if(trfT<=0){trfT=2.5+Math.random()*3;if(TRF.length<TRF_MAX)trfSpawn()}}
