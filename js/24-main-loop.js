@@ -1,4 +1,4 @@
-function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000);last=now;todStep(dt);qStep(raw);if(!ready||menuOpen){draw();return}
+function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000);last=now;todStep(dt);qStep(raw);if(!ready||menuOpen||window.HOME){if(ready&&window.HOME)homeFrame(dt,now);draw();return}
  accT=Math.min(.1,accT+dt);for(let n=0;n<12&&accT>=SDT;n++){phys(SDT);accT-=SDT}
  const thr=K.up?1:0;
  let fx=-Math.sin(hd),fz=-Math.cos(hd),rx=Math.cos(hd),rz=-Math.sin(hd);
@@ -34,14 +34,14 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  // HUD
  HUD.tS+=dt;HUD.tP+=dt;HUD.tA+=dt;
  if(HUD.tS>=.066){HUD.tS=0;const kmh=Math.round(Math.abs(vf)*3.6);hset('kmh',kmh);hgauge(kmh);hcls('gauge','hot',kmh>105);hset('gr',vf<-.5?'R':g+1);hcls('gb2','rev',vf<-.5);
-  hcls('pa','on',cruiseS>0);if(cruiseS)hset('pa',cruiseS===2?'PA '+Math.round(cruiseV*3.6):'PA…')}
+  hcls('hbi','on',K.hb);hcls('pa','on',cruiseS>0);if(cruiseS)hset('pa',cruiseS===2?'PA '+Math.round(cruiseV*3.6):'PA…')}
  if(HUD.tP>=.1){HUD.tP=0;hcls('wf','on',fuel<FUELMAX*.15);hcls('wd','on',dmg>=60);
   if(HUD.sx){hset('fl',Math.round(fuel));hbar('fb',fuel/FUELMAX);hcls('fbw','low',fuel<FUELMAX*.15);hset('dm',Math.round(dmg));hbar('db',dmg/100);hset('cg',cargo);const ag=Math.round(Math.abs(th-hd)*57.3);hcls('agw','on',hitched&&ag>10);hset('ag',ag)}
   
   hset('mk',job?(dd>=1000?(dd/1000).toFixed(1)+' km':Math.round(dd)+' m'):'Vá a uma empresa');hset('jn',job?(job.phase==='pickup'?job.from.name:job.to.name):'Sem frete');
   hset('tm',job&&job.phase==='deliver'?Math.ceil(tLeft):'--');hset('sc',score);hset('cn',deliveries);hset('ps',stNear)}
  if(HUD.tA>=.2){HUD.tA=0;let t='';if(job){let inC=false;for(const a of COACT)if(Math.hypot(pos.x-a.x,pos.z-a.z)<70){inC=true;break}
-  if(inC){const nw=navPoint(),tx2=nw.x-pos.x,tz2=nw.z-pos.z,an=Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz);t=Math.abs(an)<.35?'▲':an>0?'▶':'◀'}}
+  if(inC){const nw=navPoint(),tx2=nw.x-pos.x,tz2=nw.z-pos.z,an=Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz);const aa=Math.abs(an);if(HUD.dOn){if(aa<.5)HUD.dOn=false}else if(aa>1)HUD.dOn=true;if(HUD.dOn){if(!HUD.dS||(aa>.5&&aa<2.6&&Math.sign(an)!==HUD.dS&&aa>.9))HUD.dS=Math.sign(an);t=HUD.dS>0?'▶':'◀'}else HUD.dS=0}}
   hset('dir',t);hcls('dir','on',!!t)}
  updLights();updEnv();draw()}
 applyTOD();initFX();setQ(qi);gfxInit();

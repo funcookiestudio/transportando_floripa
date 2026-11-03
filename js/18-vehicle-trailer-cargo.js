@@ -30,7 +30,7 @@ function trailerStep(dt){if(!hitched){th=hd;wT=0;rollT=0;vTp=0;decS=0;return}con
  yawKick=Math.max(-1.5,Math.min(1.5,yawKick-(7000+cargo*1000)*decS*Math.sin(f)*2.5/85000*dt)); // frenagem: carreta empurra (risco de jackknife)
  if(slip>1.5){const k=Math.exp(-.15*Math.min(slip,4)*dt);vel.x*=k;vel.z*=k;if(skMsg<=0&&Math.abs(vkf)>8){msg('Carreta derrapando!');skMsg=3}}
  rollT+=(-wT*vkf*.008-rollT)*Math.min(1,dt*6);
- if(Math.abs(f)>1.25){th=hd+Math.sign(f)*1.25;wT*=.2;vel.x*=Math.exp(-2*dt);vel.z*=Math.exp(-2*dt);dmg=Math.min(100,dmg+8*dt);if(jkMsg<=0){msg('Jackknife!');jkMsg=3}}
+ if(Math.abs(f)>1.85){th=hd+Math.sign(f)*1.85;wT*=.2;vel.x*=Math.exp(-3*dt);vel.z*=Math.exp(-3*dt);if(jkMsg<=0){msg('Jackknife!');jkMsg=3}}
  if(jkMsg>0)jkMsg-=dt;if(skMsg>0)skMsg-=dt}
 function rollover(dt,lat){const aR=9.8*(.77-.017*cargo),ex=(Math.abs(lat)-aR)/aR;
  if(ex>0){tipS+=ex*.5*dt;tipSg=-Math.sign(lat)}else tipS=Math.max(0,tipS-.8*dt);

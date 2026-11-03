@@ -6,7 +6,7 @@ function trfMat(m,hex,k){const key=m.uuid+'|'+hex+'|'+k;let c=TMC.get(key);if(!c
 function cabPaint(root,hex){root.traverse(n=>{if(!n.isMesh||!Array.isArray(n.material)||!n.material[5])return;if(!n.userData.m0)n.userData.m0=n.material;n.material=hex==null?n.userData.m0:n.userData.m0.map((m,i)=>i===5?trfMat(m,hex,1):m)})}
 function trfBuild(){const g=new THREE.Group();const cab=TRUCKM.clone(true);g.add(cab);const sps=[];
  // o modelo original esconde os pneus (mkWheels os recria à parte): refaz as rodas do cavalo com as mesmas malhas
- for(const w of wh){const gp=new THREE.Group(),sp=new THREE.Group();gp.position.copy(w.c);w.sp.children.forEach(ch=>{const me=new THREE.Mesh(ch.geometry,ch.material);me.castShadow=true;sp.add(me)});gp.add(sp);g.add(gp);sps.push(sp)}
+ for(const w of wh){const gp=new THREE.Group(),sp=new THREE.Group();gp.position.copy(w.c);w.sp.children.forEach(ch=>{const me=new THREE.Mesh(ch.geometry,ch.userData.o||ch.material);me.castShadow=true;sp.add(me)});gp.add(sp);g.add(gp);sps.push(sp)}
 const t=mkTrailer(g,0,0,1);t.position.z=6.75;cabPaint(cab,pick(TRC));
  if(Math.random()<.65){const k=Object.keys(CARGOS),L=CARGOS[k[Math.floor(Math.random()*k.length)]];setTrCargo(t,L[Math.floor(Math.random()*L.length)],10+Math.floor(Math.random()*14))}
  return{g,t,disp:[],sps}}

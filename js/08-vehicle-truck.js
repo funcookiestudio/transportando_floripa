@@ -28,6 +28,14 @@ function mkSteer(node){const thr=-node.position.x/node.scale.x,meshes=[];node.tr
 let wh=[];const VA=new THREE.Vector3(),VB=new THREE.Vector3(),UP=new THREE.Vector3(0,1,0);
 const SPR=(()=>{const pts=[];for(let i=0;i<=100;i++){const t=i/100,a=t*5*6.2832;pts.push(new THREE.Vector3(Math.cos(a)*.15,t-.5,Math.sin(a)*.15))}return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),200,.03,5,false)})(),DMP=new THREE.CylinderGeometry(.05,.05,1,8),
 MS=new THREE.MeshStandardMaterial({color:C(0xe08a00),roughness:.4,metalness:.5}),MD=new THREE.MeshStandardMaterial({color:C(0x202226),roughness:.35,metalness:.8});
+// aro pintável: faces próximas do eixo (raio < 56% do pneu) ganham material próprio (clone), pintado pela tela inicial; pneus ficam intactos
+const RIMP=[],RIMM=new Map();
+function rimSplit(g,mat){const ps=g.attributes.position,a=g.index.array,gr=g.groups.length?g.groups:[{start:0,count:a.length,materialIndex:0}];let R=0;for(let i=0;i<ps.count;i++)R=Math.max(R,Math.hypot(ps.getY(i),ps.getZ(i)));
+ const ms=Array.isArray(mat)?mat:[mat],n=ms.length,out=[],ng=[];
+ for(const G of gr)for(const rim of[0,1]){const st=out.length;for(let i=G.start;i<G.start+G.count;i+=3){let r=0;for(let k=0;k<3;k++){const j=a[i+k];r+=Math.hypot(ps.getY(j),ps.getZ(j))}r/=3;if((r<R*.56)!==!!rim)continue;out.push(a[i],a[i+1],a[i+2])}if(out.length>st)ng.push([st,out.length-st,G.materialIndex+rim*n])}
+ g.setIndex(new THREE.BufferAttribute(new a.constructor(out),1));g.clearGroups();ng.forEach(q=>g.addGroup(q[0],q[1],q[2]));
+ const rm=ms.map(m=>{if(!(m.map&&m.roughness>.9))return m;let c=RIMM.get(m.uuid);if(!c){c=m.clone();RIMM.set(m.uuid,c);RIMP.push(c)}return c});
+ return[ms.concat(rm),ms.concat(ms)]}
 function mkWheels(root){root.updateMatrixWorld(true);const out=[];
  for(const[node,front]of[[wF,true],[wR,false]]){if(!node)continue;const meshes=[];node.traverse(n=>{if(n.isMesh)meshes.push(n)});
   for(const side of[-1,1]){const parts=[],mn=new THREE.Vector3(1e9,1e9,1e9),mx=new THREE.Vector3(-1e9,-1e9,-1e9);
@@ -35,7 +43,7 @@ function mkWheels(root){root.updateMatrixWorld(true);const out=[];
     for(const G of gr){const st=o2.length;for(let i=G.start;i<G.start+G.count;i+=3){const x=(ps.getX(a[i])+ps.getX(a[i+1])+ps.getX(a[i+2]))/3;if((x<0?-1:1)!==side)continue;for(let k=0;k<3;k++){const j=a[i+k];o2.push(j);V2.set(ps.getX(j),ps.getY(j),ps.getZ(j));mn.min(V2);mx.max(V2)}}if(o2.length>st)ng.push([st,o2.length-st,G.materialIndex])}
     g.setIndex(new THREE.BufferAttribute(new a.constructor(o2),1));g.clearGroups();ng.forEach(q=>g.addGroup(q[0],q[1],q[2]));parts.push([g,m.material])}
    const c=mn.clone().add(mx).multiplyScalar(.5),W=new THREE.Group(),sg=new THREE.Group(),sp=new THREE.Group();W.rotation.order='YXZ';sg.add(sp);W.add(sg);
-   parts.forEach(([g,mat])=>{g.translate(-c.x,-c.y,-c.z);const me=new THREE.Mesh(g,mat);me.castShadow=true;sp.add(me)});
+   parts.forEach(([g,mat])=>{g.translate(-c.x,-c.y,-c.z);const[m2,m0]=rimSplit(g,mat),me=new THREE.Mesh(g,m2);me.userData.o=m0;me.castShadow=true;sp.add(me)});
    const coil=new THREE.Mesh(SPR,MS),dmp=new THREE.Mesh(DMP,MD);coil.castShadow=dmp.castShadow=true;scene.add(W,coil,dmp);out.push({W,sg,sp,c,front,side,coil,dmp})}
   node.traverse(n=>{if(n.isMesh)n.visible=false})}
  return out}

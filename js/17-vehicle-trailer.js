@@ -30,5 +30,6 @@ const TAX=[8.8,10.2,11.6],tS=[];
  for(const s of[-1,1])for(const z of[3,7,11])bx(.04,.06,.16,mA,s*1.09,RY,z);
  // suspensão, eixos e paralamas
  for(const z of TAX)for(const s of[-1,1])bx(.12,.3,.3,mK,s*.5,1.12,z-.75);
- for(const s of[-1,1])bx(.8,.04,4.1,mK,s*.93,1.2,10.2);}
+ for(const s of[-1,1])bx(.8,.04,4.1,mK,s*.93,1.2,10.2);
+ var TRLM=[mY,mYd];}
 
