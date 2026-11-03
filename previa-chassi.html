@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prévia do chassi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Barlow:wght@400;500&display=swap">
+<style>
+/* Layout: palco 3D à esquerda, painel técnico à direita (embaixo no celular). Visual de mesa de projeto, escuro por escolha. */
+:root{--bg:#12161a;--panel:#1a2026;--panel2:#222a32;--line:#303a44;--fg:#e8edf1;--muted:#8d99a5;--accent:#f0a81c;--accent-ink:#1b1305;--danger:#ff6b5a;
+ --display:"Barlow Condensed","Arial Narrow",sans-serif;--body:"Barlow",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:400 14px/1.45 var(--body);overflow:hidden}
+#app{display:grid;grid-template-columns:minmax(0,1fr) 320px;height:100%}
+#stage{position:relative;min-width:0;min-height:0;background:radial-gradient(120% 90% at 50% 20%,#1d252d 0%,var(--bg) 70%)}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hint{position:absolute;left:16px;bottom:12px;font:400 11px var(--mono);color:var(--muted);letter-spacing:.04em;pointer-events:none}
+#err{position:absolute;inset:16px;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;background:rgba(18,22,26,.94);border:1px solid var(--danger);color:var(--danger);font:500 13px/1.5 var(--mono);white-space:pre-wrap;overflow:auto}
+#panel{min-width:0;background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding-block:20px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1{margin:0;font:700 28px/1 var(--display);letter-spacing:.01em;text-transform:uppercase;text-wrap:balance}
+.sub{margin:6px 0 0;color:var(--muted);font-size:12.5px}
+h2{margin:0 0 8px;font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+select,button{font:500 13px var(--body);color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:3px;min-height:36px}
+select{width:100%;padding:0 10px}
+button{padding:0 12px;cursor:pointer}
+button:hover,select:hover{border-color:#4a5866}
+button:focus-visible,select:focus-visible,input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:8px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0}
+.seg span{display:block;text-align:center;padding:8px 0;border:1px solid var(--line);margin-left:-1px;background:var(--panel2);font:500 13px var(--mono);cursor:pointer}
+.seg label:first-child span{margin-left:0;border-radius:3px 0 0 3px}.seg label:last-child span{border-radius:0 3px 3px 0}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chk{display:flex;align-items:center;gap:10px;min-height:32px;cursor:pointer}
+.chk input{width:16px;height:16px;accent-color:var(--accent)}
+dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:13px}
+dt{color:var(--muted)}dd{margin:0;font:500 13px var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.note{margin:0;font-size:12px;color:var(--muted)}
+@media (max-width:760px){#app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,46%)}#panel{border-left:0;border-top:1px solid var(--line);padding-block:14px;gap:16px}h1{font-size:24px}}
+</style>
+</head><body>
+<div id="app">
+ <div id="stage"><canvas id="cv"></canvas><div id="err" hidden></div><div id="hint">Arraste para girar · roda ou pinça para aproximar</div></div>
+ <aside id="panel">
+  <header><h1>Chassi porta-contêiner</h1><p class="sub">Prévia do modelo que roda no jogo, com o código real do chassi e das cargas.</p></header>
+  <section><h2>Carga</h2>
+   <select id="cargo" aria-label="Carga sobre o chassi"></select>
+   <div class="seg" role="radiogroup" aria-label="Toneladas"><label><input type="radio" name="tons" value="6"><span>6 t</span></label><label><input type="radio" name="tons" value="12"><span>12 t</span></label><label><input type="radio" name="tons" value="18" checked><span>18 t</span></label></div>
+  </section>
+  <section><h2>Vista</h2><div class="row"><button data-v="iso">Diagonal</button><button data-v="side">Lateral</button><button data-v="rear">Traseira</button><button data-v="front">Frente</button><button data-v="top">Cima</button></div></section>
+  <section><h2>Exibir</h2>
+   <label class="chk"><input type="checkbox" id="wheels" checked><span>Rodas e pneus (ilustrativos)</span></label>
+   <label class="chk"><input type="checkbox" id="spin" checked><span>Girar sozinho</span></label>
+   <p class="note">No jogo as rodas vêm do modelo do caminhão. Aqui são cilindros no mesmo raio (0,586 m) e nos mesmos eixos.</p>
+  </section>
+  <section><h2>Medidas</h2><dl>
+   <dt>Pino-rei à lanterna</dt><dd id="mLen">-</dd>
+   <dt>Largura (para-lamas)</dt><dd id="mW">-</dd>
+   <dt>Eixos</dt><dd>3 × 1,40 m</dd>
+   <dt>Posição dos eixos</dt><dd>8,8 · 10,2 · 11,6 m</dd>
+   <dt>Apoio da carga</dt><dd>1,40 m</dd>
+   <dt>Malha do chassi</dt><dd id="mTri">-</dd></dl></section>
+ </aside>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* Peças que o jogo fornece (01-core-setup, 03, 08) e que o código do chassi e das cargas esperam encontrar */
+const errBox=document.getElementById('err');
+function showErr(m){errBox.hidden=false;errBox.textContent=m}
+addEventListener('error',e=>showErr('Erro ao montar a prévia:\n'+e.message+(e.filename?'\n'+e.filename.split('/').pop()+':'+e.lineno:'')));
+const R=new THREE.WebGLRenderer({canvas:document.getElementById('cv'),antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
+const scene=new THREE.Scene(),C=h=>new THREE.Color(h).convertSRGBToLinear();
+const TL=new THREE.MeshStandardMaterial({color:C(0x550000),emissive:C(0xff1408),emissiveIntensity:.4,roughness:.3});
+const hh=(a,b,c=0)=>{const h=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453;return h-Math.floor(h)};
+const BXG=new THREE.BoxGeometry(1,1,1),CYG=new THREE.CylinderGeometry(1,1,1,12);
+{const es=new THREE.Scene(),eg=new THREE.SphereGeometry(50,24,16),ep=eg.attributes.position,ec=new Float32Array(ep.count*3),c1=new THREE.Color();
+ for(let i=0;i<ep.count;i++){const y=ep.getY(i)/50;if(y>0)c1.setRGB(.5+.4*(1-y),.65+.25*(1-y),.85+.15*(1-y));else c1.setRGB(.2,.22,.16);ec[i*3]=c1.r;ec[i*3+1]=c1.g;ec[i*3+2]=c1.b}
+ eg.setAttribute('color',new THREE.BufferAttribute(ec,3));es.add(new THREE.Mesh(eg,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
+ const sm=new THREE.Mesh(new THREE.SphereGeometry(5,8,8),new THREE.MeshBasicMaterial({color:0xfff6dd}));sm.position.set(25,28,18);es.add(sm);
+ scene.environment=new THREE.PMREMGenerator(R).fromScene(es,.03).texture}
+</script>
+<script src="js/17-vehicle-trailer.js"></script>
+<script src="js/04b-cargo-builder.js"></script>
+<script src="js/04c-cargo-cement.js"></script>
+<script src="js/04d-cargo-dump.js"></script>
+<script src="js/04e-cargo-masonry.js"></script>
+<script src="js/04f-cargo-steel.js"></script>
+<script src="js/04g-cargo-wood.js"></script>
+<script src="js/04h-cargo-pipes-precast.js"></script>
+
+<script>
+/* ---- cena da prévia ---- */
+const stage=document.getElementById('stage'),cam=new THREE.PerspectiveCamera(40,1,.1,300),ctl=new THREE.OrbitControls(cam,R.domElement);
+const TG=new THREE.Vector3(0,1.1,6.4);ctl.target.copy(TG);ctl.enableDamping=true;ctl.dampingFactor=.08;ctl.minDistance=6;ctl.maxDistance=60;ctl.maxPolarAngle=Math.PI*.495;ctl.autoRotateSpeed=1.1;
+scene.add(new THREE.HemisphereLight(0xffffff,0x4a5a3a,.55));
+const sun=new THREE.DirectionalLight(0xfff4e0,1.1);sun.position.set(14,22,16);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14,near:1,far:80});sun.shadow.bias=-.0005;sun.shadow.normalBias=.04;sun.target.position.copy(TG);scene.add(sun,sun.target);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(120,120),new THREE.ShadowMaterial({opacity:.42}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(60,60,0x3a4651,0x232c34);grid.position.y=.002;scene.add(grid);
+trl.position.set(0,.1,0); // como no jogo: o chão fica 0,1 m abaixo da origem da carreta
+{let tri=0,n=0,bb=new THREE.Box3();trl.traverse(o=>{if(o.isMesh){n++;tri+=o.geometry.index.count/3}});trl.updateMatrixWorld(true);bb.setFromObject(trl);
+ document.getElementById('mTri').textContent=n+' malhas · '+Math.round(tri/1000)+' mil tri.';
+ document.getElementById('mLen').textContent=(bb.max.z-bb.min.z).toFixed(1).replace('.',',')+' m';document.getElementById('mW').textContent=(bb.max.x-bb.min.x).toFixed(2).replace('.',',')+' m'}
+// rodas ilustrativas nos eixos TAX (o jogo usa os pneus traseiros do caminhão, raio 0,586 m)
+const wheels=new THREE.Group(),rub=new THREE.MeshStandardMaterial({color:C(0x15171a),roughness:.95}),rimM=new THREE.MeshStandardMaterial({color:C(0xaab2ba),roughness:.4,metalness:.8});
+for(const z of TAX)for(const sx of[-1,1])for(const dx of[.8,1.12]){const w=new THREE.Group(),t=new THREE.Mesh(new THREE.CylinderGeometry(.586,.586,.29,28),rub),r=new THREE.Mesh(new THREE.CylinderGeometry(.33,.33,.31,20),rimM);t.castShadow=true;w.add(t,r);w.rotation.z=Math.PI/2;w.position.set(sx*dx,.487,z);wheels.add(w)}
+trl.add(wheels);
+// contêiner 40' como no jogo e lista de cargas
+const contM=new THREE.MeshStandardMaterial({color:C(0x1f5fa8),roughness:.7,metalness:.3});
+function mkContainer(){const g=new THREE.Group(),b=new THREE.Mesh(new THREE.BoxGeometry(2.44,2.59,12.2),contM);b.position.set(0,2.695,7.1);b.castShadow=b.receiveShadow=true;g.add(b);
+ const dk=new THREE.MeshStandardMaterial({color:C(0x15181c),roughness:.8});for(const x of[-1.1,1.1])for(const z of[1.12,13.08])for(const y of[1.49,3.9]){const f=new THREE.Mesh(new THREE.BoxGeometry(.26,.18,.26),dk);f.position.set(x,y,z);g.add(f)}
+ g.userData.dispose=()=>{b.geometry.dispose();dk.dispose()};return g}
+const GROUPS=[['Chassi vazio',[['','Nenhuma']]],['Contêiner',[['__cont','Contêiner 40′']]],['Construção e materiais pesados',['Cimento ensacado','Cimento a granel','Areia','Brita','Terra e cascalho','Tijolos','Blocos de concreto','Vergalhões de aço','Vigas metálicas','Chapas de aço','Madeira serrada','Troncos de madeira','Telhas','Tubos de PVC','Estruturas pré-moldadas'].map(n=>[n,n])]];
+const sel=document.getElementById('cargo');for(const[lab,items]of GROUPS){const og=document.createElement('optgroup');og.label=lab;for(const[v,t]of items){const o=document.createElement('option');o.value=v;o.textContent=t;og.appendChild(o)}sel.appendChild(og)}
+let cur=null;
+function load(){if(cur){trl.remove(cur);cur.userData.dispose&&cur.userData.dispose();cur=null}const v=sel.value,t=+document.querySelector('input[name=tons]:checked').value;if(!v)return;
+ try{if(v==='__cont')cur=mkContainer();else{cur=HEAVY[v](t);cur.position.set(0,1.4,7.1)}trl.add(cur)}catch(e){showErr('Erro na carga "'+v+'":\n'+e.message)}}
+sel.value='Cimento a granel';sel.onchange=load;document.querySelectorAll('input[name=tons]').forEach(i=>i.onchange=load);load();
+document.getElementById('wheels').onchange=e=>wheels.visible=e.target.checked;
+const spin=document.getElementById('spin');spin.onchange=()=>ctl.autoRotate=spin.checked;ctl.autoRotate=spin.checked;
+const V={iso:[1,.5,1.15,26],side:[1,.12,0,28],rear:[0,.2,1,22],front:[0,.2,-1,22],top:[.001,1,.001,26]};
+function view(k){const[a,b,c,d]=V[k],p=new THREE.Vector3(a,b,c).normalize().multiplyScalar(d);cam.position.copy(TG).add(p);ctl.target.copy(TG);ctl.update()}
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{view(b.dataset.v);spin.checked=false;ctl.autoRotate=false});
+view('iso');
+function fit(){const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;R.setSize(w,h,false);cam.aspect=w/h;cam.fov=w/h<.9?58:40;cam.updateProjectionMatrix()}
+new ResizeObserver(fit).observe(stage);fit();
+R.setAnimationLoop(()=>{ctl.update();R.render(scene,cam)});
+</script>
+
+</body></html>
