@@ -3,7 +3,7 @@ window.HOME=true;document.body.classList.add('home');
 const HP=[['Vermelho',0xd0392e],['Azul',0x2f6fc0],['Azul escuro',0x15306b],['Verde',0x3a9a4a],['Branco',0xf2f2ee],['Preto',0x16181c],['Grafite',0x4a4f55],['Prata',0xb8bec6],['Laranja',0xe07a22],['Amarelo',0xe8c020],['Roxo',0x8b4aa5],['Rosa',0xe0558a]];
 let HPS={};try{HPS=JSON.parse(localStorage.getItem('fh16paint2'))||{}}catch(e){}
 function hpSave(){try{localStorage.setItem('fh16paint2',JSON.stringify(HPS))}catch(e){}}
-function paintTrl(h){TRLM[0].color.copy(C(h==null?0xe8a317:h));TRLM[1].color.copy(C(h==null?0xc98710:h)).multiplyScalar(h==null?1:.88)}
+function paintTrl(h){TRLM[0].color.copy(C(h==null?TRLD[0]:h));TRLM[1].color.copy(C(h==null?TRLD[1]:h)).multiplyScalar(h==null?1:.88)}
 function paintRim(h){RIMP.forEach(m=>m.color.copy(h==null?C(0xffffff):C(h)))}
 function hpApply(tab,h){if(tab==='cab'){cabPaint(TRUCKP,h);paintSave(h)}else if(tab==='trl'){paintTrl(h);HPS.t=h;hpSave()}else{paintRim(h);HPS.r=h;hpSave()}}
 let hpTab='cab',hpInit=false,hpS=null,hpA=.6;

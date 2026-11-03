@@ -7,8 +7,8 @@ try{const tex=(w,h,fn,rx,ry)=>{const c=document.createElement('canvas');c.width=
  mk=t=>{const m=new THREE.MeshStandardMaterial({color:C(0x1f5fa8),map:t,roughness:.7,metalness:.3});cbMats.push(m);return m},
  dk=new THREE.MeshStandardMaterial({color:C(0x15181c),roughness:.8,metalness:.3}),side=mk(rib(40)),
  box=new THREE.Mesh(new THREE.BoxGeometry(2.44,2.59,12.2),[side,side,mk(rib(8)),dk,mk(door),mk(rib(8))]);
- cargoBox=new THREE.Group();box.position.set(0,3.195,7.1);box.castShadow=box.receiveShadow=true;cargoBox.add(box);
- for(const x of[-1.1,1.1])for(const z of[1.12,13.08])for(const y of[1.99,4.4]){const f=new THREE.Mesh(new THREE.BoxGeometry(.26,.18,.26),dk);f.position.set(x,y,z);f.castShadow=true;cargoBox.add(f)}
+ cargoBox=new THREE.Group();box.position.set(0,2.695,7.1);box.castShadow=box.receiveShadow=true;cargoBox.add(box);
+ for(const x of[-1.1,1.1])for(const z of[1.12,13.08])for(const y of[1.49,3.9]){const f=new THREE.Mesh(new THREE.BoxGeometry(.26,.18,.26),dk);f.position.set(x,y,z);f.castShadow=true;cargoBox.add(f)}
  trl.add(cargoBox);setCont()}catch(e){console.warn('container',e)}
 const SA=new THREE.Vector3(),SB=new THREE.Vector3(),SD=new THREE.Vector3(),SZ=new THREE.Vector3(0,0,1);
 function suspLink(m,a,b,xz){SD.copy(b).sub(a);const L=SD.length()||.01;m.position.set((a.x+b.x)/2,(a.y+b.y)/2,(a.z+b.z)/2);SD.multiplyScalar(1/L);m.quaternion.setFromUnitVectors(m.userData.ax,SD);m.scale.set(xz,m.userData.ax.z?1:L,m.userData.ax.z?L:1);if(m.userData.ax.z)m.scale.set(1,1,L);else m.scale.set(xz,L,xz)}

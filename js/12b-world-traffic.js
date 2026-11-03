@@ -6,7 +6,7 @@ function trfMat(m,hex,k){const key=m.uuid+'|'+hex+'|'+k;let c=TMC.get(key);if(!c
 function cabPaint(root,hex){root.traverse(n=>{if(!n.isMesh||!Array.isArray(n.material)||!n.material[5])return;if(!n.userData.m0)n.userData.m0=n.material;n.material=hex==null?n.userData.m0:n.userData.m0.map((m,i)=>i===5?trfMat(m,hex,1):m)})}
 // materiais da carreta/aros independentes por veículo (a pintura do jogador não altera o tráfego nem os outros jogadores)
 const TRLC=new Map(),RIMC=new Map();
-function trlMat(m,hex){const i=TRLM.indexOf(m);if(i<0)return m;const k=i+'|'+(hex==null?'d':hex);let c=TRLC.get(k);if(!c){c=m.clone();c.color.copy(C(hex==null?(i?0xc98710:0xe8a317):hex));if(hex!=null&&i)c.color.multiplyScalar(.88);TRLC.set(k,c)}return c}
+function trlMat(m,hex){const i=TRLM.indexOf(m);if(i<0)return m;const k=i+'|'+(hex==null?'d':hex);let c=TRLC.get(k);if(!c){c=m.clone();c.color.copy(C(hex==null?TRLD[i]:hex));if(hex!=null&&i)c.color.multiplyScalar(.88);TRLC.set(k,c)}return c}
 function trlSwap(t,hex){t.traverse(o=>{if(!o.isMesh)return;o.material=Array.isArray(o.material)?o.material.map(m=>trlMat(m,hex)):trlMat(o.material,hex)})}
 function rimClone(m,hex){const k=m.uuid+'|'+hex;let c=RIMC.get(k);if(!c){c=m.clone();c.color.copy(C(hex));RIMC.set(k,c)}return c}
 function trfBuild(po){const g=new THREE.Group();const cab=TRUCKM.clone(true);g.add(cab);const sps=[];
