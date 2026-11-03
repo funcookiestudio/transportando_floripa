@@ -32,8 +32,17 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  const g=gear,rpm=Math.max(0,Math.min(1,(eRpm-650)/1250));
  audioStep(dt,now,vf,thr);
  // HUD
- $('dm').textContent=Math.round(dmg);$('fl').textContent=Math.round(fuel);$('ps').textContent=stNear;$('cg').textContent=cargo;$('ag').textContent=Math.round(Math.abs(th-hd)*57.3);$('kmh').textContent=Math.round(Math.abs(vf)*3.6);$('gr').textContent=(vf<-.5?'R':g+1)+(cruiseS===2?' · PA '+Math.round(cruiseV*3.6)+' km/h':cruiseS===1?' · PA…':'');$('dst').textContent=Math.round(dd);$('tm').textContent=job&&job.phase==='deliver'?Math.ceil(tLeft):'--';$('jn').textContent=jobLabel();$('sc').textContent=score;$('cn').textContent=deliveries;
- const nw=navPoint(),tx2=nw.x-pos.x,tz2=nw.z-pos.z;$('arr').style.transform='rotate('+Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz)+'rad)';
+ HUD.tS+=dt;HUD.tP+=dt;HUD.tA+=dt;
+ if(HUD.tS>=.066){HUD.tS=0;const kmh=Math.round(Math.abs(vf)*3.6);hset('kmh',kmh);hgauge(kmh);hcls('gauge','hot',kmh>105);hset('gr',vf<-.5?'R':g+1);hcls('gb2','rev',vf<-.5);
+  hcls('pa','on',cruiseS>0);if(cruiseS)hset('pa',cruiseS===2?'PA '+Math.round(cruiseV*3.6):'PA…')}
+ if(HUD.tP>=.1){HUD.tP=0;hcls('wf','on',fuel<FUELMAX*.15);hcls('wd','on',dmg>=60);
+  if(HUD.sx){hset('fl',Math.round(fuel));hbar('fb',fuel/FUELMAX);hcls('fbw','low',fuel<FUELMAX*.15);hset('dm',Math.round(dmg));hbar('db',dmg/100);hset('cg',cargo);const ag=Math.round(Math.abs(th-hd)*57.3);hcls('agw','on',hitched&&ag>10);hset('ag',ag)}
+  
+  hset('mk',job?(dd>=1000?(dd/1000).toFixed(1)+' km':Math.round(dd)+' m'):'Vá a uma empresa');hset('jn',job?(job.phase==='pickup'?job.from.name:job.to.name):'Sem frete');
+  hset('tm',job&&job.phase==='deliver'?Math.ceil(tLeft):'--');hset('sc',score);hset('cn',deliveries);hset('ps',stNear)}
+ if(HUD.tA>=.2){HUD.tA=0;let t='';if(job){let inC=false;for(const a of COACT)if(Math.hypot(pos.x-a.x,pos.z-a.z)<70){inC=true;break}
+  if(inC){const nw=navPoint(),tx2=nw.x-pos.x,tz2=nw.z-pos.z,an=Math.atan2(tx2*rx+tz2*rz,tx2*fx+tz2*fz);t=Math.abs(an)<.35?'▲':an>0?'▶':'◀'}}
+  hset('dir',t);hcls('dir','on',!!t)}
  updLights();updEnv();draw()}
 applyTOD();initFX();setQ(qi);gfxInit();
 requestAnimationFrame(frame);

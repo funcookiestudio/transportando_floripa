@@ -9,9 +9,14 @@
 <div class="ctl" id="stk"><div class="trk" id="st"><div class="tick"></div><div class="knob" id="sk"><svg id="sw" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="4"/><path d="M20 20V36M20 20L7 13M20 20L33 13" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" fill="none"/></svg></div></div><small>◀ DIREÇÃO ▶</small></div>
 <div class="ctl" id="ped"><small>▲ ACELERA</small><div class="trk" id="pt"><div class="fill" id="pf"></div><div class="tick"></div><div class="knob" id="pk"><svg viewBox="0 0 40 40"><path d="M12 15L20 7L28 15M12 25L20 33L28 25" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div><small>▼ FREIO / RÉ</small></div>
 <div id="load">Carregando o FH16…</div>
-<div class="p" id="spd"><b id="kmh">0</b> <small>km/h</small><br><small>Marcha <span id="gr">1</span> · Dano <span id="dm">0</span>%</small><br><small>Carga <span id="cg">8</span> t · Âng <span id="ag">0</span>°</small><br><small>⛽ <span id="fl">300</span> L · Posto <span id="ps">--</span> km</small></div>
-<div class="p" id="mis"><svg id="arr" viewBox="0 0 44 44"><path d="M22 3 L38 38 L22 30 L6 38 Z" fill="#ffb400" stroke="#000" stroke-width="2"/></svg>
-<b id="jn">Sem frete</b>Dist: <b id="dst">0</b> m<br>Tempo: <b id="tm">--</b> s<br>R$ <b id="sc">0</b> · Entregas: <b id="cn">0</b></div>
+<div class="p" id="spd">
+ <div id="gauge"><svg viewBox="0 0 120 68" aria-hidden="true"><path class="gb" d="M10 62A50 50 0 0 1 110 62"/><path class="gv" id="gv" d="M10 62A50 50 0 0 1 110 62"/></svg><div id="kc"><b id="kmh">0</b><small>km/h</small></div><div id="gb2"><span id="gr">1</span></div></div>
+ <div id="sx"><div class="bar" id="fbw"><i id="fb"></i><span>⛽ <b id="fl">0</b> L</span></div><div class="bar dbar"><i id="db"></i><span>🔧 <b id="dm">0</b>%</span></div><div class="mrow"><span>Carga <b id="cg">0</b> t</span><span id="agw">↔ <b id="ag">0</b>°</span></div></div>
+ <div id="sub"><span id="wf">⛽ combustível baixo</span><span id="wd">🔧 avaria</span><span id="pa">PA</span></div>
+</div>
+<div class="p" id="mis"><b id="jn">Sem frete</b><div class="mrow"><span id="mk">Vá a uma empresa</span><i id="mc">▾</i></div>
+<div id="mx"><div class="mrow"><span>⏱ <b id="tm">--</b> s</span><span>R$ <b id="sc">0</b> · <b id="cn">0</b> entregas</span></div><div class="mrow"><span id="psw">⛽ posto <b id="ps">--</b> km</span></div></div></div>
+<div id="dir"></div>
 <div class="p" id="msg"></div>
 <div class="p" id="help">W/↑ acelera · S/↓ freio/ré · A D/←→ direção · ESPAÇO liga/desliga freio de mão · 2x acelerar = piloto automático (freio ou 2x desliga) · SHIFT turbo · H buzina · C câmera · ARRASTE com mouse/dedo para girar a câmera · roda/pinça = zoom · V recentra · L faróis · F neblina · N noite · T hora do dia · Q qualidade · O ou ⚙ ajustes gráficos · M som · G fretes ou posto (parado) · R reiniciar</div>
 <div class="tb" id="tl"><div class="b" data-k="left">◀</div><div class="b" data-k="right">▶</div></div>
@@ -55,6 +60,7 @@
 <script src="js/21-render-reflections.js"></script>
 <script src="js/22-render-postfx.js"></script>
 <script src="js/23-ui-graphics-settings.js"></script>
+<script src="js/24b-hud.js"></script>
 <script src="js/24-main-loop.js"></script>
 <script src="js/25-boot-load-model.js"></script>
 </body></html>
