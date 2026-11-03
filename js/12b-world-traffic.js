@@ -4,11 +4,16 @@ const TRF=[],TRF_MAX=9;let trfT=2,TRUCKM=null,TRUCKP=null;const trfLat=(o,dir,ou
 const TRC=[0xd0392e,0x2f6fc0,0x3a9a4a,0xf2f2ee,0xe07a22,0x4a4f55,0x8b4aa5,0xe8c020],TMC=new Map(),pick=a=>a[Math.floor(Math.random()*a.length)];
 function trfMat(m,hex,k){const key=m.uuid+'|'+hex+'|'+k;let c=TMC.get(key);if(!c){c=m.clone();c.color.copy(C(hex));if(k)c.color.multiplyScalar(k);TMC.set(key,c)}return c}
 function cabPaint(root,hex){root.traverse(n=>{if(!n.isMesh||!Array.isArray(n.material)||!n.material[5])return;if(!n.userData.m0)n.userData.m0=n.material;n.material=hex==null?n.userData.m0:n.userData.m0.map((m,i)=>i===5?trfMat(m,hex,1):m)})}
-function trfBuild(){const g=new THREE.Group();const cab=TRUCKM.clone(true);g.add(cab);const sps=[];
+// materiais da carreta/aros independentes por veículo (a pintura do jogador não altera o tráfego nem os outros jogadores)
+const TRLC=new Map(),RIMC=new Map();
+function trlMat(m,hex){const i=TRLM.indexOf(m);if(i<0)return m;const k=i+'|'+(hex==null?'d':hex);let c=TRLC.get(k);if(!c){c=m.clone();c.color.copy(C(hex==null?(i?0xc98710:0xe8a317):hex));if(hex!=null&&i)c.color.multiplyScalar(.88);TRLC.set(k,c)}return c}
+function trlSwap(t,hex){t.traverse(o=>{if(!o.isMesh)return;o.material=Array.isArray(o.material)?o.material.map(m=>trlMat(m,hex)):trlMat(o.material,hex)})}
+function rimClone(m,hex){const k=m.uuid+'|'+hex;let c=RIMC.get(k);if(!c){c=m.clone();c.color.copy(C(hex));RIMC.set(k,c)}return c}
+function trfBuild(po){const g=new THREE.Group();const cab=TRUCKM.clone(true);g.add(cab);const sps=[];
  // o modelo original esconde os pneus (mkWheels os recria à parte): refaz as rodas do cavalo com as mesmas malhas
- for(const w of wh){const gp=new THREE.Group(),sp=new THREE.Group();gp.position.copy(w.c);w.sp.children.forEach(ch=>{const me=new THREE.Mesh(ch.geometry,ch.userData.o||ch.material);me.castShadow=true;sp.add(me)});gp.add(sp);g.add(gp);sps.push(sp)}
-const t=mkTrailer(g,0,0,1);t.position.z=6.75;cabPaint(cab,pick(TRC));
- if(Math.random()<.65){const k=Object.keys(CARGOS),L=CARGOS[k[Math.floor(Math.random()*k.length)]];setTrCargo(t,L[Math.floor(Math.random()*L.length)],10+Math.floor(Math.random()*14))}
+ for(const w of wh){const gp=new THREE.Group(),sp=new THREE.Group();gp.position.copy(w.c);w.sp.children.forEach(ch=>{let mt=ch.userData.o||ch.material;if(po&&po.rim!=null&&ch.userData.o)mt=ch.material.map(x=>RIMP.includes(x)?rimClone(x,po.rim):x);const me=new THREE.Mesh(ch.geometry,mt);me.castShadow=true;sp.add(me)});gp.add(sp);g.add(gp);sps.push(sp)}
+const t=mkTrailer(g,0,0,1);t.position.z=6.75;trlSwap(t,po?po.trl:null);cabPaint(cab,po?po.cab:pick(TRC));
+ if(!po&&Math.random()<.65){const k=Object.keys(CARGOS),L=CARGOS[k[Math.floor(Math.random()*k.length)]];setTrCargo(t,L[Math.floor(Math.random()*L.length)],10+Math.floor(Math.random()*14))}
  return{g,t,disp:[],sps}}
 
 // ---- carros: Honda Civic Type R (modelo do jogador) com cores aleatórias; a pintura amarela da textura é recolorida por matiz ----
@@ -52,6 +57,7 @@ function trfBrain(v,dt){if(v.fx===undefined)return;const c0=v.v0||(v.v0=v.sp),fx
  for(const d of[4.2,1,-3])chk(pos.x-sh*d,pos.z-ch*d,vfp*(-fx*sh-fz*ch>0?1:-1),1.35);
  if(hitched){const st=Math.sin(th),ct=Math.cos(th);for(let t=2;t<=TLEN+1.5;t+=2.2)chk(pos.x+st*t,pos.z+ct*t,0,1.45)}
  for(const o of TRF){if(o===v||o.dir!==v.dir)continue;for(const k of o.cols)chk(k.x,k.z,o.sp,1.35)}
+ if(typeof NET!=='undefined')for(const p of NET.peers.values())if(p.cols)for(const k of p.cols)chk(k.x,k.z,p.sp||0,1.4);
  v.ld=ld;v.lv=lv;
  if(vt<v.sp)v.sp=Math.max(vt,v.sp-7.5*dt);else v.sp=Math.min(c0,v.sp+(seen?1:1.6)*dt)}
 // pista dupla: carros na esquerda (interna), caminhões na direita (externa); se o da frente é bem mais lento, ultrapassa pela outra pista só se estiver livre (a trás, ao lado e à frente) e volta quando livre

@@ -1,4 +1,4 @@
-function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000);last=now;todStep(dt);qStep(raw);if(!ready||menuOpen||window.HOME){if(ready&&window.HOME)homeFrame(dt,now);draw();return}
+function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000);last=now;todStep(dt);qStep(raw);if(window.netFrame)netFrame(dt,now);if(!ready||menuOpen||window.HOME){if(ready&&window.HOME)homeFrame(dt,now);draw();return}
  accT=Math.min(.1,accT+dt);for(let n=0;n<12&&accT>=SDT;n++){phys(SDT);accT-=SDT}
  const thr=K.up?1:0;
  let fx=-Math.sin(hd),fz=-Math.cos(hd),rx=Math.cos(hd),rz=-Math.sin(hd);

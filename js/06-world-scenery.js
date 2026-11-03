@@ -7,7 +7,7 @@ function updObs(){const ci=Math.floor(pos.x/14),cj=Math.floor(pos.z/14);if(ci==o
   const s=.8+hh(i,j,5)*.9,y=H(x,z);D.rotation.set(0,hh(i,j,6)*6,0);
   if(hh(i,j,4)<.7){D.scale.set(s,s,s);D.position.set(x,y+1.5*s,z);D.updateMatrix();trunk.setMatrixAt(nt,D.matrix);D.position.set(x,y+5*s,z);D.updateMatrix();leaf.setMatrixAt(nt++,D.matrix);obs.push({x,z,r:.7*s,k:0})}
   else{D.scale.set(s*1.2,s,s*1.2);D.rotation.set(hh(i,j,7),hh(i,j,6)*6,0);D.position.set(x,y+.5*s,z);D.updateMatrix();rock.setMatrixAt(nr++,D.matrix);obs.push({x,z,r:1.4*s,k:1})}}
- for(const c of COACT)for(const q of c.cols)obs.push(q);for(const o of OVA)for(const q of o.cols)obs.push(q);for(const o of ICA)for(const q of o.cols)obs.push(q);for(const v of TRF)for(const q of v.cols)obs.push(q);
+ for(const c of COACT)for(const q of c.cols)obs.push(q);for(const o of OVA)for(const q of o.cols)obs.push(q);for(const o of ICA)for(const q of o.cols)obs.push(q);for(const v of TRF)for(const q of v.cols)obs.push(q);if(typeof NET!=='undefined')for(const p of NET.peers.values())if(p.cols)for(const q of p.cols)obs.push(q);
  trunk.count=leaf.count=nt;rock.count=nr;[trunk,leaf,rock].forEach(m=>m.instanceMatrix.needsUpdate=true)}
 
 // ---- cones ----
