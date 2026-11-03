@@ -143,6 +143,19 @@ function stRibbons(f){const W=(p,q)=>{roadPt(f.s+p,q);return[RPx,RPz]},hw=f.hw,k
   gm(2,0,u1,u=>{const g=gap(u),k=sm(u/.1);return[aw-1.4*k+(g+2.4*k)/2,g+2.4*k]});
   gm(3,.03,u1,u=>[aw,.4])}
  return rb}
+// recuo de entrada das empresas: faixa de desaceleração junto à pista (lado da empresa), com afunilamento e borda tracejada
+function coLane(c,g,disp){const kk=RK[samp(Math.round(c.s/RDS)).kd||0],aw=kk.A,sd=c.side,W=4.6,q0=aw-1,cr=c.cr,sr=c.sr;
+ const sm3=u=>u<=0?0:u>=1?1:u*u*(3-2*u),wid=p=>W*sm3((p+85)/40)*(1-sm3((p-12)/10));
+ const lo=(p,q)=>{roadPt(c.s+sd*p,sd*q);const dx=RPx-c.x,dz=RPz-c.z;return[dx*cr-dz*sr,dx*sr+dz*cr]};
+ const ribbon=(kind,p0,p1,fn,n)=>{const pos=new Float32Array(n*6),uv=new Float32Array(n*4),idx=[];let acc=0,pl=null;
+  for(let j=0;j<n;j++){const p=p0+(p1-p0)*j/(n-1),v=fn(p),a=lo(p,v[0]-v[1]),b=lo(p,v[0]+v[1]),y=yR(c.s+sd*p)+.1-c.y+.04;if(pl)acc+=Math.hypot(a[0]-pl[0],a[1]-pl[1]);pl=a;
+   pos.set([a[0],y,a[1],b[0],y,b[1]],j*6);uv.set([0,acc/9,1,acc/9],j*4)}
+  for(let j=0;j<n-1;j++){const a=j*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}
+  const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.BufferAttribute(pos,3));ge.setAttribute('uv',new THREE.BufferAttribute(uv,2));ge.setIndex(idx);ge.computeVertexNormals();
+  if(ge.attributes.normal.getY(0)<0){for(let k=0;k<idx.length;k+=3){const t=idx[k+1];idx[k+1]=idx[k+2];idx[k+2]=t}ge.setIndex(idx);ge.computeVertexNormals()}
+  const m=new THREE.Mesh(ge,goreMat(kind));m.receiveShadow=true;m.frustumCulled=false;g.add(m);disp.push(ge)};
+ ribbon(2,-85,24,p=>{const w=wid(p);return[q0+w/2,w/2+.001]},40);
+ ribbon(3,-62,10,p=>[aw,.2],20)}
 function stDeco(f,g,disp){const hw=f.hw,W=(p,q)=>{roadPt(f.s+p,q);return[RPx,RPz]},ya=p=>yR(f.s+p)+.1,
  R=mat(f.pal[0]),A=mat(f.pal[1]),WH=mat(0xe9e9e4),DK=mat(0x2a2d33),CO=mat(0x8d9096),GL=mat(0x1a2a36),YL=mat(0xf2c200),LT=new THREE.MeshBasicMaterial({color:0xfff2cc});disp.push(LT);
  const B=(p,q,y,sx,sy,sz,m)=>{const w=W(p,q);put(g,BXG,m,w[0],ya(p)+y,w[1],sx,sy,sz,0,f.h,0)},Cy=(p,q,y,r,h,m)=>{const w=W(p,q);put(g,CYG,m,w[0],ya(p)+y,w[1],r,h,r)},col=(p,q,r)=>{const w=W(p,q);f.cols.push({x:w[0],z:w[1],r,k:1})};

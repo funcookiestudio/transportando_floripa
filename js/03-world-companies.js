@@ -78,7 +78,7 @@ function buildCo(c){const g=new THREE.Group(),T=c.t,W=mat(T.col),A=mat(T.acc),DK
  for(let i=0;i<3;i++){const t=mkTr(PCEN,c.bays[i].lz,1);t.rotation.y=Math.PI/2;t.visible=!!(c.spawn&&c.spawn.slot===i);if(t.visible)setTrCargo(t,c.spawn.name,c.spawn.tons);g.userData.slots.push(t)}
  g.userData.decor=[];
   DECOR.forEach(([dx,dz,full],i)=>{const t=mkTr(dx,dz,1);g.userData.decor.push(t);if(full){const L=CARGOS[T.id];setTrCargo(t,L[Math.floor(hh(c.k,i,31)*L.length)],18)}});
- flushBatch(g,disp);scene.add(g);return g}
+ coLane(c,g,disp);flushBatch(g,disp);scene.add(g);return g}
 // carretas estacionadas usam EXATAMENTE o mesmo modelo da carreta engatada (trl): malhas fundidas por material, geometria compartilhada
 let TPL=null;
 function trailerTpl(){if(TPL)return TPL;trl.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(trl.matrixWorld).invert(),by=new Map(),skip=trl.userData.cg;
