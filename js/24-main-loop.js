@@ -1,4 +1,4 @@
-function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000);last=now;todStep(dt);qStep(raw);if(window.netFrame)netFrame(dt,now);if(!ready||menuOpen||window.HOME){if(ready&&window.HOME)homeFrame(dt,now);draw();return}
+function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000);last=now;const pvOn=typeof PV!=='undefined'&&PV.on;todStep(dt);if(!pvOn)qStep(raw);if(window.netFrame)netFrame(dt,now);if(!ready||menuOpen||window.HOME){if(ready&&window.HOME)homeFrame(dt,now);if(!pvOn)draw();return} // painel de fretes em tela cheia cobre o mundo: não renderiza o jogo por trás
  accT=Math.min(.1,accT+dt);for(let n=0;n<12&&accT>=SDT;n++){phys(SDT);accT-=SDT}
  const thr=K.up?1:0;
  let fx=-Math.sin(hd),fz=-Math.cos(hd),rx=Math.cos(hd),rz=-Math.sin(hd);
@@ -7,7 +7,9 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  acc+=((vf-prevVf)/Math.max(dt,.001)-acc)*Math.min(1,dt*5);prevVf=vf;
  if(RESTY){HREF=RESTY.y;RESTY.t-=dt}const yr=H(pos.x,pos.z);if(RESTY&&(Math.abs(yr-RESTY.y)<1.2||RESTY.t<=0))RESTY=null;HREF=RESTY?RESTY.y:yr;const yf=H(pos.x+fx*L,pos.z+fz*L),mx=pos.x+fx*2,mz=pos.z+fz*2,hr=H(mx+rx*1.1,mz+rz*1.1),hl=H(mx-rx*1.1,mz-rz*1.1);
  pitch+=(Math.atan2(yf-yr,L)-pitch)*Math.min(1,dt*10);roll+=(Math.atan2(hr-hl,2.2)-roll)*Math.min(1,dt*10);
- const lat=yawS*vf;{const tp=Math.max(-.015,Math.min(.015,acc*.0012)),tr=Math.max(-.07,Math.min(.07,-lat*.003));
+ const lat=yawS*vf;{const trqP=trqS;trqS+=(trqCab-trqS)*Math.min(1,dt*9);const trqD=(trqS-trqP)/Math.max(dt,.001); // torque do motor: cabine senta (pitch) e balança de lado ao pisar/aliviar
+ if(shiftKick){sv.p+=shiftKick;sv.r+=shiftKick*.35*(gear&1?1:-1);shiftKick=0}trqCab*=Math.exp(-dt*6);
+ const tp=Math.max(-.02,Math.min(.02,acc*.0012+trqS*.006)),tr=Math.max(-.07,Math.min(.07,-lat*.003+Math.max(-.01,Math.min(.01,trqD*.0012))));
  const yv=(yr-yrP)/Math.max(dt,.001),ya=(yv-yvP)/Math.max(dt,.001);yrP=yr;yvP=yv;
  sv.p+=((tp-xp)*70-sv.p*11)*dt;xp+=sv.p*dt;sv.r+=((tr-xr)*80-sv.r*10)*dt;xr+=sv.r*dt;
  sv.h+=(-hz*90-sv.h*8-Math.max(-60,Math.min(60,ya))*.5)*dt;hz+=sv.h*dt;hz=Math.max(-.15,Math.min(.15,hz))}
