@@ -3,7 +3,7 @@ const PRE=[
  {pr:.75,sh:0,spot:false,post:false,bloom:false,msaa:false,grade:false,motion:false,reflex:false,beams:false,lamps:false,pool:0,trees:true,bushes:true,parts:true,view:1,tone:true},
  {pr:1,sh:1024,spot:false,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:2,trees:true,bushes:true,parts:true,view:1,tone:true},
  {pr:1.5,sh:2048,spot:true,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:4,trees:true,bushes:true,parts:true,view:1,tone:true}];
-const GS=Object.assign({auto:true,fps:false,preset:1},PRE[1]);
+const GS=Object.assign({auto:true,fps:false,preset:1,fov:69},PRE[1]);
 let gfxOpen=false,gfxEl=null,fpsEl=null,fpsRun=false;
 function setQ(i){setQBase(i);Object.assign(GS,PRE[i],{preset:i});GS.auto=qAuto;applyGfx()}
 function gfxMatch(){for(let i=0;i<PRE.length;i++){let ok=true;for(const k in PRE[i])if(GS[k]!==PRE[i][k]){ok=false;break}if(ok)return i}return -1}
@@ -25,7 +25,7 @@ function fpsStart(){if(fpsRun)return;if(!fpsEl){fpsEl=document.createElement('di
  (function L(t){n++;if(t-t0>=500){const f=n*1000/(t-t0);n=0;t0=t;const x='FPS '+Math.round(f)+' · '+(1000/f).toFixed(1)+' ms';fpsEl.textContent=x;if(gfxEl){const h=gfxEl.querySelector('.gf');if(h)h.textContent=x}}if(GS.fps||gfxOpen)requestAnimationFrame(L);else fpsRun=false})(t0)}
 const GSC=[
  ['Qualidade',[{k:'preset',t:'seg',l:'Predefinição',o:[['Baixo',0],['Médio',1],['Alto',2]]},{k:'auto',t:'sw',l:'Qualidade automática',h:'Se o FPS cair, reduz primeiro a resolução e só depois desliga efeitos'}]],
- ['Imagem',[{k:'pr',t:'seg',l:'Resolução da imagem',h:'Limitada pela densidade da tela (DPR '+(Math.round(devicePixelRatio*100)/100)+')',o:[['50%',.5],['75%',.75],['100%',1],['125%',1.25],['150%',1.5],['200%',2]]},{k:'view',t:'seg',l:'Distância de visão',o:[['Curta',.6],['Média',.8],['Longa',1],['Muito longa',1.3]]},{k:'rd',t:'seg',l:'Distância de renderização',h:'Alcance do terreno e das árvores · recarrega o jogo',o:[['Normal',0],['Alta',1],['Máxima',2]]},{k:'tone',t:'sw',l:'Cores cinematográficas',h:'Tone mapping ACES'},{k:'grade',t:'sw',l:'Correção de cor e contraste',d:1}]],
+ ['Imagem',[{k:'pr',t:'seg',l:'Resolução da imagem',h:'Limitada pela densidade da tela (DPR '+(Math.round(devicePixelRatio*100)/100)+')',o:[['50%',.5],['75%',.75],['100%',1],['125%',1.25],['150%',1.5],['200%',2]]},{k:'view',t:'seg',l:'Distância de visão',o:[['Curta',.6],['Média',.8],['Longa',1],['Muito longa',1.3]]},{k:'rd',t:'seg',l:'Distância de renderização',h:'Alcance do terreno e das árvores · recarrega o jogo',o:[['Normal',0],['Alta',1],['Máxima',2]]},{k:'fov',t:'seg',l:'Campo de visão (FOV)',h:'Ângulo da câmera · interna usa o valor, externas ficam 9° abaixo',o:[['55°',55],['62°',62],['69°',69],['76°',76],['85°',85]]},{k:'tone',t:'sw',l:'Cores cinematográficas',h:'Tone mapping ACES'},{k:'grade',t:'sw',l:'Correção de cor e contraste',d:1}]],
  ['Sombras',[{k:'sh',t:'seg',l:'Sombras do sol',o:[['Desligadas',0],['512',512],['1024',1024],['2048',2048]]},{k:'spot',t:'sw',l:'Sombras dos faróis'}]],
  ['Efeitos',[{k:'post',t:'sw',l:'Pós-processamento',h:'Necessário para bloom, suavização, cor e desfoque'},{k:'bloom',t:'sw',l:'Brilho (bloom)',d:1},{k:'msaa',t:'sw',l:'Suavização de bordas (MSAA)',d:1},{k:'motion',t:'sw',l:'Desfoque em alta velocidade',d:1},{k:'reflex',t:'sw',l:'Reflexos dinâmicos',h:'Atualiza o reflexo do cenário na lataria'},{k:'parts',t:'sw',l:'Poeira e fumaça'}]],
  ['Iluminação',[{k:'beams',t:'sw',l:'Feixes e brilho dos faróis'},{k:'lamps',t:'sw',l:'Luzes de freio e de neblina'},{k:'pool',t:'seg',l:'Luzes dos postes',o:[['Nenhuma',0],['2',2],['4',4]]}]],
@@ -41,6 +41,7 @@ function gfxSet(k,v){
  if(k==='rd'){try{localStorage.setItem('fh16rd',String(v))}catch(e){}try{saveG()}catch(e){}location.reload();return}
  if(k==='preset'){qAuto=false;setQ(v)}
  else if(k==='auto'){GS.auto=v;qAuto=v}
+ else if(k==='fov')GS.fov=v;
  else{GS[k]=v;if(v===true&&(k==='bloom'||k==='msaa'||k==='grade'||k==='motion'))GS.post=true;GS.auto=false;qAuto=false}
  applyGfx();gfxSave();gfxRender()}
 function gfxReset(){try{localStorage.removeItem('fh16gfx')}catch(e){}qAuto=true;GS.fps=false;setQ(MOB?1:2);GS.auto=true;gfxRender()}
