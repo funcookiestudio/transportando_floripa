@@ -102,15 +102,28 @@ function icNear(x,z){let best=1e9,found=false;for(let k=0;k<ICA.length;k++){cons
  return found}
 function icPull(x,z,r,phys){if(!icNear(x,z))return r;if(ICb&&!(phys&&HREF>ICy-2.5))return r;const bl=10+2.2*Math.abs(ICy-r),e=ICd-ICh-1;if(e>=bl)return r;const w=e<=0?1:sm(1-e/bl);return r+(ICy-r)*w}
 function icBlock(x,z,m){return icNear(x,z)&&ICd<ICh+m}
-function buildIC(f){const g=new THREE.Group(),disp=[];g.userData.batch=[];g.userData.disp=disp;const CON=mat(0x9d9d98),CD=mat(0x7b7c78),RM=rMat.clone();if(!rMatClean)rMatClean=mkRoadAtlas(true);RM.map=rMatClean;RM.side=THREE.DoubleSide;f.cols.length=0;
+function railMesh(g,disp,R,mt){const n=R.length,pos=[],idx=[],W=.2,B=-.15,T=.9;let o=0;
+ const q=(a,b,c,d)=>{pos.push(...a,...b,...c,...d);idx.push(o,o+1,o+2,o,o+2,o+3);o+=4},pt=(r,w,y)=>[r[0]+r[3]*w,r[1]+y,r[2]+r[4]*w];
+ for(let j=0;j<n-1;j++){const a=R[j],b=R[j+1];
+  q(pt(a,-W,B),pt(b,-W,B),pt(b,-W,T),pt(a,-W,T)); q(pt(a,W,B),pt(a,W,T),pt(b,W,T),pt(b,W,B)); q(pt(a,-W,T),pt(b,-W,T),pt(b,W,T),pt(a,W,T))}
+ for(const r of[R[0],R[n-1]])q(pt(r,-W,B),pt(r,-W,T),pt(r,W,T),pt(r,W,B));
+ const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pos),3));ge.setIndex(idx);ge.computeVertexNormals();
+ const m=new THREE.Mesh(ge,mt);m.castShadow=false;m.receiveShadow=true;m.frustumCulled=false;g.add(m);disp.push(ge)}
+function buildIC(f){const g=new THREE.Group(),disp=[];g.userData.batch=[];g.userData.disp=disp;const CON0=mat(0x9d9d98),CON=CON0.clone(),CD=mat(0x7b7c78),RM=rMat.clone();CON.side=THREE.DoubleSide;if(!rMatClean)rMatClean=mkRoadAtlas(true);RM.map=rMatClean;RM.side=THREE.DoubleSide;f.cols.length=0;
  for(const r of f.rb){const n=r.n,P=r.p,pos=new Float32Array(n*6),uv=new Float32Array(n*4),idx=[],uL=r.gore?0:(r.ki*512+1)/2048,uR=r.gore?1:((r.ki+1)*512-1)/2048,vs=r.gore?9:24;let acc=0;
   for(let j=0;j<n;j++){const a=Math.max(0,j-1),b=Math.min(n-1,j+1);let dx=P[b*5]-P[a*5],dz=P[b*5+1]-P[a*5+1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
    if(j)acc+=Math.hypot(P[j*5]-P[j*5-5],P[j*5+1]-P[j*5-4]);const lx=-dz,lz=dx,y=P[j*5+2]+.03;
    const hj=r.hw*P[j*5+4];pos.set([P[j*5]-lx*hj,y,P[j*5+1]-lz*hj,P[j*5]+lx*hj,y,P[j*5+1]+lz*hj],j*6);uv.set([uL,acc/vs,uR,acc/vs],j*4);
    // guarda-corpo em trechos altos; laje em trechos sobre a rodovia
    const gy=Hb(P[j*5],P[j*5+1]),h=P[j*5+2]-gy,th=Math.atan2(dx,dz);
-   if(f.kind!=='st'&&h>.5&&j<n-1&&P[j*5+4]>.2&&P[j*5+9]>.2){const wj=r.hw*(P[j*5+4]+P[j*5+9])/2;const ex=P[j*5+5]-P[j*5],ez=P[j*5+6]-P[j*5+1],sl=Math.hypot(ex,ez)||1,sh=Math.atan2(ex,ez),mx=(P[j*5]+P[j*5+5])/2,mz=(P[j*5+1]+P[j*5+6])/2,my=(P[j*5+2]+P[j*5+7])/2,nx=-ez/sl,nz=ex/sl;for(const sd of[-1,1]){const rx=mx+nx*sd*(wj+.25),rz=mz+nz*sd*(wj+.25);let ok=true;for(const q of f.rb){if(q===r||q.gore)continue;const lim=q.hw+2.5;for(let k=0;k<q.n;k++){const dx=q.p[k*5]-rx,dz=q.p[k*5+1]-rz;if(dx*dx+dz*dz<lim*lim&&Math.abs(q.p[k*5+2]-my)<2.5){ok=false;break}}if(!ok)break}if(ok)put(g,BXG,CON,rx,my+.45,rz,.4,.9,sl+.35,0,sh,0)}}
    if(P[j*5+3]>0){put(g,BXG,CON,P[j*5],P[j*5+2]-.55,P[j*5+1],2*r.hw+1.1,1.1,6.4,0,th,0);put(g,BXG,CD,P[j*5],P[j*5+2]-1.3,P[j*5+1],2*r.hw*.8,.5,6.4,0,th,0)}}
+  if(f.kind!=='st'&&!r.gore)for(const sd of[-1,1]){ // guarda-corpo: faixa contínua (parede + topo) que segue a borda da pista, só interrompida nos cruzamentos
+   const run=[],flush=()=>{if(run.length>1)railMesh(g,disp,run,CON);run.length=0};
+   for(let j=0;j<n;j++){const a=Math.max(0,j-1),b=Math.min(n-1,j+1);let dx=P[b*5]-P[a*5],dz=P[b*5+1]-P[a*5+1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
+    const hj=r.hw*P[j*5+4],y=P[j*5+2],x=P[j*5]-dz*sd*(hj+.25),z=P[j*5+1]+dx*sd*(hj+.25);let ok=P[j*5+4]>.3&&y-Hb(P[j*5],P[j*5+1])>.5;
+    if(ok)for(const q of f.rb){if(q===r||q.gore)continue;const lim=q.hw+2.5;for(let k=0;k<q.n;k++){const ex=q.p[k*5]-x,ez=q.p[k*5+1]-z;if(ex*ex+ez*ez<lim*lim&&Math.abs(q.p[k*5+2]-y)<2.5){ok=false;break}}if(!ok)break}
+    if(ok)run.push([x,y,z,-dz*sd,dx*sd]);else flush()}
+   flush()}
   for(let j=0;j<n-1;j++){const a=j*2,b=j*2+1,c=j*2+2,d=j*2+3;idx.push(a,b,c,b,d,c)}
   const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.BufferAttribute(pos,3));ge.setAttribute('uv',new THREE.BufferAttribute(uv,2));ge.setIndex(idx);ge.computeVertexNormals();
   if(ge.attributes.normal.getY(0)<0){for(let k=0;k<idx.length;k+=3){const t=idx[k+1];idx[k+1]=idx[k+2];idx[k+2]=t}ge.setIndex(idx);ge.computeVertexNormals()}
