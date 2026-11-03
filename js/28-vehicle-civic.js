@@ -34,6 +34,7 @@ function civBuild(){if(CIVP)return CIVP;if(!civReady())return null;
 function vehShow(){const car=!!VEH.car;if(TRUCKP)TRUCKP.visible=!car;for(const w of wh){w.W.visible=!car;w.coil.visible=w.dmp.visible=!car}
  if(CIVP)CIVP.visible=car;if(trl)trl.visible=!car&&hitched;
  spots.forEach((s,i)=>{const x=(i?1:-1)*VEH.spot[0];s.position.set(x,VEH.spot[1],VEH.spot[2]);s.target.position.set(x*.5,.5,-40)});
+ beams.forEach((b,i)=>b.position.set((i?1:-1)*VEH.spot[0],VEH.spot[1]-.05,VEH.spot[2]-.1)); /* cone de luz sai dos faróis do veículo atual */
  const hn=document.querySelectorAll('#hpan .ht button');hn.forEach(b=>{b.style.display=car&&b.dataset.t!=='cab'?'none':''});
  $('hv1').classList.toggle('on',!car);$('hv2').classList.toggle('on',car)}
 function vehSwitch(id){if(id===VSEL)return;if(id==='civic'&&!civBuild())return;
@@ -48,24 +49,30 @@ $('hv1').onclick=()=>vehSwitch('truck');$('hv2').onclick=()=>{if(!civReady()){ms
 (function waitCiv(){if(typeof ready==='undefined'||!ready){setTimeout(waitCiv,300);return}if(civReady())civBuild();else{setTimeout(waitCiv,300);return}
  let want='truck';try{want=localStorage.getItem('fh16veh')||'truck'}catch(e){}vehShow();if(want==='civic')vehSwitch('civic')})();
 
-/* ===== luzes do Civic: halos aditivos (sprites) nas lanternas, faróis, setas e ré — independem da geometria do GLB ===== */
-var CLT=null;
+/* ===== luzes do Civic: posicionadas pela superfície real da malha (vértices do chassi) ===== */
+var CLT;
 function civGlowTex(){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.25,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)}
-function civLightsBuild(g,zmax){ /* g está deslocado em z; as posições abaixo são no espaço do modelo antes do deslocamento (frente = z mínimo) */
- const tex=civGlowTex(),bb=new THREE.Box3().setFromObject(g),zF=bb.min.z-g.position.z+.06,zR=bb.max.z-g.position.z-.04,hx=bb.max.x;
- const mk=(c,x,y,z,sz)=>{const m=new THREE.SpriteMaterial({map:tex,color:c,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}),sp=new THREE.Sprite(m);sp.position.set(x,y,z);sp.scale.set(sz,sz,1);sp.renderOrder=5;g.add(sp);return {m,sz}};
- CLT={tl:mk(0xff1a10,-hx*.66,.78,zR,.5),tr:mk(0xff1a10,hx*.66,.78,zR,.5),
-  bl:mk(0xff2010,-hx*.66,.78,zR,.9),br:mk(0xff2010,hx*.66,.78,zR,.9),
-  sFL:mk(0xff9a10,-hx*.8,.62,zF,.4),sFR:mk(0xff9a10,hx*.8,.62,zF,.4),
-  sRL:mk(0xff9a10,-hx*.82,.7,zR,.4),sRR:mk(0xff9a10,hx*.82,.7,zR,.4),
-  hl:mk(0xfff2d0,-hx*.62,.7,zF,.7),hr:mk(0xfff2d0,hx*.62,.7,zF,.7),
-  rl:mk(0xffffff,-hx*.35,.72,zR,.35),rr:mk(0xffffff,hx*.35,.72,zR,.35)}}
-function civLights(vf){if(!CLT)return;const bl=Math.floor(performance.now()/400)%2,brk=(K.down&&vf>.5)||K.hb,rev=K.down&&vf<=.5&&engineOn,on=typeof lightsOn!=='undefined'&&lightsOn;
- const set=(o,v)=>{o.m.opacity=v};
- set(CLT.tl,on||brk?.55:.12);set(CLT.tr,on||brk?.55:.12);set(CLT.bl,brk?1:0);set(CLT.br,brk?1:0);
- set(CLT.sFL,bl&&sigL?1:0);set(CLT.sRL,bl&&sigL?1:0);set(CLT.sFR,bl&&sigR?1:0);set(CLT.sRR,bl&&sigR?1:0);
- set(CLT.hl,on?.9:.1);set(CLT.hr,dmg>35?0:(on?.9:.1)); /* avaria: farol direito queima */set(CLT.rl,rev?.9:0);set(CLT.rr,rev?.9:0)}
-
+function civLightsBuild(g,zmax){ /* coordenadas no espaço do veículo (eixo traseiro em z=0, frente = -z); g está deslocado em g.position.z */
+ const pts=[],v=new THREE.Vector3();g.updateMatrixWorld(true);
+ g.traverse(m=>{if(m.isMesh&&/CHASSIS/.test(m.material&&m.material.name||'')){const p=m.geometry.attributes.position;for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld);pts.push(v.x,v.y,v.z)}}});
+ const surf=(x,y,front)=>{let z=front?1e9:-1e9,n=0;for(let i=0;i<pts.length;i+=3){if(Math.abs(Math.abs(pts[i])-Math.abs(x))<.1&&Math.abs(pts[i+1]-y)<.08){const pz=pts[i+2];if(front?pz<z:pz>z)z=pz;n++}}return n?z:(front?-3.5:.7)},
+  oz=g.position.z,tex=civGlowTex();
+ const box=(c,x,y,front,w,h,d)=>{const zs=surf(x,y,front),m=new THREE.MeshBasicMaterial({color:c}),b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);b.position.set(x,y,zs-oz+(front?-.004:.004));b.renderOrder=6;g.add(b);return {b,m,x,y,z:zs-oz+(front?-.03:.03)}};
+ const glow=(c,L,sz)=>{const m=new THREE.SpriteMaterial({map:tex,color:c,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}),sp=new THREE.Sprite(m);sp.position.set(L.x,L.y,L.z);sp.scale.set(sz,sz,1);sp.renderOrder=5;g.add(sp);return m};
+ const T=[-1,1].map(s=>box(0x5a0d0d,s*.66,.9,false,.28,.13,.05)),SR=[-1,1].map(s=>box(0xff9a10,s*.76,.74,false,.2,.08,.05)),RV=[-1,1].map(s=>box(0xffffff,s*.42,.76,false,.14,.07,.05)),
+  SF=[-1,1].map(s=>box(0xff9a10,s*.74,.62,true,.2,.08,.05)),HL=[-1,1].map(s=>box(0xfff2d0,s*.62,.74,true,.3,.12,.05));
+ [...SR,...RV,...SF].forEach(o=>o.b.visible=false);
+ CLT={T,SR,RV,SF,HL,gT:T.map(o=>glow(0xff2010,o,.8)),gH:HL.map(o=>glow(0xfff2d0,o,.9)),gS:[...SF,...SR].map(o=>glow(0xff9a10,o,.5)),zF:Math.min(...HL.map(o=>o.z))+oz,hx:HL[1].x,hy:HL[1].y};
+ VP.civic.spot=[Math.abs(CLT.hx),CLT.hy,CLT.zF-.02]}
+function civLights(vf){if(!CLT)return;const bl=Math.floor(performance.now()/400)%2,brk=(K.down&&vf>.5)||K.hb,rev=K.down&&vf<=.5&&engineOn,on=typeof lightsOn!=='undefined'&&lightsOn,sL=bl&&sigL,sR=bl&&sigR;
+ CLT.T.forEach(o=>o.m.color.setHex(brk?0xff2a1a:(on?0xb01010:0x5a0d0d)));
+ CLT.gT.forEach(m=>m.opacity=brk?.9:(on?.35:0));
+ CLT.SF[0].b.visible=CLT.SR[0].b.visible=!!sL;CLT.SF[1].b.visible=CLT.SR[1].b.visible=!!sR;
+ CLT.gS[0].opacity=CLT.gS[2].opacity=sL?.9:0;CLT.gS[1].opacity=CLT.gS[3].opacity=sR?.9:0;
+ CLT.RV.forEach(o=>o.b.visible=!!rev);
+ CLT.HL.forEach((o,i)=>{o.m.color.setHex(on?0xffffff:0xb8b49a);if(i===1&&dmg>35)o.m.color.setHex(0x333333)});
+ CLT.gH.forEach((m,i)=>m.opacity=(on&&!(i===1&&dmg>35))?(hiB?1:.65):0)}
+act.beam=()=>{if(!lightsOn){msg('Ligue os faróis (L) primeiro');return}hiB=!hiB;msg(hiB?'Farol alto':'Farol baixo')};
 /* ===== fumaça de pneu e marcas no asfalto (pool de sprites e de faixas) ===== */
 var CFX=null;
 function civFxInit(){const tex=civGlowTex(),SM=[],MK=[];

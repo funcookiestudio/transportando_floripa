@@ -11,6 +11,7 @@ const VP={
   idle:800,rv:900,lim:6500,limN:6800,up:[3200,5800],dn:[1500,2300],minR:1900,revLim:3500,revRv:800,span:4500,vgov:52,eb:140,tqMax:250,gref:3.6,cda:[.65,.65],CZ:[.4,-.95,-2.3,-3.55],CR:1.0,cam:.5,turbo:1,st:.6,stv:15,sr:9,vch2:1300,bp:{k:150,c:17,pc:.0042,pm:.045,tq:.004},br:{k:170,c:19,rc:.0072,rm:.085},bh:{k:150,c:15,m:.08},cabin:[-.4,1.15,-1.2],spot:[.6,.75,-3.2],camY:1.2}};
 var VEH=VP.truck;
 function applyVeh(id){const v=VP[id]||VP.truck;VEH=v;TQ=v.TQ;GR=v.GR;FD=v.FD;WR=v.WR;JE=v.JE;GRV=v.GRV;L=v.L;FUELMAX=v.fuel;CZ=v.CZ;CR=v.CR;MASS=v.m0;cargo=0;gear=0;eRpm=v.idle;fuel=Math.min(fuel,FUELMAX);boost=0;TQK=1;FFr=v.car?.6:.5;manual=false;mReq=0}
+var hiB=false; /* farol alto (H) */
 var manual=false,mReq=0; /* câmbio manual do Civic: B alterna, X sobe, Z desce */
 var wsp=0,absOn=0,absT=0,hbL=false,slipS=0; /* patinagem, ABS ativo, freio de mão, derrapagem lateral */
 var fuel=300,FUELMAX=300;let gear=0,eRpm=650,shiftT=0,thrS=0,brkP=0,dmg=0,yawKick=0;
