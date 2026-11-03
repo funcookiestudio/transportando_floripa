@@ -54,6 +54,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #gfx .sg{display:flex;flex-wrap:wrap;gap:6px}#gfx .sg button{font:inherit;font-size:13px;color:var(--fg);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:7px 12px;cursor:pointer}#gfx .sg button.on{background:var(--ac);color:#000;border-color:var(--ac);font-weight:700}
 #gfx .ga{display:flex;gap:10px;margin-top:20px}#gfx .ga button{flex:1;font:inherit;font-size:14px;color:var(--fg);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:12px;cursor:pointer}#gfx .ga button.pri{background:var(--ac);color:#000;border-color:var(--ac);font-weight:700}
 #fpsb{position:fixed;left:12px;top:calc(104px + env(safe-area-inset-top,0px));font:11px ui-monospace,Consolas,monospace;background:var(--pn);padding:3px 8px;border-radius:8px;display:none;z-index:6;pointer-events:none}
+#gbtn{position:fixed;right:12px;top:calc(130px + env(safe-area-inset-top,0px));z-index:7;cursor:pointer}.mob #gbtn{display:none}@media (pointer:coarse){#gbtn{display:none}}
 #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.4) 100%)}
 @media (pointer:coarse){.tb{display:flex}#help{display:none}}
 </style></head><body>
@@ -69,6 +70,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div class="p" id="help">W/↑ acelera · S/↓ freio/ré · A D/←→ direção · ESPAÇO freio de mão · SHIFT turbo · H buzina · C câmera · ARRASTE com mouse/dedo para girar a câmera · roda/pinça = zoom · V recentra · L faróis · F neblina · N noite · T hora do dia · Q qualidade · O ou ⚙ ajustes gráficos · M som · G fretes (parado) · R reiniciar</div>
 <div class="tb" id="tl"><div class="b" data-k="left">◀</div><div class="b" data-k="right">▶</div></div>
 <div class="tb" id="tr"><div class="b" data-k="up">▲</div><div class="b" data-k="down">▼</div></div>
+<div class="b s" id="gbtn" data-a="gfx" title="Ajustes gráficos (O)" aria-label="Ajustes gráficos">⚙</div>
 <div class="tb" id="tt"><div class="b s" data-a="cam">📷</div><div class="b s" data-a="cmenu">📦</div><div class="b s" data-a="full">⛶</div><div class="b s" data-a="lights">💡</div><div class="b s" data-a="night">🌙</div><div class="b s" data-a="time">🕒</div><div class="b s" data-a="gfx">⚙</div><div class="b s" data-a="mute">🔊</div><div class="b s" data-a="reset">↺</div></div>
 <div class="tb" id="tc"><div class="b s" data-k="hb">HB</div><div class="b s" data-k="nitro">⚡</div><div class="b s" data-k="horn">📯</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="document.getElementById('load').textContent='Falha ao carregar '+this.src"></script>
