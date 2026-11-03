@@ -36,7 +36,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  HUD.tS+=dt;HUD.tP+=dt;HUD.tA+=dt;
  if(HUD.tS>=.066){HUD.tS=0;const kmh=Math.round(Math.abs(vf)*3.6);hset('kmh',kmh);hgauge(kmh);hcls('gauge','hot',kmh>105);hset('gr',vf<-.5?'R':g+1);hcls('gb2','rev',vf<-.5);
   hcls('hbi','on',K.hb);hcls('pa','on',cruiseS>0);if(cruiseS)hset('pa',cruiseS===2?'PA '+Math.round(cruiseV*3.6):'PA…')}
- if(HUD.tP>=.1){HUD.tP=0;hcls('wf','on',fuel<FUELMAX*.15);hcls('wd','on',dmg>=60);
+ if(HUD.tP>=.1){HUD.tP=0;{const sb=stBay(),k=yardCo()?'📦':sb?(sb.k==='shop'?'🔧':'⛽'):coFuelZone()?'⛽':'',on=!menuOpen&&!HOME&&!!k;if(on!==HUD.cmb||k!==HUD.cmk){HUD.cmb=on;HUD.cmk=k;const e=document.getElementById('cmb');e.style.display=on?'':'none';if(k)e.textContent=k}}hcls('wf','on',fuel<FUELMAX*.15);hcls('wd','on',dmg>=60);
   if(HUD.sx){hset('fl',Math.round(fuel));hbar('fb',fuel/FUELMAX);hcls('fbw','low',fuel<FUELMAX*.15);hset('dm',Math.round(dmg));hbar('db',dmg/100);hset('cg',cargo);const ag=Math.round(Math.abs(th-hd)*57.3);hcls('agw','on',hitched&&ag>10);hset('ag',ag)}
   
   hset('mk',job?(dd>=1000?(dd/1000).toFixed(1)+' km':Math.round(dd)+' m'):'Vá a uma empresa');hset('jn',job?(job.phase==='pickup'?job.from.name:job.to.name):'Sem frete');

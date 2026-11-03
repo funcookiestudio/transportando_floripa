@@ -32,7 +32,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .mob .ctl{display:flex}.mob #help{display:none}#tl,#tr{display:none!important}
 .mob #tt{display:flex;flex-direction:row;right:auto;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));gap:6px}
 .mob .b.s{width:38px;height:38px;font-size:16px}
-.mob #tc{display:grid;grid-template-columns:auto auto;left:auto;transform:none;right:calc(112px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));gap:8px;align-items:end}.mob #tc .b{width:56px;height:56px;font-size:15px}
+.mob #tc{display:grid;grid-template-columns:auto auto;left:auto;transform:none;right:calc(112px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));gap:8px;align-items:end}.mob #tc .b{width:56px;height:56px;font-size:15px}#tc #cmb{grid-column:1;font-size:24px}.mob #tc [data-k=hb]{grid-column:1}.mob #tc [data-k=nitro]{grid-column:2}.mob #tc [data-k=horn]{grid-column:1}
 .mob #spd{width:118px;padding:5px 7px}.mob #mis{padding:6px 9px;font-size:12px;min-width:0;width:150px}.mob #arr{width:30px;height:30px}.mob #vig{display:none}
 @media (orientation:portrait){.mob #tt{flex-wrap:wrap;width:calc(100vw - 24px);justify-content:center;top:calc(184px + env(safe-area-inset-top,0px))}.mob #tc{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(300px + env(safe-area-inset-bottom,0px))}}
 @media (max-height:460px){.cmb h2{font-size:18px}.cmb p{display:none}.cmg{grid-template-columns:repeat(4,1fr)}.cmg button{padding:8px 4px}.cmg button span{font-size:22px}.cmg button small{font-size:10px}}

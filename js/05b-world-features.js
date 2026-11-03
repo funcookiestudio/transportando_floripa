@@ -135,10 +135,12 @@ function stGet(i){if(STM.has(i))return STM.get(i);let f=null;const s0=i*ST_D+150
  if(hh(i,1,53)<.9)for(let k=0;k<13;k++){const s=s0+(k%2?1:-1)*Math.ceil(k/2)*100;if(stOk(s)){f={i,s,kind:'st',sd:hh(i,3,53)<.5?-1:1,name:STN[Math.floor(hh(i,4,53)*STN.length)],pal:STP[Math.floor(hh(i,5,53)*STP.length)],g:null,pend:false,cols:[],rb:null};break}}
  STM.set(i,f);return f}
 function stRibbons(f){const W=(p,q)=>{roadPt(f.s+p,q);return[RPx,RPz]},hw=f.hw,kk=RK[samp(Math.round(f.s/RDS)).kd||0],aw=hw*kk.A/kk.hw,rb=[],ya=p=>yR(f.s+p)+.1,herm=(P0,T0,P1,T1,t)=>{const t2=t*t,t3=t2*t,h1=2*t3-3*t2+1,h2=-2*t3+3*t2,h3=t3-2*t2+t,h4=t3-t2;return[h1*P0[0]+h2*P1[0]+h3*T0[0]+h4*T1[0],h1*P0[1]+h2*P1[1]+h3*T0[1]+h4*T1[1]]};
- f.zones=[];
+ f.zones=[];f.bays=[];
  const mk=(w,fn,n)=>{const p=new Float32Array(n*5);for(let j=0;j<n;j++){const v=fn(j/(n-1));p[j*5]=v[0];p[j*5+1]=v[1];p[j*5+2]=v[2];p[j*5+3]=0;p[j*5+4]=v[3]}rb.push({hw:w,p,n,ki:3})};
  // um recuo completo em CADA lado da rodovia: quem vem pelo sentido oposto entra no seu próprio posto, sem cruzar a pista
  for(const s2 of[f.sd,-f.sd]){const dp=s2,cq=s2*(hw+19),e0=s2*(hw-4),z=W(0,cq);const zs=W(0,cq-s2*1.5);f.zones.push({x:zs[0],z:zs[1]});
+   // vagas marcadas: uma por bomba (L x W ao longo da rodovia) e uma para a oficina
+   for(const pp of[-6,6]){const b=W(pp,cq+s2*2);f.bays.push({x:b[0],z:b[1],L:9,W:4.2,k:'fuel'})}{const b=W(s2*30,cq+s2*2.5);f.bays.push({x:b[0],z:b[1],L:12,W:5,k:'shop'})}
   // pátio (2 faixas) com as pontas afinando
   mk(9,t=>{const p=-50+100*t,w=W(p,cq);return[w[0],w[1],ya(p),1]},21);
   // a borda interna começa EXATAMENTE na borda da rodovia (sem sobrepor as faixas dela); a faixa alarga até a largura do pátio ao chegar nele
@@ -174,7 +176,15 @@ function stDeco(f,g,disp){const hw=f.hw,W=(p,q)=>{roadPt(f.s+p,q);return[RPx,RPz
   for(const p of[-10,-3.3,3.3,10]){Cy(p,cq+s2*8.6,2.8,.45,5.6,CO);col(p,cq+s2*8.6,.6)}
   // duas ilhas com bombas de frente para a faixa de abastecimento + faixa amarela no chão
   for(const p of[-6,6]){B(p,qc,.15,1.6,.3,6,CO);B(p,qc,1.05,.8,1.5,1.0,R);B(p,qc,1.9,.84,.3,1.04,A);col(p,qc,1.4)}
-  B(0,cq+s2*1,.03,.25,.04,22,YL);
+  // vaga amarela de cada bomba (retângulo no chão, ao lado da ilha)
+  for(const pc of[-6,6]){const qb=cq+s2*2;B(pc,qb-s2*2.1,.03,.28,.04,9,YL);B(pc,qb+s2*2.1,.03,.28,.04,9,YL);B(pc-4.5,qb,.03,4.2,.04,.28,YL);B(pc+4.5,qb,.03,4.2,.04,.28,YL)}
+  // oficina: galpão atrás da vaga amarela, mais adiante na pista
+  {const pb=s2*30,qb=cq+s2*2.5,qw=cq+s2*13;
+   B(pb,qb-s2*2.6,.03,.28,.04,12,YL);B(pb,qb+s2*2.6,.03,.28,.04,12,YL);B(pb-6,qb,.03,5,.04,.28,YL);B(pb+6,qb,.03,5,.04,.28,YL);
+   B(pb,qw,2.1,7,4.2,13,WH);B(pb,qw,4.4,7.6,.4,13.6,R);B(pb,qw-s2*3.55,1.5,.1,2.9,9.4,DK);B(pb,qw-s2*3.52,2.9,.12,.25,9.8,A);
+   for(const pp of[-5,-2.5,0,2.5,5])col(pb+pp,qw,3.7);
+   const tw2=W(pb,qw-s2*3.7),sx=signTex('OFICINA',f.pal[0],f.pal[1]),sm3=new THREE.MeshBasicMaterial({map:sx,side:THREE.DoubleSide});disp.push(sx,sm3);
+   const pg2=new THREE.PlaneGeometry(5.2,1.3),m2=new THREE.Mesh(pg2,sm3);m2.position.set(tw2[0],ya(pb)+3.6,tw2[1]);m2.rotation.y=f.h+Math.PI/2;g.add(m2);disp.push(pg2)}
   // loja (lado principal) ou quiosque (lado oposto)
   if(main){const qs=cq+s2*22;B(0,qs,2.1,9,4.2,22,WH);B(0,qs,4.4,9.6,.4,22.6,R);B(0,qs-s2*4.55,1.9,.1,1.7,16,GL);B(0,qs-s2*4.55,.05,.12,.1,22,A);for(const p of[-9,-4.5,0,4.5,9])col(p,qs,4.4)}
   else{const qs=cq+s2*18;B(0,qs,1.6,6,3.2,10,WH);B(0,qs,3.3,6.6,.35,10.6,R);col(0,qs,3.2)}
