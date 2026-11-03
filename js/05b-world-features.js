@@ -64,12 +64,14 @@ function featFrame(lo,hi,allowBuild){let ch=false;
 const ICM=new Map(),IC_D=6500,IC_R=62,IC_P=300,IC_H=7.4;let HREF=-1e9,ICd=0,ICy=0,ICh=0,ICb=false;
 const ICOFF=(()=>{const a=[0];for(let d=125;d<=2500;d+=125)a.push(d,-d);return a})();
 // procura, dentro da janela da fatia, o 1º trecho de autoestrada reta e livre (empresas a 360 m, cidades, rios) onde cabe o trevo
-function icOk(s){if(Math.abs(s)<2500||nearCo(s,320)||inCity(s,1250))return false;
+function icOk(s){if((!REG.id&&Math.abs(s)<2500)||nearCo(s,320)||inCity(s,1250))return false;
  for(let d=-400;d<=400;d+=40)if(kindAt(s+d)!==0)return false;
  for(let q=Math.floor(s/RV_D)-1;q<=Math.floor(s/RV_D)+1;q++){const r=riverGet(q);if(r&&Math.abs(r.s-s)<r.sb+430)return false}
  ensureRoad(s-450,s+450);return Math.abs(samp(Math.round((s+350)/RDS)).h-samp(Math.round((s-350)/RDS)).h)<=.14}
-function icGet(i){if(ICM.has(i))return ICM.get(i);let f=null;const sb=i*IC_D+2900+(hh(i,2,47)-.5)*1200;
- if(hh(i,1,47)<.95)for(const d of ICOFF){const s=sb+d;if(icOk(s)){f={i,s,g:null,pend:false,cols:[],rb:null};break}}
+function icGet(i){if(ICM.has(i))return ICM.get(i);let f=null;let sb=i*IC_D+2900+(hh(i,2,47)-.5)*1200,pin=false;
+ // região nova: garante um trevo logo depois do ponto de chegada, para dar retorno/novas saídas
+ if(REG.id&&REG.arr&&i===Math.round((REG.arr+900-2900)/IC_D)){sb=REG.arr+900;pin=true}
+ if(pin||hh(i,1,47)<.95)for(const d of ICOFF){const s=sb+d;if(icOk(s)){f={i,s,g:null,pend:false,cols:[],rb:null};break}}
  ICM.set(i,f);return f}
 function icRibbons(f){const W=(p,q)=>[f.x0+f.tx*p+f.nx*q,f.z0+f.tz*p+f.nz*q],yb=yR(f.s)+.1,hwR=5.2,hwC=7.5,off=f.hw+hwR-1.5,off2=hwC+hwR-1.5,rb=[],sg=Math.PI*1.5;
  const crossY=q=>{const a=Math.abs(q),lift=IC_H*(1-sm((a-85)/115)),m=sm((a-190)/190),w=W(0,q),yg=yb*(1-m)+(Hb(w[0],w[1])+.15)*m;return yg+lift};
@@ -120,9 +122,9 @@ function buildIC(f){const g=new THREE.Group(),disp=[];g.userData.batch=[];g.user
  {const r0=f.rb[0],hwC=7.5;for(const sd of[-1,1]){const q=sd*470,j=Math.round((520+q)/1040*(r0.n-1)),y=r0.p[j*5+2],x=f.x0+f.nx*q,z=f.z0+f.nz*q,CO2=mat(0x8d9096);
    for(const tt of[-1,1]){const px=x+f.tx*tt*(hwC+1.6),pz=z+f.tz*tt*(hwC+1.6);put(g,BXG,CON,px,y+3.5,pz,1.1,7,1.1,0,f.h,0);f.cols.push({x:px,z:pz,r:1.4,k:1})}
    put(g,BXG,CO2,x,y+6.9,z,1.2,1.3,2*(hwC+2.6),0,f.h,0);
-   const d=regDest(f,sd),tex=signTex(d.back?'REGIÃO ANTERIOR':'NOVA REGIÃO',d.back?0x2b7a3b:0x1f5fa8,0xf2f2ee),sm4=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}),pg=new THREE.PlaneGeometry(10,2.5),m=new THREE.Mesh(pg,sm4);disp.push(tex,sm4,pg);
+   const tex=signTex('NOVA REGIÃO ▶',0x1f5fa8,0xf2f2ee),sm4=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}),pg=new THREE.PlaneGeometry(10,2.5),m=new THREE.Mesh(pg,sm4);disp.push(tex,sm4,pg);
    m.position.set(x-f.nx*sd*.8,y+5.2,z-f.nz*sd*.8);m.rotation.y=f.h+Math.PI/2;g.add(m);
-   put(g,BXG,CD,f.x0+f.nx*sd*506,y+.6,f.z0+f.nz*sd*506,1.2,1.2,2*hwC+3,0,f.h,0);for(let tt=-8;tt<=8;tt+=3.5)f.cols.push({x:f.x0+f.nx*sd*506+f.tx*tt,z:f.z0+f.nz*sd*506+f.tz*tt,r:2.3,k:1})}}
+}}
  flushBatch(g,disp);scene.add(g);return g}
 // triângulo de separação (gore): asfalto com hachura amarela diagonal e linhas amarelas contínuas nas bordas
 let GOREM={};function goreMat(k){if(GOREM[k])return GOREM[k];const W=128,H=256,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');g.fillStyle=k==2?'#303237':'#3b3d41';g.fillRect(0,0,W,H);

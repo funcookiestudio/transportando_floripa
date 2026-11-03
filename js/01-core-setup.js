@@ -6,8 +6,12 @@ const WSEED=(()=>{let t='';try{const q=new URLSearchParams(location.search).get(
 const SAVEKEY=WSEED.n?'fh16save:'+WSEED.n:'fh16save';
 // hash inteiro (idêntico em qualquer navegador, sem Math.sin); o mundo clássico mantém a fórmula original para continuar igual
 function ihash(a,b,c,s){let h=(s^0x9e3779b9)|0;h=Math.imul(h^a,0x85ebca6b);h^=h>>>13;h=Math.imul(h^b,0xc2b2ae35);h^=h>>>16;h=Math.imul(h^c,0x27d4eb2f);h^=h>>>15;h=Math.imul(h,0x165667b1);h^=h>>>13;return(h>>>0)/4294967296}
-const hh=WSEED.n?(a,b,c=0)=>ihash(Math.round(a*16),Math.round(b*16),Math.round(c*16),WSEED.n):(a,b,c=0)=>{const h=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453;return h-Math.floor(h)};
-const PH=i=>WSEED.n?ihash(i,77,19,WSEED.n)*6.2832:0; // fases do relevo/estrada por seed (0 no mundo clássico)
+// região: ao passar pelo fim da rodovia que cruza um trevo, a estrada principal passa a ser outra (id novo) e é reancorada na posição do caminhão
+const REG=(()=>{let r=null;try{r=JSON.parse(localStorage.getItem('fh16reg:'+(WSEED.n||0))||'null')}catch(e){}return r&&typeof r==='object'&&isFinite(r.id+r.ox+r.oz+r.oh+r.y)?r:{id:0,ox:0,oz:0,oh:0,y:0,hist:[],arr:0}})();
+const HSALT={7:1,31:1,41:1,43:1,47:1,53:1,61:1,91:1}; // canais de hash da estrutura do mundo (empresas, rios, viadutos, trevos, postos, tipo de via); o relevo e as árvores não mudam
+const rsalt=()=>WSEED.n^Math.imul(REG.id,0x9e3779b1);
+const hh=(a,b,c=0)=>{const r=REG.id&&HSALT[c]?1:0;if(WSEED.n)return ihash(Math.round(a*16),Math.round(b*16),Math.round(c*16),r?rsalt():WSEED.n);const h=Math.sin(a*127.1+b*311.7+c*74.7+(r?REG.id*19.19:0))*43758.5453;return h-Math.floor(h)};
+const PH=i=>{const r=i>=10&&REG.id;if(WSEED.n)return ihash(i,77,19,r?rsalt():WSEED.n)*6.2832;return r?ihash(i,77,19,REG.id*7919)*6.2832:0}; // fases do relevo (1-9) e da estrada (10-16)
 const Hb=(x,z)=>{const d=Math.hypot(x,z),f=Math.min(1,Math.max(0,(d-30)/70)),s=f*f*(3-2*f);
  return s*(Math.sin(x*.021+PH(1))*Math.cos(z*.017+PH(2))*3.2+Math.sin(x*.047+z*.031+PH(3))*1.1+Math.sin(z*.05-x*.023+PH(4))*.9+Math.sin(x*.009+1+PH(5))*Math.sin(z*.011+PH(6))*6)};
 const wrap=a=>{while(a>Math.PI)a-=6.2832;while(a<-Math.PI)a+=6.2832;return a};

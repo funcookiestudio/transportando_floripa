@@ -7,7 +7,7 @@ const CT=[
  {id:'var',label:'Varejo',col:0x1f7fbf,acc:0xffd23a,n:['Mega Atacado Bom Preço','Casa & Cia Centro de Distribuição','SuperMais Atacadista','Rede Compre Bem']},
  {id:'cons',label:'Construção',col:0xd49a1f,acc:0x30343a,n:['Cimentos Nova Esperança','Madeireira Três Lagoas','Pedreira Bela Vista','Materiais São Bento']}];
 const CITY=['Vila Nova','São Bento','Porto Seco','Campo Alto','Rio Claro','Santa Aurora','Monte Real','Três Lagoas','Bela Vista','Serra Dourada','Pedra Branca','Nova Esperança'];
-const cityIdx=s=>Math.floor((s+4500)/9000),cityName=s=>{const i=cityIdx(s);return CITY[((i*7+3+(WSEED.n%CITY.length))%CITY.length+CITY.length)%CITY.length]};
+const cityIdx=s=>Math.floor((s+4500)/9000),cityName=s=>{const i=cityIdx(s);return CITY[((i*7+3+((WSEED.n+REG.id*7)%CITY.length))%CITY.length+CITY.length)%CITY.length]};
 const CO_D=2000,COM=new Map(),COG=new Map();let coSig='',lastCity=null;
 const BXG=new THREE.BoxGeometry(1,1,1),CYG=new THREE.CylinderGeometry(1,1,1,12),CNG=new THREE.ConeGeometry(1,1,12),MC=new Map();
 const mat=hex=>{let m=MC.get(hex);if(!m){m=new THREE.MeshStandardMaterial({color:C(hex),roughness:.85,flatShading:true});MC.set(hex,m)}return m};

@@ -1,8 +1,8 @@
 // ---- autoestrada infinita ----
-const RDS=5,RWD=11.5,RF=[{x:0,z:0,h:0,s:0,hw:11.5,kd:0}],RB=[],RC=new Map();let RHW=11.5,RS=0,RD=1e9,RL=0,RW=0,RPx=0,RPz=0,curS=0,onRoad=true,rbI=1e9;
+const RDS=5,RWD=11.5,RF=[{x:REG.ox,z:REG.oz,h:REG.oh,s:0,hw:11.5,kd:0}],RB=[],RC=new Map();let RHW=11.5,RS=0,RD=1e9,RL=0,RW=0,RPx=0,RPz=0,curS=0,onRoad=true,rbI=1e9;
+let yK1=0,yK2=0,yK3=0;const yKset=()=>{yK1=Math.sin(PH(14));yK2=Math.sin(1+PH(15));yK3=Math.sin(.5+PH(16))};yKset();
 const kap=s=>.0018*(.5*Math.sin(s*.00083+.7+PH(10))+.32*Math.sin(s*.00219+1.9+PH(11))+.22*Math.sin(s*.00457+.3+PH(12))+.12*Math.sin(s*.0091+2.2+PH(13))),
- yK1=WSEED.n?Math.sin(PH(14)):0,yK2=WSEED.n?Math.sin(1+PH(15)):.84147,yK3=WSEED.n?Math.sin(.5+PH(16)):.47943,
- yR=s=>10*(Math.sin(s*.0009+PH(14))-yK1)+5*(Math.sin(s*.0027+1+PH(15))-yK2)+2.2*(Math.sin(s*.0061+.5+PH(16))-yK3)+.05*Math.sin(s*.31);
+ yR=s=>10*(Math.sin(s*.0009+PH(14))-yK1)+5*(Math.sin(s*.0027+1+PH(15))-yK2)+2.2*(Math.sin(s*.0061+.5+PH(16))-yK3)+.05*Math.sin(s*.31)+REG.y;
 // ---- tipos de via por trecho (determinístico por seed): 0 autoestrada, 1 pista simples, 2 avenida urbana ----
 const KHW=[11.5,6.3,9.5]; // meia largura da malha por tipo
 function kindAt(s){if(Math.abs(s)<900)return 0;const ci=Math.round(s/9000);if(ci!==0&&Math.abs(s-ci*9000)<800)return 2;const sg=Math.floor((s+2300)/3400);return hh(sg,5,91)<.55?0:1}

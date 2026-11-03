@@ -30,7 +30,7 @@ function stFrame(dt){if(!ready||menuOpen)return;const sp=Math.hypot(vel.x,vel.z)
  if(fuel<=0){fuelDead=sp<1?fuelDead+dt:0;if(fuelDead>6){fuelDead=0;score=Math.max(0,score-500);fuel=40;saveG();msg('Sem combustível! O guincho trouxe 40 L (-R$ 500)')}}else fuelDead=0;
  if(fuel<45&&fuel>0){fuelWarn-=dt;if(fuelWarn<=0){fuelWarn=40;msg('Combustível baixo — procure um posto')}}
  {const z=stBay();if(z){if(z!==stIn){stIn=z;msg(z.k==='shop'?'Pare e aperte G para a oficina':'Pare e aperte G para abastecer')}}else stIn=false}
- {const g=icGate();if(g){if(!gateOn){gateOn=true;gateMenu(g)}}else gateOn=false}
+ {const g=icGate();if(g)regGo(g);else if(REG.hist&&REG.hist.length&&curS<REG.arr-40&&RD<14)regBack()}
  {const cz=coFuelZone();if(cz){if(!coPIn){coPIn=true;msg('Pare e aperte G para abastecer (R$ '+CPRICE.toFixed(2).replace('.',',')+'/L)')}}else coPIn=false}
  stHudT-=dt;if(stHudT<=0){stHudT=.4;const o=samp(Math.round(curS/RDS));cam.getWorldDirection(stV);const sg=(stV.x*-Math.sin(o.h)+stV.z*-Math.cos(o.h))>=0?1:-1;let b=1e9;
   for(let i=Math.floor(curS/ST_D)-3;i<=Math.floor(curS/ST_D)+3;i++){const f=stGet(i);if(f){const d=(f.s-curS)*sg;if(d>0&&d<b)b=d}}
@@ -44,22 +44,34 @@ function stBay(){for(const f of ICA){if(f.kind!=='st'||!f.bays)continue;if(Math.
  for(const b of f.bays){const dx=pos.x-b.x,dz=pos.z-b.z,al=dx*f.tx+dz*f.tz,la=dx*f.nx+dz*f.nz;if(Math.abs(al)<b.L/2+.8&&Math.abs(la)<b.W/2+.5&&Math.abs(-Math.sin(hd)*f.tx-Math.cos(hd)*f.tz)>.82){b.f=f;return b}}}return null}
 function stUse(){const bay=stBay();const f=bay&&bay.f;if(!f){const cz=coFuelZone();if(!cz)return false;if(Math.hypot(vel.x,vel.z)>1.5){msg('Pare o caminhão para abastecer');return true}coFuelMenu(cz);return true}if(Math.hypot(vel.x,vel.z)>1.5){msg('Pare o caminhão para usar o posto');return true}stMenu(f,bay.k);return true}
 
-// ---- saídas do trevo: a rodovia que cruza leva a outra região (outro mundo); a ponta oposta volta à região anterior ----
-const XKEY='fh16xfer',HKEY='fh16hist';let gateOn=false;
-function regHist(){try{const h=JSON.parse(localStorage.getItem(HKEY)||'[]');return Array.isArray(h)?h:[]}catch(e){return[]}}
-function regSeed(key){let n=2166136261;const t=WSEED.txt+'|'+key;for(let i=0;i<t.length;i++){n^=t.charCodeAt(i);n=Math.imul(n,16777619)}return'R'+(n>>>0).toString(36)}
-function regDest(f,sd){const h=regHist();if(sd<0&&h.length)return{txt:h[h.length-1],back:true};return{txt:regSeed(f.i+(sd>0?'a':'b')),back:false}}
-function icGate(){for(const f of ICA){if(f.kind==='st'||!f.rb)continue;const dx=pos.x-f.x0,dz=pos.z-f.z0;if(Math.abs(dx)>700||Math.abs(dz)>700)continue;const q=dx*f.nx+dz*f.nz,t=dx*f.tx+dz*f.tz;if(Math.abs(q)>440&&Math.abs(t)<14)return{f,sd:q>0?1:-1}}return null}
-function gateMenu(g){const d=regDest(g.f,g.sd),nm=d.txt||'clássico';
- cmShow(d.back?'Voltar à região anterior':'Seguir para uma nova região','Região '+nm+(job?' · o frete atual será cancelado, sem multa':''),
-  [{html:'<b>'+(d.back?'Voltar':'Seguir viagem')+'</b><small>Região '+nm+' · seu dinheiro e o combustível vão junto</small>',fn:()=>regGo(g,d)},{html:'<b>Ficar</b><small>Esc</small>',fn:closeCm}],'')}
-function regGo(g,d){closeCm();if(job)cancelJob(true);
- try{const h=regHist();if(d.back)h.pop();else h.push(WSEED.txt);localStorage.setItem(HKEY,JSON.stringify(h.slice(-30)));localStorage.setItem(XKEY,JSON.stringify({money:score,deliveries,fuel,dmg,txt:d.txt}))}catch(e){}
- // ao voltar a esta região, o caminhão reaparece na rodovia que cruza, de frente para o trevo
- const f=g.f,q=g.sd*400;pos.x=f.x0+f.nx*q;pos.z=f.z0+f.nz*q;hd=Math.atan2(g.sd*f.nx,g.sd*f.nz);th=hd;camH=hd;curS=f.s;vel.x=vel.z=0;
- seedGo(d.txt)}
-// ao chegar de outra região: dinheiro, entregas, combustível e dano acompanham o caminhão
-let XF=null;try{XF=JSON.parse(localStorage.getItem(XKEY)||'null');localStorage.removeItem(XKEY)}catch(e){}
-if(XF&&XF.txt!==WSEED.txt)XF=null;
-function applyXfer(){if(!XF)return;if(typeof XF.money==='number')score=XF.money;deliveries=XF.deliveries|0;if(typeof XF.fuel==='number')fuel=Math.max(0,Math.min(FUELMAX,XF.fuel));if(typeof XF.dmg==='number')dmg=Math.max(0,XF.dmg);
- const t=WSEED.txt||'clássico';XF=null;setTimeout(()=>msg('📍 Região '+t),1200)}
+// ---- saídas do trevo: a rodovia que cruza continua e vira a estrada principal de uma NOVA REGIÃO, sem recarregar ----
+let regBusy=false;
+function regSave(){try{localStorage.setItem('fh16reg:'+(WSEED.n||0),JSON.stringify(REG))}catch(e){}}
+function icGate(){for(const f of ICA){if(f.kind==='st'||!f.rb)continue;const dx=pos.x-f.x0,dz=pos.z-f.z0;if(Math.abs(dx)>700||Math.abs(dz)>700)continue;const q=dx*f.nx+dz*f.nz,t=dx*f.tx+dz*f.tz;
+  if(Math.abs(q)>490&&Math.abs(t)<14){const sd=q>0?1:-1;if(-Math.sin(hd)*f.nx*sd-Math.cos(hd)*f.nz*sd>.5)return{f,sd}}}return null}
+// descarta tudo que depende da estrada/semente atual (empresas, rios, viadutos, trevos, postos, tráfego) e recria a estrada a partir da origem de REG
+function regWipe(){if(job)cancelJob(true);setTarget(null);
+ for(let i=TRF.length-1;i>=0;i--)trfKill(i);
+ for(const[k,gp]of COG){scene.remove(gp);disposeCo(gp)}COG.clear();COM.clear();COACT.length=0;coPend=false;lastCity=null;
+ for(const a of[RIVA,OVA,ICA]){for(const f of a){featDispose(f);f.rb=null}a.length=0}RVM.clear();OVM.clear();ICM.clear();STM.clear();featFull=false;TDIRTY.length=0;
+ RF.length=0;RB.length=0;RC.clear();RF.push({x:REG.ox,z:REG.oz,h:REG.oh,s:0,hw:11.5,kd:0});addS(RF[0]);yKset()}
+function regGo(g){if(regBusy||(window.NET&&NET.on)){if(window.NET&&NET.on)msg('Saia da sala multiplayer para mudar de região');return}regBusy=true;
+ const f=g.f,sd=g.sd,q=(pos.x-f.x0)*f.nx+(pos.z-f.z0)*f.nz,ax=f.x0+f.nx*q,az=f.z0+f.nz*q,hw=Math.atan2(-sd*f.nx,-sd*f.nz),gy=H(pos.x,pos.z);
+ const nid=((Math.imul(REG.id+1,2654435761)^Math.imul(f.i*2+(sd>0?1:0)+17,40503))>>>0)%900000+1000;
+ const hist=(REG.hist||[]).concat([{id:REG.id,ox:REG.ox,oz:REG.oz,oh:REG.oh,y:REG.y,s:f.s,arr:REG.arr||0}]).slice(-12);
+ Object.assign(REG,{id:nid,ox:0,oz:0,oh:0,y:0,hist,arr:0});regWipe();
+ // acha um trecho (antes do ponto de partida) de autoestrada sem empresa, cidade ou rio, por onde a nova estrada passa sob o caminhão
+ let S=1500;for(;S<4000;S+=100){const s=-S;if(nearCo(s,350)||inCity(s,1100))continue;let ok=true;for(let d=-300;d<=300;d+=50)if(kindAt(s+d)!==0)ok=false;
+  for(let r=Math.floor(s/RV_D)-1;r<=Math.floor(s/RV_D)+1&&ok;r++){const rv=riverGet(r);if(rv&&Math.abs(rv.s-s)<rv.sb+300)ok=false}if(ok)break}
+ REG.arr=-S;ensureRoad(-S-50,50);const o=samp(Math.round(-S/RDS)),th0=hw-o.h,c=Math.cos(th0),sn=Math.sin(th0);
+ REG.ox=ax-(c*o.x+sn*o.z);REG.oz=az-(-sn*o.x+c*o.z);REG.oh=th0;regWipe();ensureRoad(-S-1200,1200);
+ REG.y=gy-.1-yR(-S);curS=-S;
+ // terreno: só perto do caminhão (da frente para trás), em lotes pequenos por quadro
+ const fx=-Math.sin(hd),fz=-Math.cos(hd);for(const k of[0,90,180,270,360,-90,-180])terrMark(pos.x+fx*k,pos.z+fz*k,80);
+ rbI=1e9;ocx=1e9;placeCones();regSave();saveG();msg('📍 Nova região');regBusy=false}
+// retorno: voltando pela estrada para antes do ponto de chegada, a região anterior reaparece no mesmo lugar (sem teleporte), no fim da rodovia do trevo
+function regBack(){if(regBusy||(window.NET&&NET.on))return;regBusy=true;const e=REG.hist[REG.hist.length-1],hist=REG.hist.slice(0,-1);
+ Object.assign(REG,{id:e.id,ox:e.ox,oz:e.oz,oh:e.oh,y:e.y,hist,arr:e.arr||0});regWipe();curS=e.s;ensureRoad(e.s-1200,e.s+1200);
+ const fx=-Math.sin(hd),fz=-Math.cos(hd);for(const k of[0,90,180,-90])terrMark(pos.x+fx*k,pos.z+fz*k,80);
+ rbI=1e9;ocx=1e9;placeCones();regSave();saveG();msg('📍 Região anterior');regBusy=false}
+function applyXfer(){}
