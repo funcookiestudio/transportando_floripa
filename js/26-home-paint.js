@@ -10,10 +10,11 @@ let hpTab='cab',hpInit=false,hpS=null,hpA=.6;
 const hpCur=()=>{if(hpTab==='cab'){try{const v=localStorage.getItem('fh16paint');return v?+v:null}catch(e){return null}}return hpTab==='trl'?HPS.t:HPS.r};
 function hpDraw(){const sw=$('hsw');sw.innerHTML='';const cur=hpCur();HP.forEach(([n,h])=>{const b=document.createElement('button');b.className='sw'+(cur===h?' on':'');b.title=n;b.style.background='#'+h.toString(16).padStart(6,'0');b.onclick=()=>{hpApply(hpTab,h);$('hcol').value=b.style.background&&'#'+h.toString(16).padStart(6,'0');hpDraw()};sw.appendChild(b)});
  document.querySelectorAll('#hpan .ht button').forEach(b=>b.classList.toggle('on',b.dataset.t===hpTab))}
-document.querySelectorAll('#hpan .ht button').forEach(b=>b.onclick=()=>{hpTab=b.dataset.t;hpDraw()});
+document.querySelectorAll('#hpan .ht button').forEach(b=>b.onclick=()=>{hpTab=b.dataset.t;hpDraw();hpFocusTab()});
+function hpFocusTab(){zoom=1;if(hpTab==='cab'){hpF.k='cab';hpF.w=null}else if(hpTab==='trl'){hpF.k='trl';hpF.w=null}else{let best=null,bd=1e9;for(const w of wh){const d=w.W.getWorldPosition(hpT).distanceTo(cam.position);if(d<bd){bd=d;best=w.W}}hpF.k='wheel';hpF.w=best}}
 $('hcol').oninput=e=>{hpApply(hpTab,parseInt(e.target.value.slice(1),16));hpDraw()};
 $('hrst').onclick=()=>{hpApply(hpTab,null);hpDraw()};
-$('hpaint').onclick=()=>{$('hmain').style.display='none';$('hpan').style.display='block';hpDraw()};
+$('hpaint').onclick=()=>{$('hmain').style.display='none';$('hpan').style.display='block';hpDraw();hpFocusTab()};
 $('hback').onclick=()=>{$('hpan').style.display='none';$('hmain').style.display='flex'};
 $('hplay').onclick=()=>{try{audio()}catch(e){}window.HOME=false;cam.clearViewOffset();document.body.classList.remove('home');$('home').style.display='none';
  if(hpS){th=hpS.th;trl.visible=hpS.tv;if(cargoBox)cargoBox.visible=hpS.cb}hpS=null;orbYaw=orbPitch=0;zoom=1;accT=0;last=performance.now();camH=hd};
