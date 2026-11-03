@@ -15,6 +15,10 @@ const sm=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
 // relevo natural -> relevo com vales de rio
 function riverH(x,z,h){for(let q=0;q<RIVA.length;q++){const r=RIVA[q],dx=x-r.x0,dz=z-r.z0,a=Math.abs(dx*r.tx+dz*r.tz);if(a>=r.wv)continue;const an=Math.abs(dx*r.nx+dz*r.nz);if(an>=600)continue;
   const b=(a<=r.wr?1:sm((r.wv-a)/(r.wv-r.wr)))*(an<350?1:sm((600-an)/250)),t=r.floor<h?h+(r.floor-h)*b:h;if(t<h)h=t}return h}
+// altura-alvo do terreno junto à estrada perto de um rio: o vale é escavado a partir da COTA DA ESTRADA (e não do relevo natural),
+// descendo suave do nível da pista (na cabeceira) até o fundo do rio — sem degrau na entrada/saída da ponte
+function brTarget(Y){for(let q=0;q<RIVA.length;q++){const r=RIVA[q],d=Math.abs(RS-r.s);if(d>=r.sb+22)continue;const Yb=Y-.4;
+  const t=d<=r.wr?r.floor:d<r.sb?r.floor+(Yb-r.floor)*sm((d-r.wr)/(r.sb-r.wr)):Yb+(Y-Yb)*sm((d-r.sb)/22);return Math.min(Y,t)}return Y}
 // peso de ponte (1 = sobre o vão, 0 = fora) para a posição s da estrada
 function bridgeW(s){let w=0;for(let q=0;q<RIVA.length;q++){const r=RIVA[q],d=Math.abs(s-r.s);if(d<=r.sb)return 1;if(d<r.sb+25)w=Math.max(w,1-sm((d-r.sb)/25))}return w}
 // 0..1: margem de areia ao redor do rio (cor do terreno)
