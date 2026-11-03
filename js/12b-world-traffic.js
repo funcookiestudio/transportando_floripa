@@ -32,7 +32,17 @@ function carMat(ci,base){let c=CARMC.get(ci);if(c)return c;const[h,s,v]=CARCOL[c
   if(hp<1){rr=ch;gg=xx;bb=0}else if(hp<2){rr=xx;gg=ch;bb=0}else if(hp<3){rr=0;gg=ch;bb=xx}else if(hp<4){rr=0;gg=xx;bb=ch}else if(hp<5){rr=xx;gg=0;bb=ch}else{rr=ch;gg=0;bb=xx}
   a[i]=(rr+m0)*255;a[i+1]=(gg+m0)*255;a[i+2]=(bb+m0)*255}
  x.putImageData(d,0,0);const t=new THREE.CanvasTexture(cv);t.flipY=false;t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.wrapS=t.wrapT=THREE.RepeatWrapping;c=base.clone();c.map=t;CARMC.set(ci,c);return c}
-function trfBuildCar(){const g=CARM.clone(true),ci=Math.floor(Math.random()*CARCOL.length),sps=[];g.traverse(n=>{if(n.userData.body)n.material=carMat(ci,n.material);if(n.userData.wheel)sps.push({n,s:n.userData.wheel})});return{g,t:null,disp:[],sps,car:1}}
+/* rodas dianteiras do GLB vêm viradas ~30°: mesma correção do Civic do jogador (grupo em volta do centro do pneu, -30° na vertical) */
+function trfFixWheels(g,sps){g.updateMatrixWorld(true);const bb=new THREE.Box3(),v=new THREE.Vector3();let zmin=1e9,zmax=-1e9;
+ for(const q of sps){bb.setFromObject(q.n).getCenter(v);zmin=Math.min(zmin,v.z);zmax=Math.max(zmax,v.z)}const zm=(zmin+zmax)/2;
+ for(const q of sps){bb.setFromObject(q.n).getCenter(v);if(!(v.z<zm))continue;const par=q.n.parent,sg=new THREE.Group();
+  q.n.updateWorldMatrix(true,true);const inv=new THREE.Matrix4().copy(q.n.matrixWorld).invert(),vv=new THREE.Vector3(),pts=[];let rm=0;
+  q.n.traverse(m=>{if(!m.isMesh)return;const ps=m.geometry.attributes.position,mm=new THREE.Matrix4().multiplyMatrices(inv,m.matrixWorld);for(let i=0;i<ps.count;i++){vv.fromBufferAttribute(ps,i).applyMatrix4(mm);const r=Math.hypot(vv.x,vv.z);if(r>rm)rm=r;pts.push(vv.x,vv.y,vv.z)}});
+  let lo=1e9,hi=-1e9;for(let i=0;i<pts.length;i+=3)if(Math.hypot(pts[i],pts[i+2])>rm*.93){lo=Math.min(lo,pts[i+1]);hi=Math.max(hi,pts[i+1])}
+  const lc=lo<hi?(lo+hi)/2:0,pw=q.n.localToWorld(new THREE.Vector3(0,lc,0));par.worldToLocal(pw);
+  sg.position.copy(pw);par.add(sg);sg.add(q.n);q.n.position.copy(pw).negate().add(q.n.position);
+  par.updateWorldMatrix(true,false);const qp=new THREE.Quaternion();par.getWorldQuaternion(qp);sg.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0).applyQuaternion(qp.invert()),-Math.PI/6)}}
+function trfBuildCar(){const g=CARM.clone(true),ci=Math.floor(Math.random()*CARCOL.length),sps=[];g.traverse(n=>{if(n.userData.body)n.material=carMat(ci,n.material);if(n.userData.wheel)sps.push({n,s:n.userData.wheel})});trfFixWheels(g,sps);return{g,t:null,disp:[],sps,car:1}}
 function trfSpawn(){const same=TRF.filter(v=>v.dir===coDir).length,go=same<=TRF.length-same,dir=go?coDir:-coDir,s=curS+coDir*(go?180+Math.random()*320:300+Math.random()*350);ensureRoad(s-60,s+60);
  for(const v of TRF)if(Math.abs(v.s-s)<120)return;
  const o=samp(Math.round(s/RDS)),lat=trfLat(o,dir),nTr=TRF.filter(q=>!q.car).length,isCar=CARM&&CARBASE&&(nTr>=4||Math.random()<.6),m=isCar?trfBuildCar():trfBuild();scene.add(m.g);
@@ -60,7 +70,20 @@ function trfBrain(v,dt){if(v.fx===undefined)return;const c0=v.v0||(v.v0=v.sp),fx
  for(const o of TRF){if(o===v||o.dir!==v.dir)continue;for(const k of o.cols)chk(k.x,k.z,o.sp,1.35)}
  if(typeof NET!=='undefined')for(const p of NET.peers.values())if(p.cols)for(const k of p.cols)chk(k.x,k.z,p.sp||0,1.4);
  v.ld=ld;v.lv=lv;
- if(vt<v.sp)v.sp=Math.max(vt,v.sp-7.5*dt);else v.sp=Math.min(c0,v.sp+(seen?1:1.6)*dt)}
+ /* mesma física dos veículos do jogador: tração limitada por potência (cai com a velocidade), freio por tipo, atraso do pedal */
+ const car=!!v.car,aMax=car?3.4:1.1,bMax=car?8.5:5.2,vMax=Math.max(c0*1.35,1);
+ let ad;if(vt<v.sp)ad=-Math.min(bMax,(v.sp-vt)*2.5+.8);else if(v.sp<c0)ad=Math.max(.25,aMax*(1-v.sp/vMax))*(seen?.6:1);else ad=0;
+ v.ac=v.ac||0;v.ac+=Math.max(-dt*(car?22:14),Math.min(dt*(car?10:6),ad-v.ac)); /* variação de aceleração limitada: nada brusco */
+ let ns=v.sp+v.ac*dt;ns=vt<v.sp?Math.max(ns,vt):Math.min(ns,Math.max(c0,v.sp));v.sp=Math.max(0,ns)}
+/* carroceria: arfagem (frenagem/aceleração), rolagem (curva) e inclinação do terreno, em molas amortecidas como nos veículos do jogador */
+function trfBody(v,dt,hdg,x,z,dx,dz){const car=!!v.car,L=car?2.7:4,l=Math.hypot(dx,dz)||1,nx=dx/l,nz=dz/l;
+ if(v.hp===undefined){v.hp=hdg;v.sp0=v.sp;v.pp=v.pv=v.rp=v.rv=0;v.sl=0}
+ let dh=hdg-v.hp;while(dh>Math.PI)dh-=2*Math.PI;while(dh<-Math.PI)dh+=2*Math.PI;v.hp=hdg;
+ const yr=dt>0?dh/dt:0,acc=dt>0?(v.sp-v.sp0)/dt:0;v.sp0=v.sp;
+ const sl=Math.max(-.15,Math.min(.15,Math.atan2(Hx(x+nx*L/2,z+nz*L/2,0)-Hx(x-nx*L/2,z-nz*L/2,0),L)));v.sl+=(sl-v.sl)*Math.min(1,dt*6);
+ const k=car?150:90,c=car?25:11,tp=Math.max(-.07,Math.min(.07,acc*(car?.0075:.011))),tr=Math.max(-.12,Math.min(.12,-yr*v.sp*(car?.011:.017)));
+ v.pv+=(k*(tp-v.pp)-c*v.pv)*dt;v.pp+=v.pv*dt;v.rv+=(k*(tr-v.rp)-c*v.rv)*dt;v.rp+=v.rv*dt;
+ v.g.rotation.order='YXZ';v.g.rotation.x=v.sl+v.pp;v.g.rotation.z=v.rp}
 // pista dupla: carros na esquerda (interna), caminhões na direita (externa); se o da frente é bem mais lento, ultrapassa pela outra pista só se estiver livre (a trás, ao lado e à frente) e volta quando livre
 function trfOut(v){return v.car?!!v.lane:!v.lane}
 function trfFree(v,out,a,b){const o=samp(Math.round(v.s/RDS)),lat=trfLat(o,v.dir,out);
@@ -75,6 +98,14 @@ function trfLane(v){const o=samp(Math.round(v.s/RDS)),oa=samp(Math.round((v.s+v.
 function trfUpd(dt){if(!ready)return;
  for(let i=TRF.length-1;i>=0;i--){const v=TRF[i];if(Math.abs(v.s-curS)>950){trfKill(i);continue}
   v.lt-=dt;if(v.lt<=0){v.lt=.5;ensureRoad(v.s-160,v.s+160);trfLane(v)}trfBrain(v,dt);v.s+=v.dir*v.sp*dt;ensureRoad(v.s-30,v.s+30);v.lat+=(trfLat(samp(Math.round(v.s/RDS)),v.dir,trfOut(v))-v.lat)*Math.min(1,dt*1.5);roadPt(v.s,v.lat);const x=RPx,z=RPz;roadPt(v.s+v.dir*6,v.lat);const dx=RPx-x,dz=RPz-z;
-  v.g.position.set(x,Hx(x,z,0),z);v.x=x;v.z=z;v.g.rotation.y=Math.atan2(-dx,-dz);const l=Math.hypot(dx,dz)||1,fx=dx/l,fz=dz/l;v.fx=fx;v.fz=fz;if(v.car){for(const q of v.sps)q.n.rotation.y+=q.s*v.sp*dt/.29}else for(const q of v.sps)q.rotation.x-=v.sp*dt/.55;v.vx=fx*v.sp;v.vz=fz*v.sp;trfSnd(v,dt);
-  v.co.forEach((d,k)=>{const c=v.cols[k];c.x=x+fx*d;c.z=z+fz*d;c.y=v.g.position.y})}
+  v.g.position.set(x,Hx(x,z,0),z);v.x=x;v.z=z;{const tg=Math.atan2(-dx,-dz);if(v.hy===undefined)v.hy=tg;let e=tg-v.hy;while(e>Math.PI)e-=2*Math.PI;while(e<-Math.PI)e+=2*Math.PI;v.hy+=e*Math.min(1,dt*9);v.g.rotation.y=v.hy;
+   if(v.t){ /* articulação da carreta na quinta roda: mesma dinâmica do jogador, com atraso e amortecimento */
+    if(v.th===undefined){v.th=v.hy;v.wT=0}const vk=v.sp*Math.sin(v.th-v.hy),wD=-vk/TLEN;v.wT+=(wD-v.wT)*Math.min(1,dt*9);v.th+=v.wT*dt;
+    let f=v.th-v.hy;f=Math.atan2(Math.sin(f),Math.cos(f));f=Math.max(-.9,Math.min(.9,f));v.th=v.hy+f;v.t.rotation.y=f;v.t.position.set(6.75*Math.sin(f),0,6.75*Math.cos(f))}}
+  trfBody(v,dt,v.g.rotation.y,x,z,dx,dz);
+  if(v.t&&v.th!==undefined){ /* articulação vertical e lateral no engate: a carreta acompanha o terreno e rola por conta própria */
+   const rx=x-Math.sin(v.th)*TLEN,rz=z-Math.cos(v.th)*TLEN,st=Math.max(-.15,Math.min(.15,Math.atan2(Hx(x,z,0)-Hx(rx,rz,0),TLEN)));
+   v.tp=(v.tp||0)+(st-(v.tp||0))*Math.min(1,dt*6);v.tr=(v.tr||0)+(Math.max(-.1,Math.min(.1,-v.wT*v.sp*.01))-(v.tr||0))*Math.min(1,dt*5);
+   v.t.rotation.order='YXZ';v.t.rotation.x=v.tp-v.g.rotation.x;v.t.rotation.z=v.tr-v.g.rotation.z}const l=Math.hypot(dx,dz)||1,fx=dx/l,fz=dz/l;v.fx=fx;v.fz=fz;if(v.car){for(const q of v.sps)q.n.rotation.y+=q.s*v.sp*dt/.29}else for(const q of v.sps)q.rotation.x-=v.sp*dt/.55;v.vx=fx*v.sp;v.vz=fz*v.sp;trfSnd(v,dt);
+  v.co.forEach((d,k)=>{const c=v.cols[k],tr=v.t&&k>=3&&v.th!==undefined,ux=tr?-Math.sin(v.th):fx,uz=tr?-Math.cos(v.th):fz;c.x=x+ux*d;c.z=z+uz*d;c.y=v.g.position.y})}
  trfT-=dt;if(trfT<=0){trfT=2.5+Math.random()*3;if(TRF.length<TRF_MAX)trfSpawn()}}

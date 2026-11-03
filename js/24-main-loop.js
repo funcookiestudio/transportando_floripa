@@ -8,28 +8,28 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  if(RESTY){HREF=RESTY.y;RESTY.t-=dt}const yr=H(pos.x,pos.z);if(RESTY&&(Math.abs(yr-RESTY.y)<1.2||RESTY.t<=0))RESTY=null;HREF=RESTY?RESTY.y:yr;const yf=H(pos.x+fx*L,pos.z+fz*L),mx=pos.x+fx*2,mz=pos.z+fz*2,hr=H(mx+rx*1.1,mz+rz*1.1),hl=H(mx-rx*1.1,mz-rz*1.1);
  pitch+=(Math.atan2(yf-yr,L)-pitch)*Math.min(1,dt*10);roll+=(Math.atan2(hr-hl,2.2)-roll)*Math.min(1,dt*10);
  const lat=yawS*vf;{const trqP=trqS;trqS+=(trqCab-trqS)*Math.min(1,dt*9);const trqD=(trqS-trqP)/Math.max(dt,.001); // torque do motor: cabine senta (pitch) e balança de lado ao pisar/aliviar
- if(shiftKick){sv.p+=shiftKick;sv.r+=shiftKick*.35*(gear&1?1:-1);shiftKick=0}trqCab*=Math.exp(-dt*6);
- const BP=VEH.bp,BR=VEH.br,BH=VEH.bh,tp=Math.max(-BP.pm*1.3,Math.min(BP.pm*1.3,acc*BP.pc+trqS*BP.tq)),tr=Math.max(-BR.rm,Math.min(BR.rm,-lat*BR.rc+Math.max(-.01,Math.min(.01,trqD*.0012))));
+ if(shiftKick){sv.p+=shiftKick;sv.r+=shiftKick*(VEH.car?0:.35)*(gear&1?1:-1);shiftKick=0}trqCab*=Math.exp(-dt*6);
+ const BP=VEH.bp,BR=VEH.br,BH=VEH.bh,tp=Math.max(-BP.pm*1.3,Math.min(BP.pm*1.3,acc*BP.pc+trqS*BP.tq)),tr=Math.max(-BR.rm,Math.min(BR.rm,-lat*BR.rc+(VEH.car?0:Math.max(-.01,Math.min(.01,trqD*.0012)))));
  const yv=(yr-yrP)/Math.max(dt,.001),ya=(yv-yvP)/Math.max(dt,.001);yrP=yr;yvP=yv;
  sv.p+=((tp-xp)*BP.k-sv.p*BP.c)*dt;xp+=sv.p*dt;sv.r+=((tr-xr)*BR.k-sv.r*BR.c)*dt;xr+=sv.r*dt;
  sv.h+=(-hz*BH.k-sv.h*BH.c-Math.max(-60,Math.min(60,ya))*.5)*dt;hz+=sv.h*dt;hz=Math.max(-BH.m,Math.min(BH.m,hz))}
- const bob=hz-xp*2+Math.sin(now*.02)*.01*Math.min(1,Math.abs(vf)/10);
+ const bob=hz-xp*2+(VEH.car?0:Math.sin(now*.02)*.01*Math.min(1,Math.abs(vf)/10));
  pivot.position.set(pos.x,yr+bob,pos.z);pivot.rotation.set(pitch+xp,hd,roll+xr+tipSg*tipS*.28,'YXZ');
  spin-=vf*dt;updWheels();civStep(dt,vf);
  {const sT=Math.sin(th),cT=Math.cos(th),ax=pos.x+TLEN*sT,az=pos.z+TLEN*cT,yk=H(pos.x,pos.z);let tx=pos.x,tz=pos.z;if(hb){hb.t+=dt*2.2;const k=Math.min(1,hb.t),e=k*k*(3-2*k);tx=hb.x+(pos.x-hb.x)*e;tz=hb.z+(pos.z-hb.z)*e;if(hb.t>=1)hb=null}trl.position.set(tx,yk+.1,tz);
   pitchT+=(Math.atan2(yk-H(ax,az),TLEN)-pitchT)*Math.min(1,dt*8);trl.rotation.set(pitchT,th,tipSg*tipS*.28+rollT,'YXZ');gearStep(dt);tS.forEach(o=>{o.sp.rotation.x=spin/o.cy;susp(o,dt,sT,cT,yk)})}
- spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?(hiB?3.6:1.9):0;s.distance=hiB?95:44;s.target.position.set(s.position.x*.5,hiB?.7:-.5,hiB?-62:-30)});beamStep();HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);{const bl=Math.floor(now/400)%2; // setas: < esquerda · > direita (desligam sozinhas depois da curva)
+ spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?(hiB?3.6:1.9):0;s.distance=hiB?95:44;lpAimSpot(s,i)});beamStep();lpFrame(dt,vf);HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);{const bl=Math.floor(now/400)%2; // setas: < esquerda · > direita (desligam sozinhas depois da curva)
  if(sigL){if(steer>.22)sigTL=1;else if(sigTL&&steer<.05){sigL=false;sigTL=0}}if(sigR){if(steer<-.22)sigTR=1;else if(sigTR&&steer>-.05){sigR=false;sigTR=0}}
  AM.emissiveIntensity=bl&&sigL?2.2:.4;AR.emissiveIntensity=bl&&sigR?2.2:.4}
  roadFrame();trfUpd(dt);stFrame(dt);updTerrain();updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
  jobFrame(dt);
  // câmera
- camH+=wrap(hd-camH)*Math.min(1,dt*3.5);const cfx=-Math.sin(camH+(camMode<2?orbYaw:0)),cfz=-Math.cos(camH+(camMode<2?orbYaw:0)),cx=pos.x+fx*3.2,cz=pos.z+fz*3.2,cy=yr+2;
+ camH+=wrap(hd-camH)*Math.min(1,dt*3.5);const cfx=-Math.sin(camH+(camMode<2?orbYaw:0)),cfz=-Math.cos(camH+(camMode<2?orbYaw:0)),cx=pos.x+fx*VEH.ca,cz=pos.z+fz*VEH.ca,cy=yr+VEH.cy;
  cam.fov+=((camMode==2?GS.fov:GS.fov-9+Math.abs(vf)*.35)-cam.fov)*Math.min(1,dt*4);cam.updateProjectionMatrix();
  if(camMode==2){V.set(VEH.cabin[0],VEH.cabin[1],VEH.cabin[2]);pivot.localToWorld(V);cam.position.copy(V);cam.quaternion.copy(pivot.quaternion).multiply(QO.setFromEuler(EO.set(-Math.max(-.8,Math.min(.8,orbPitch)),orbYaw,0,'YXZ')))}
- else{let P=camMode==0?.38:.43,P2=Math.max(.04,Math.min(1.45,P+orbPitch)),d=(camMode==0?27+Math.abs(vf)*.08:camMode==1?48:1)*zoom*(camMode<2?VEH.cam:1),h=camMode==3?70:d*Math.sin(P2);if(camMode<2)d*=Math.cos(P2);
-  const tx=cx-cfx*d+(camMode==3?0:0),tz=cz-cfz*d;cam.position.set(tx,Math.max(cy+h,H(tx,tz)+2),tz);
-  if(camMode==3)cam.position.set(cx,cy+70,cz+.01);cam.lookAt(cx+cfx*(camMode==3?0:5),cy+(camMode==3?0:2.2),cz+cfz*(camMode==3?0:5))}
+ else{let P=camMode==0?.38:.43,P2=Math.max(.04,Math.min(1.45,P+orbPitch)),d=(camMode==0?27+Math.abs(vf)*.08:camMode==1?48:1)*zoom*(camMode<2?VEH.cam:1),h=camMode==3?VEH.ctop:d*Math.sin(P2);if(camMode<2)d*=Math.cos(P2);
+  const tx=cx-cfx*d+(camMode==3?0:0),tz=cz-cfz*d;cam.position.set(tx,Math.max(cy+h,H(tx,tz)+VEH.cmin),tz);
+  if(camMode==3)cam.position.set(cx,cy+VEH.ctop,cz+.01);cam.lookAt(cx+cfx*(camMode==3?0:VEH.cla),cy+(camMode==3?0:VEH.cl),cz+cfz*(camMode==3?0:VEH.cla))}
  if(shake>0){cam.position.x+=(Math.random()-.5)*shake;cam.position.y+=(Math.random()-.5)*shake;shake=Math.max(0,shake-dt*1.5)}
  if(window.hzFrame)hzFrame(dt,vf);
  sunFollow();

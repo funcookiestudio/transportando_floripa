@@ -18,10 +18,10 @@ function phys(dt){
  vf-=9.8*Math.sin(pitch)*dt*.8;
  if(VEH.car&&K.hb&&!hbL&&vf>8)yawKick+=steer*Math.min(1,vf/22)*1.4; /* puxar o freio de mão em curva joga a traseira */
  hbL=!!K.hb;if(K.hb){vf*=Math.exp((VEH.car?-.55:-1.1)*dt)}
- const muF=onRoad?.85:.55,aF=muF*9.8*Math.sqrt(Math.max(.15,1-Math.pow(brkA/(muF*9.8),2))),aR=(VEH.car?aF*Math.max(.45,Math.min(1.2,(1-FFr)/.4)):aF)*(K.hb?(VEH.car?.26:.4):1),dvMax=aR*dt;let dv=-vl*(1-Math.exp(-7*dt));
+ const muF=VEH.car?(onRoad?1.08:.7):(onRoad?.85:.55),aF=muF*9.8*Math.sqrt(Math.max(.15,1-Math.pow(brkA/(muF*9.8),2))),aR=(VEH.car?aF*Math.max(.45,Math.min(1.2,(1-FFr)/.4)):aF)*(K.hb?(VEH.car?.26:.4):1),dvMax=aR*dt;let dv=-vl*(1-Math.exp(-(VEH.car?14:7)*dt));
  if(Math.abs(dv)>dvMax){dv=Math.sign(dv)*dvMax;vf-=Math.sign(vf)*Math.min(Math.abs(vf),.3*dvMax)}vl+=dv;slipS=vl;
  vel.x=fx*vf+rx*vl;vel.z=fz*vf+rz*vl;
  const ms=VEH.st/(1+Math.abs(vf)/VEH.stv),tg2=(typeof K.sa==='number'?K.sa:((K.left?1:0)-(K.right?1:0)))*ms+(dmg>30?(dmg-30)*.0003:0);steer+=(tg2-steer)*Math.min(1,dt*VEH.sr);
- const yMax=1.15*(VEH.car?aF*Math.max(.55,Math.min(1.15,FFr/.6)):aF)/Math.max(Math.abs(vf),1),yaw=Math.max(-yMax,Math.min(yMax,vf/L*Math.tan(steer)/(1+vf*vf/VEH.vch2)*(K.hb?(VEH.car?1.8:1.35):1)*(1-.012*cargo))); /* subesterço: a velocidade característica reduz a curva em alta */ hd+=(yaw+yawKick)*dt;yawKick*=Math.exp(-4*dt);yawS=yaw;
+ const yMax=(VEH.car?1.02:1.15)*(VEH.car?aF*Math.max(.55,Math.min(1.15,FFr/.6)):aF)/Math.max(Math.abs(vf),1),yaw=Math.max(-yMax,Math.min(yMax,vf/L*Math.tan(steer)/(1+vf*vf/VEH.vch2)*(K.hb?(VEH.car?1.8:1.35):1)*(1-.012*cargo))); /* subesterço: a velocidade característica reduz a curva em alta */ hd+=(yaw+yawKick)*dt;yawKick*=Math.exp(-4*dt);yawS=yaw;
  pos.x+=vel.x*dt;pos.z+=vel.z*dt;collide();trailerStep(dt);rollover(dt,Math.abs(wT*1.25)>Math.abs(yawS)?wT*1.25*vf:yawS*vf);
 }
