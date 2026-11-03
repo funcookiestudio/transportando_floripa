@@ -28,6 +28,6 @@ function coFrame(){const k0=Math.floor((curS-700)/CO_D),k1=Math.ceil((curS+700)/
  const sig=want.map(c=>c.k).join();
  if(sig!==coSig){coSig=sig;for(const[k,gp]of COG)if(!want.some(c=>c.k===k)){scene.remove(gp);disposeCo(gp);COG.delete(k)}
   for(const c of want)if(!COG.has(c.k))COG.set(c.k,buildCo(c));
-  COACT.length=0;COACT.push(...want);rbI=1e9;tcx=1e9;ocx=1e9}
+  COACT.length=0;COACT.push(...want);rbI=1e9;tcx=1e9;ocx=1e9;placeCones()}
  for(const c of want)if(!c.ann&&Math.abs(c.s-curS)<300){c.ann=true;msg(c.name+' · '+c.t.label)}
  const ci=cityIdx(curS);if(lastCity!==null&&ci!==lastCity)msg('📍 '+cityName(curS));lastCity=ci}

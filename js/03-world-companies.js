@@ -27,14 +27,14 @@ const hexCss=h=>'#'+h.toString(16).padStart(6,'0');
 function signTex(name,bg,fg){const cv=document.createElement('canvas');cv.width=512;cv.height=128;const g=cv.getContext('2d');g.fillStyle=hexCss(bg);g.fillRect(0,0,512,128);g.fillStyle=hexCss(fg);g.fillRect(0,0,512,8);g.fillRect(0,120,512,8);
  let fs=54;g.font='bold '+fs+'px system-ui,sans-serif';while(g.measureText(name).width>470&&fs>18){fs-=2;g.font='bold '+fs+'px system-ui,sans-serif'}g.textAlign='center';g.textBaseline='middle';g.fillText(name,256,66);
  const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t}
-const SLOT_X=[-11,-16,-11,-16],SLOT_Z=[-22,-22,22,22],PCOL=[0x1f5fa8,0xb3261e,0x2e7d32,0xd9822b,0x4a5560,0x7a3b8c,0xc9b037],DECOR=[[29.5,-8,1],[29.5,8,0]];
+const BZ_X=-29,SLOT_X=[-11,-16,-11,-16],SLOT_Z=[-22,-22,22,22],PCOL=[0x1f5fa8,0xb3261e,0x2e7d32,0xd9822b,0x4a5560,0x7a3b8c,0xc9b037],DECOR=[[29.5,-8,1],[29.5,8,0]];
 const slotCol=(c,i)=>Math.floor(hh(c.k,(c.nonce||0)*4+i,24)*PCOL.length);
 function coGet(k){let c=COM.get(k);if(c)return c;const s=k===0?0:k*CO_D+(hh(k,1,7)-.5)*500,side=k===0?1:hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)];
  ensureRoad(s-60,s+60);roadPt(s,side*46);const o=samp(Math.round(s/RDS));
  c={k,s,side,t,name:t.n[Math.floor(hh(k,4,7)*t.n.length)],x:RPx,z:RPz,h:o.h,y:yR(s)+.1,rot:o.h+(side<0?Math.PI:0),ann:false,cols:[],bays:[],city:cityName(s)};
  // coordenadas locais: +x = para longe da pista, z = ao longo da pista
- const cr=Math.cos(c.rot),sr=Math.sin(c.rot);c.loc=(lx,lz)=>({x:c.x+lx*cr+lz*sr,z:c.z-lx*sr+lz*cr});
- for(const lz of[-13,-6.5,0,6.5,13]){const q=c.loc(19.5,lz);c.cols.push({x:q.x,z:q.z,r:6.4,k:1})}
+ const cr=Math.cos(c.rot),sr=Math.sin(c.rot);c.cr=cr;c.sr=sr;c.loc=(lx,lz)=>({x:c.x+lx*cr+lz*sr,z:c.z-lx*sr+lz*cr});
+ c.board=c.loc(BZ_X,0);for(const lz of[-13,-6.5,0,6.5,13]){const q=c.loc(19.5,lz);c.cols.push({x:q.x,z:q.z,r:6.4,k:1})}
  for(const lz of[-10,0,10]){const q=c.loc(12,lz);c.bays.push({x:q.x,z:q.z,lz})}
  c.slotK=[];c.slotCols=[];c.taken={};
  for(let i=0;i<4;i++){const x=SLOT_X[i],zc=SLOT_Z[i],bd=Math.sign(zc),Kz=zc-bd*6.75,cl=[];c.slotK.push(c.loc(x,Kz));
@@ -61,6 +61,8 @@ function buildCo(c){const g=new THREE.Group(),T=c.t,W=mat(T.col),A=mat(T.acc),DK
  else if(ex==='comb')for(const z of[-23,23]){cCy(g,WH,17.5,0,z,4.2,7);cCy(g,A,17.5,3,z,4.25,1.2);cCy(g,mat(0xb8bcc2),17.5,7,z,3.4,.5)}
  else if(ex==='var'){const cc=[0xc9c9c9,0x2a3b5c,0xa83232,0x2d2d2d,0xe3e3e3];for(let i=0;i<10;i++){const z=(i%2?1:-1)*(22+(i>>1)%2*3),x=-6+Math.floor(i/2)*4;cBx(g,mat(cc[i%cc.length]),x,.3,z,4.2,1.4,1.8)}}
  else for(const z of[-23,23]){cCn(g,mat(0xc2a878),16,0,z,5.5,4);cCn(g,mat(0x8a8d90),22,0,z,4,3);cBx(g,mat(0xb4553a),8,0,z,3,1.6,2.2);cBx(g,mat(0xb4553a),4,0,z,3,1.6,2.2)}
+ // ponto de fretes (seletor de cargas) entre os cones: moldura amarela no chão
+ for(const[bx0,bz0,bw,bd]of[[BZ_X,-4.4,9,.5],[BZ_X,4.4,9,.5],[BZ_X-4.4,0,.5,9],[BZ_X+4.4,0,.5,9],[BZ_X,0,.5,6],[BZ_X,0,6,.5]])cBx(g,YL,bx0,0,bz0,bw,.07,bd);
  // postes
  for(const[lx,lz]of[[-14,26],[-14,-26],[4,28],[4,-28]]){cCy(g,CO,lx,0,lz,.15,9);cBx(g,LM,lx,9,lz,1.4,.2,.5)}
 

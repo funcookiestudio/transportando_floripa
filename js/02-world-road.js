@@ -11,8 +11,15 @@ function roadInfo(x,z){const cx=Math.floor(x/52),cz=Math.floor(z/52);let best=nu
  if(!best){RW=0;RD=1e9;return false}
  const dx=x-best.x,dz=z-best.z,al=dx*-Math.sin(best.h)+dz*-Math.cos(best.h),cl=Math.max(-2.6,Math.min(2.6,al));RS=best.s+cl;RL=dx*Math.cos(best.h)-dz*Math.sin(best.h);RD=Math.hypot(RL,al-cl);return true}
 const COACT=[],PR1=34,PR2=58;let PADW=0,PADY=0;
-function padW(x,z){PADW=0;for(let i=0;i<COACT.length;i++){const c=COACT[i],d=Math.hypot(x-c.x,z-c.z);if(d>=PR2)continue;const f=d<=PR1?1:1-(d-PR1)/(PR2-PR1),w=f*f*(3-2*f);if(w>PADW){PADW=w;PADY=c.y}}return PADW}
-const H=(x,z)=>{const b=Hb(x,z);let r=b;if(roadInfo(x,z)){let w=1;if(RD>15){const f=Math.max(0,(50-RD)/35);w=f*f*(3-2*f)}RW=w;r=b+(yR(RS)+.1-b)*w}if(COACT.length&&padW(x,z)>0)r+=(PADY-r)*PADW;return r};
+const APR1=13,APR2=19;
+// pátio circular + acesso (apron) retangular ligando o pátio ao asfalto, sem faixa de terra no meio
+function padW(x,z){PADW=0;for(let i=0;i<COACT.length;i++){const c=COACT[i],dx=x-c.x,dz=z-c.z,d=Math.hypot(dx,dz);let w=0;
+ if(d<PR2){const f=d<=PR1?1:1-(d-PR1)/(PR2-PR1);w=f*f*(3-2*f)}
+ if(d<75){const lx=dx*c.cr-dz*c.sr,lz=dx*c.sr+dz*c.cr;if(lx>-44&&lx<-12){const a=Math.abs(lz),fz=a<=APR1?1:a>=APR2?0:1-(a-APR1)/(APR2-APR1),fx=lx<-42?(lx+44)/2:lx>-16?(-12-lx)/4:1,w2=Math.max(0,Math.min(fz,fx));const s2=w2*w2*(3-2*w2);if(s2>w)w=s2}}
+ if(w>PADW){PADW=w;PADY=c.y}}return PADW}
+// true se (x,z) cai na entrada de alguma empresa ativa (sem postes/mourões)
+function inEntry(x,z,m){for(const c of COACT){const dx=x-c.x,dz=z-c.z;if(Math.abs(dx)>80||Math.abs(dz)>80)continue;const lx=dx*c.cr-dz*c.sr,lz=dx*c.sr+dz*c.cr;if(lx>-52&&lx<-20&&Math.abs(lz)<m)return true}return false}
+let RIN=false;const H=(x,z)=>{const b=Hb(x,z);let r=b;RIN=roadInfo(x,z);if(RIN){let w=1;if(RD>15){const f=Math.max(0,(50-RD)/35);w=f*f*(3-2*f)}RW=w;r=b+(yR(RS)+.1-b)*w}if(COACT.length&&padW(x,z)>0)r+=(PADY-r)*PADW;return r};
 const cvs=document.createElement('canvas');cvs.width=cvs.height=256;{const g=cvs.getContext('2d');g.fillStyle='#3a3c40';g.fillRect(0,0,256,256);
  for(let i=0;i<2500;i++){const v=40+Math.random()*30;g.fillStyle='rgb('+v+','+v+','+(v+4)+')';g.fillRect(Math.random()*256,Math.random()*256,2,2)}
  g.fillStyle='#e8e8e8';g.fillRect(9,0,5,256);g.fillRect(242,0,5,256);g.fillRect(62,0,4,64);g.fillRect(190,0,4,64);g.fillStyle='#e6b800';g.fillRect(121,0,4,256);g.fillRect(131,0,4,256)}
@@ -48,8 +55,8 @@ lpool.frustumCulled=false;lpool.visible=false;scene.add(lpool);
 function buildRoad(ci){const P=rg.attributes.position,U=rg.attributes.uv,Dm=new THREE.Object3D();let np=0,nl=0;
  for(let k=0;k<NS;k++){const i=ci-80+k,o=samp(i),cs=Math.cos(o.h),sn=Math.sin(o.h),y=yR(o.s)+.13,a=k*2;
   P.setXYZ(a,o.x-cs*RWD,y,o.z+sn*RWD);P.setXYZ(a+1,o.x+cs*RWD,y,o.z-sn*RWD);U.setXY(a,0,o.s/24);U.setXY(a+1,1,o.s/24);
-  for(const sd of[-1,1]){if(i%5==0&&np<200){Dm.rotation.set(0,o.h,0);Dm.position.set(o.x+cs*sd*10.1,y+.3,o.z-sn*sd*10.1);Dm.updateMatrix();posts.setMatrixAt(np++,Dm.matrix)}
-   if(i%12==0&&nl<80){Dm.rotation.set(0,o.h,0);Dm.position.set(o.x+cs*sd*11.4,y+4.4,o.z-sn*sd*11.4);Dm.updateMatrix();poles.setMatrixAt(nl,Dm.matrix);
+  for(const sd of[-1,1]){const px=o.x+cs*sd*10.8,pz=o.z-sn*sd*10.8,blk=inEntry(px,pz,22);if(i%5==0&&np<200&&!blk){Dm.rotation.set(0,o.h,0);Dm.position.set(o.x+cs*sd*10.1,y+.3,o.z-sn*sd*10.1);Dm.updateMatrix();posts.setMatrixAt(np++,Dm.matrix)}
+   if(i%12==0&&nl<80&&!blk){Dm.rotation.set(0,o.h,0);Dm.position.set(o.x+cs*sd*11.4,y+4.4,o.z-sn*sd*11.4);Dm.updateMatrix();poles.setMatrixAt(nl,Dm.matrix);
     Dm.position.set(o.x+cs*sd*10.6,y+8.9,o.z-sn*sd*10.6);Dm.updateMatrix();heads.setMatrixAt(nl,Dm.matrix);Dm.position.set(o.x+cs*sd*7.2,y+.04,o.z-sn*sd*7.2);Dm.updateMatrix();lpool.setMatrixAt(nl++,Dm.matrix)}}}
  let nb=0;for(let i=ci-80;i<=ci+80&&nb<400;i++){const o=samp(i);for(const sd of[-1,1]){const r1=hh(i,sd,11);if(r1>.55)continue;const lat=sd*(11.8+hh(i,sd,12)*7+(r1<.15?3:0)),sc=.5+hh(i,sd,13)*1.1,cs=Math.cos(o.h),sn=Math.sin(o.h),ds=(hh(i,sd,14)-.5)*RDS,x=o.x+cs*lat-sn*ds,z=o.z-sn*lat-cs*ds;if(padW(x,z)>0)continue;
  Dm.rotation.set(hh(i,sd,15)*3,hh(i,sd,16)*6,0);Dm.scale.set(sc*1.3,sc*.8,sc*1.3);Dm.position.set(x,H(x,z)+sc*.3,z);Dm.updateMatrix();bushes.setMatrixAt(nb,Dm.matrix);BC.setHSL(.24+hh(i,sd,17)*.08-(r1<.15?.12:0),.4,.2+hh(i,sd,18)*.1).convertSRGBToLinear();bushes.setColorAt(nb++,BC)}}

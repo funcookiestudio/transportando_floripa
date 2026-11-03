@@ -12,8 +12,11 @@ function updObs(){const ci=Math.floor(pos.x/14),cj=Math.floor(pos.z/14);if(ci==o
 
 // ---- cones ----
 const NC=90,cones=[],coneM=new THREE.InstancedMesh(new THREE.ConeGeometry(.35,.8,8),new THREE.MeshStandardMaterial({color:C(0xff6a00),roughness:.7}),NC);coneM.frustumCulled=false;scene.add(coneM);
-for(let i=0;i<NC;i++){let x,z;if(i<12){x=(i%2?5:-5)+(i%2?0:0);z=-30-i*9;x=(i%2?4:-4)}else{const a=hh(i,1)*6.28,d=40+hh(i,2)*220;x=Math.cos(a)*d;z=Math.sin(a)*d}
- cones.push({x,z,y:H(x,z)+.4,vx:0,vy:0,vz:0,rx:0,rz:0,ry:hh(i,3)*6,w:0,aw:false,hit:false});}
+for(let i=0;i<NC;i++)cones.push({x:0,z:0,y:-500,vx:0,vy:0,vz:0,rx:0,rz:0,ry:hh(i,3)*6,w:0,aw:false,hit:false});
+// cones ficam nas entradas das empresas ativas (coordenadas locais: lx<0 = lado da pista)
+const CONE_L=[[-33,-6],[-29,-6],[-25,-6],[-33,6],[-29,6],[-25,6],[-33,-9.5],[-33,9.5]];
+function placeCones(){let n=0;for(const c of COACT)for(const[lx,lz]of CONE_L){if(n>=NC)break;const q=c.loc(lx,lz),o=cones[n++];o.x=q.x;o.z=q.z;o.y=H(q.x,q.z)+.4;o.vx=o.vy=o.vz=o.rx=o.rz=o.w=0;o.aw=false;o.hit=false;setCone(n-1)}
+ for(;n<NC;n++){const o=cones[n];o.x=o.z=0;o.y=-500;o.aw=false;setCone(n)}coneM.instanceMatrix.needsUpdate=true}
 function setCone(i){const c=cones[i];D.scale.set(1,1,1);D.position.set(c.x,c.y,c.z);D.rotation.set(c.rx,c.ry,c.rz);D.updateMatrix();coneM.setMatrixAt(i,D.matrix)}
 cones.forEach((_,i)=>setCone(i));coneM.instanceMatrix.needsUpdate=true;
 
