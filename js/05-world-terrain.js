@@ -21,10 +21,13 @@ const TN=SEG+1,tIdx=new Int32Array(TN*TN),tcol=new Int16Array(tp.count),trow=new
 for(let i=0;i<tp.count;i++){const c=Math.round((bx[i]+SEG*STEP/2)/STEP),r=Math.round((bz[i]+SEG*STEP/2)/STEP);tcol[i]=c;trow[i]=r;tIdx[r*TN+c]=i}
 function tVert(i,cx,cz){const x=cx+bx[i],z=cz+bz[i];let y=Hx(x,z,0);if(RIN&&RD<=11.8){const lim=yR(RS)-.06;if(y>lim)y=lim}tp.setY(i,y);const n=hh(x,z,9),t=Math.min(1,Math.max(0,y/7));
   col.setHSL(.27,.45,.32);if(Math.hypot(x,z)<28)col.setHSL(.1,.25,.42+.05*n);{const nn=.5+.5*Math.sin(x*.13+Math.sin(z*.09)*2.5)*Math.cos(z*.11+Math.sin(x*.07)*2);if(RD<10.8+3.5*nn)col.setHSL(.09,.12,.34+.06*n);else if(RD<22)col.offsetHSL(.015*nn,-.1*nn,.04*nn-.02)}if(padW(x,z)>.04){const u=Math.min(1,Math.max(0,(PADW-.25)/.5)),k=u*u*(3-2*u);if(k>0){const a=col.r,b2=col.g,c2=col.b;col.setHSL(.1,.05,.52+.05*n);col.r=a+(col.r-a)*k;col.g=b2+(col.g-b2)*k;col.b=c2+(col.b-c2)*k}}if(RIVA.length){const rb=riverBank(x,z);if(rb>.02){const a=col.r,b2=col.g,c2=col.b;col.setHSL(.11,.3,.5+.05*n);col.r=a+(col.r-a)*rb;col.g=b2+(col.g-b2)*rb;col.b=c2+(col.b-c2)*rb}}col.convertSRGBToLinear();tc[i*3]=col.r;tc[i*3+1]=col.g;tc[i*3+2]=col.b}
-function updTerrain(){const cx=Math.round(pos.x/STEP)*STEP,cz=Math.round(pos.z/STEP)*STEP;if(cx==tcx&&cz==tcz)return;
+// marcações locais: recalcula só os vértices num raio (1 por quadro) em vez do terreno inteiro
+const TDIRTY=[];function terrMark(x,z,r){TDIRTY.push([x,z,r,0])}
+function terrFlush(){if(!TDIRTY.length)return;if(tcx>1e8){TDIRTY.length=0;return}const d=TDIRTY[0],r2=d[2]*d[2],cx=tcx,cz=tcz,n=tp.count;let k=0,i=d[3];for(;i<n&&k<250;i++){const x=cx+bx[i]-d[0],z=cz+bz[i]-d[1];if(x*x+z*z<=r2){tVert(i,cx,cz);k++}}d[3]=i;if(i>=n)TDIRTY.shift();if(k){tp.needsUpdate=true;tg.attributes.color.needsUpdate=true}}
+function updTerrain(){terrFlush();const cx=Math.round(pos.x/STEP)*STEP,cz=Math.round(pos.z/STEP)*STEP;if(cx==tcx&&cz==tcz)return;
  let full=tcx>1e8,dc=0,dr=0;if(!full){dc=(cx-tcx)/STEP;dr=(cz-tcz)/STEP;if(Math.abs(dc)>=TN-2||Math.abs(dr)>=TN-2)full=true}
  tcx=cx;tcz=cz;tm.position.set(cx,0,cz);const ya=tp.array,n=tp.count;
- if(full){for(let i=0;i<n;i++)tVert(i,cx,cz)}
+ if(full){TDIRTY.length=0;for(let i=0;i<n;i++)tVert(i,cx,cz)}
  else{for(let i=0;i<n;i++)tyS[i]=ya[i*3+1];tcS.set(tc);let nn=0;
   for(let i=0;i<n;i++){const sc=tcol[i]+dc,sr=trow[i]+dr;if(sc>=0&&sc<TN&&sr>=0&&sr<TN){const j=tIdx[sr*TN+sc];ya[i*3+1]=tyS[j];tc[i*3]=tcS[j*3];tc[i*3+1]=tcS[j*3+1];tc[i*3+2]=tcS[j*3+2]}else tNeed[nn++]=i}
   for(let k=0;k<nn;k++)tVert(tNeed[k],cx,cz)}

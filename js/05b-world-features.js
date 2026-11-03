@@ -34,18 +34,21 @@ function buildOverpass(o){const g=new THREE.Group(),disp=[];g.userData.batch=[];
   if(au>hw+9&&y-.8-gy>.4)put(g,BXG,CD,x,gy+(y-.8-gy)/2,z,2.6,y-.8-gy,W-.6,0,o.h,0)}
  for(const sd of[-1,1]){const u=sd*(hw+3.4),x=o.x0+o.nx*u,z=o.z0+o.nz*u,gy=Hx(x,z,0),ph=top-.9-gy;if(ph>.4){put(g,CYG,CD,x,gy+ph/2,z,1.1,ph,1.1);put(g,BXG,CD,x,top-1.1,z,2.8,.5,W-.5,0,o.h,0)}o.cols.push({x,z,r:1.4,k:1})}
  flushBatch(g,disp);scene.add(g);return g}
+let featFull=false;
+// postos mexem no terreno só ao redor deles (recalculo local); rios e trevos pedem reconstrução completa
+function featTerr(f){if(f.kind==='st'){for(const p of[-120,-60,0,60,120]){roadPt(f.s+p,0);terrMark(RPx,RPz,75)}}else featFull=true}
 function featDispose(f){if(!f.g)return;scene.remove(f.g);for(const d of f.g.userData.disp)d.dispose();f.g=null}
 function icFrame(lo,hi,allowBuild){let ch=false;const w=[];for(let i=Math.floor((lo-250)/IC_D)-1;i<=Math.ceil((hi+250)/IC_D)+1;i++){const f=icGet(i);if(f&&f.s>lo-250&&f.s<hi+250)w.push(f)}
- for(let i=ICA.length-1;i>=0;i--)if(!w.includes(ICA[i])){featDispose(ICA[i]);ICA[i].rb=null;ICA.splice(i,1);ch=true}
  for(let i=Math.floor((lo-250)/ST_D)-1;i<=Math.ceil((hi+250)/ST_D)+1;i++){const f=stGet(i);if(f&&f.s>lo-250&&f.s<hi+250)w.push(f)}
- for(const f of w)if(!ICA.includes(f)){featGeo(f);f.rb=f.kind==='st'?stRibbons(f):icRibbons(f);f.pend=true;ICA.push(f);ch=true}
- if(allowBuild)for(const f of ICA)if(f.pend&&!f.g){f.pend=false;f.g=buildIC(f);ocx=1e9;tcx=1e9;rbI=1e9;return true}
+ for(let i=ICA.length-1;i>=0;i--)if(!w.includes(ICA[i])){const fo=ICA[i];featDispose(fo);fo.rb=null;ICA.splice(i,1);ch=true;if(fo.kind!=='st')featFull=true}
+ for(const f of w)if(!ICA.includes(f)){featGeo(f);f.rb=f.kind==='st'?stRibbons(f):icRibbons(f);f.pend=true;ICA.push(f);ch=true;featTerr(f)}
+ if(allowBuild)for(const f of ICA)if(f.pend&&!f.g){f.pend=false;f.g=buildIC(f);ocx=1e9;rbI=1e9;return true}
  return ch}
 // mantém as listas de recursos ativos e constrói no máx. 1 por quadro; devolve true se o conjunto ativo mudou
 function featFrame(lo,hi,allowBuild){let ch=false;
  const wr=[];for(let j=Math.floor((lo-300)/RV_D)-1;j<=Math.ceil((hi+300)/RV_D)+1;j++){const r=riverGet(j);if(r&&r.s>lo-300&&r.s<hi+300)wr.push(r)}
- for(let i=RIVA.length-1;i>=0;i--)if(!wr.includes(RIVA[i])){featDispose(RIVA[i]);RIVA.splice(i,1);ch=true}
- for(const r of wr)if(!RIVA.includes(r)){featGeo(r);RIVA.push(r);r.pend=true;ch=true}
+ for(let i=RIVA.length-1;i>=0;i--)if(!wr.includes(RIVA[i])){featDispose(RIVA[i]);RIVA.splice(i,1);ch=true;featFull=true}
+ for(const r of wr)if(!RIVA.includes(r)){featGeo(r);RIVA.push(r);r.pend=true;ch=true;featFull=true}
  const wo=[];for(let i=Math.floor((lo-200)/OV_D)-1;i<=Math.ceil((hi+200)/OV_D)+1;i++){const o=ovGet(i);if(o&&o.s>lo-200&&o.s<hi+200)wo.push(o)}
  for(let i=OVA.length-1;i>=0;i--)if(!wo.includes(OVA[i])){featDispose(OVA[i]);OVA.splice(i,1)}
  for(const o of wo)if(!OVA.includes(o)){featGeo(o);OVA.push(o);o.pend=true}
@@ -82,7 +85,9 @@ function icRibbons(f){const W=(p,q)=>[f.x0+f.tx*p+f.nx*q,f.z0+f.tz*p+f.nz*q],yb=
  return rb}
 // mais próximo ponto das fitas ativas; devolve true e preenche ICd/ICy/ICh/ICb
 function icNear(x,z){let best=1e9,found=false;for(let k=0;k<ICA.length;k++){const f=ICA[k];if(!f.rb)continue;const dx=x-f.x0,dz=z-f.z0;if(dx*dx+dz*dz>560*560)continue;
- for(const r of f.rb){const P=r.p,n=r.n;let bd=1e9,bj=0;for(let j=0;j<n;j++){const a=P[j*5]-x,b=P[j*5+1]-z,d=a*a+b*b;if(d<bd){bd=d;bj=j}}
+ for(const r of f.rb){const P=r.p,n=r.n;if(!r.bb){let a=1e9,b=1e9,c=-1e9,d=-1e9;for(let j=0;j<n;j++){const px=P[j*5],pz=P[j*5+1];if(px<a)a=px;if(px>c)c=px;if(pz<b)b=pz;if(pz>d)d=pz}r.bb=[a,b,c,d]}
+  {const bb=r.bb,l0=r.hw+60;if(x<bb[0]-l0||x>bb[2]+l0||z<bb[1]-l0||z>bb[3]+l0)continue}
+  let bd=1e9,bj=0;for(let j=0;j<n;j++){const a=P[j*5]-x,b=P[j*5+1]-z,d=a*a+b*b;if(d<bd){bd=d;bj=j}}
   const lim=r.hw+60;if(bd>lim*lim)continue;
   for(let j=Math.max(0,bj-1);j<Math.min(n-1,bj+1);j++){const o=j*5,ax=P[o],az=P[o+1],ex=P[o+5]-ax,ez=P[o+6]-az,l2=ex*ex+ez*ez||1;let t=((x-ax)*ex+(z-az)*ez)/l2;t=t<0?0:t>1?1:t;const px=ax+ex*t-x,pz=az+ez*t-z,d=Math.sqrt(px*px+pz*pz),hj=r.hw*(P[o+4]+(P[o+9]-P[o+4])*t),sc=d-hj;
    if(sc<best){best=sc;ICd=d;ICy=P[o+2]+(P[o+7]-P[o+2])*t;ICh=hj;ICb=P[o+3]>0;found=true}}}}
@@ -173,3 +178,6 @@ function stDeco(f,g,disp){const hw=f.hw,W=(p,q)=>{roadPt(f.s+p,q);return[RPx,RPz
   const tp=-dp*34,tq=s2*(hw+6),tw=W(tp,tq),ty=ya(tp);Cy(tp,tq,5.6,.22,11.2,CO);col(tp,tq,.6);
   const tex=signTex(f.name,f.pal[0],f.pal[1]),sm2=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide});disp.push(tex,sm2);
   const pg=new THREE.PlaneGeometry(6,1.5),m=new THREE.Mesh(pg,sm2);m.position.set(tw[0],ty+11.8,tw[1]);m.rotation.y=f.h;g.add(m);disp.push(pg)}}
+
+// pré-compila os materiais das faixas (evita travada de shader quando o 1º posto/empresa aparece)
+{for(const k of[2,3]){const m=new THREE.Mesh(new THREE.PlaneGeometry(.01,.01),goreMat(k));m.position.y=-900;m.frustumCulled=false;scene.add(m)}}

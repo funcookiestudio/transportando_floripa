@@ -36,7 +36,7 @@ function coFrame(){if(!ready)return;const oo=samp(Math.round(curS/RDS));coDir=Ma
  if(coPend){coPend=false;for(const gp of COG.values())gp.visible=true;changed=true}
  else if(best){const gp=buildCo(best);gp.visible=false;COG.set(best.k,gp);coPend=true}
  if(featFrame(lo,hi,!coPend&&!best))changed=true;
- if(changed){COACT.length=0;for(const c of want)if(COG.has(c.k))COACT.push(c);rbI=1e9;tcx=1e9;ocx=1e9;placeCones()}
+ if(changed){const prev=new Set(COACT);COACT.length=0;for(const c of want)if(COG.has(c.k))COACT.push(c);rbI=1e9;ocx=1e9;for(const c of COACT)if(!prev.has(c))terrMark(c.x,c.z,70);if(featFull){featFull=false;tcx=1e9}placeCones()}
  for(const c of COACT)if(!c.ann&&Math.abs(c.s-curS)<300){c.ann=true;msg(c.name+' · '+c.t.label)}
  if(++coTick%180==0&&COM.size>48){const kc=curS/CO_D;for(const[k,c]of COM)if(Math.abs(k-kc)>14&&!COG.has(k)&&!coKeep(c))COM.delete(k)}
  const ci=cityIdx(curS);if(lastCity!==null&&ci!==lastCity)msg('📍 '+cityName(curS));lastCity=ci}
