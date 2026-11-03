@@ -9,11 +9,11 @@ let mt=0;function msg(t){const m=$('msg');m.textContent=t;m.style.opacity=1;clea
 const CARGOS={agro:['Soja','Milho','Fertilizante','Farelo de trigo'],log:['Eletrônicos','Cargas diversas','Paletes','Bebidas'],aco:['Bobinas de aço','Vergalhões','Chapas de aço','Tubos'],comb:['Lubrificantes','Aditivos','Solventes','Parafina'],var:['Eletrodomésticos','Móveis','Alimentos','Roupas'],cons:['Cimento','Tijolos','Madeira','Cerâmica']};
 var cargoCol=null,hitched=false,autoBoard=false;let job=null,deliveries=0,dd=0,dockT=0,promptCo=null,boardKeys=null;
 const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/60)+' min '+String(Math.round(t%60)).padStart(2,'0')+' s';
-score=2000;try{const sv=JSON.parse(localStorage.getItem('fh16save')||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
-let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem('fh16save')||'null')}catch(e){}
+score=2000;try{const sv=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
+let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch(e){}
 function saveG(){if(typeof ready==='undefined'||!ready)return;try{const d={money:score,deliveries,dmg,x:pos.x,z:pos.z,hd,th,s:curS,hitched,cargo,tl:tLeft};
  if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.nonce=job.from.nonce||0;d.job=j}
- localStorage.setItem('fh16save',JSON.stringify(d))}catch(e){}}
+ localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
 // restaura posição, carreta, frete e dano salvos (chamado após reset() no boot)
 function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
  try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);tcx=1e9;ocx=1e9;

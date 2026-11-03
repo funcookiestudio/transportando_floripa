@@ -1,7 +1,15 @@
 const $=id=>document.getElementById(id);
-const hh=(a,b,c=0)=>{const h=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453;return h-Math.floor(h)};
+/* ===== Seed do mundo =====
+   Tudo (empresas, cidades, relevo, curvas e altimetria da estrada) é função pura de (seed, posição). Seed vazia = mundo clássico (idêntico ao original). */
+const WSEED=(()=>{let t='';try{const q=new URLSearchParams(location.search).get('seed');if(q!==null){t=q;try{localStorage.setItem('fh16seed',q)}catch(e){}}else t=localStorage.getItem('fh16seed')||''}catch(e){}
+ t=String(t).trim().slice(0,40);let n=0;if(t&&t.toLowerCase()!=='classico'&&t!=='0'){n=2166136261;for(let i=0;i<t.length;i++){n^=t.charCodeAt(i);n=Math.imul(n,16777619)}n>>>=0;if(!n)n=1}return{txt:n?t:'',n}})();
+const SAVEKEY=WSEED.n?'fh16save:'+WSEED.n:'fh16save';
+// hash inteiro (idêntico em qualquer navegador, sem Math.sin); o mundo clássico mantém a fórmula original para continuar igual
+function ihash(a,b,c,s){let h=(s^0x9e3779b9)|0;h=Math.imul(h^a,0x85ebca6b);h^=h>>>13;h=Math.imul(h^b,0xc2b2ae35);h^=h>>>16;h=Math.imul(h^c,0x27d4eb2f);h^=h>>>15;h=Math.imul(h,0x165667b1);h^=h>>>13;return(h>>>0)/4294967296}
+const hh=WSEED.n?(a,b,c=0)=>ihash(Math.round(a*16),Math.round(b*16),Math.round(c*16),WSEED.n):(a,b,c=0)=>{const h=Math.sin(a*127.1+b*311.7+c*74.7)*43758.5453;return h-Math.floor(h)};
+const PH=i=>WSEED.n?ihash(i,77,19,WSEED.n)*6.2832:0; // fases do relevo/estrada por seed (0 no mundo clássico)
 const Hb=(x,z)=>{const d=Math.hypot(x,z),f=Math.min(1,Math.max(0,(d-30)/70)),s=f*f*(3-2*f);
- return s*(Math.sin(x*.021)*Math.cos(z*.017)*3.2+Math.sin(x*.047+z*.031)*1.1+Math.sin(z*.05-x*.023)*.9+Math.sin(x*.009+1)*Math.sin(z*.011)*6)};
+ return s*(Math.sin(x*.021+PH(1))*Math.cos(z*.017+PH(2))*3.2+Math.sin(x*.047+z*.031+PH(3))*1.1+Math.sin(z*.05-x*.023+PH(4))*.9+Math.sin(x*.009+1+PH(5))*Math.sin(z*.011+PH(6))*6)};
 const wrap=a=>{while(a>Math.PI)a-=6.2832;while(a<-Math.PI)a+=6.2832;return a};
 const R=new THREE.WebGLRenderer({antialias:!(/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)||(navigator.hardwareConcurrency||8)<=4),powerPreference:"high-performance"});R.setPixelRatio(Math.min(devicePixelRatio,1.5));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.05;
 document.body.prepend(R.domElement);

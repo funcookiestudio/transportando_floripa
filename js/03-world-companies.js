@@ -7,7 +7,7 @@ const CT=[
  {id:'var',label:'Varejo',col:0x1f7fbf,acc:0xffd23a,n:['Mega Atacado Bom Preço','Casa & Cia Centro de Distribuição','SuperMais Atacadista','Rede Compre Bem']},
  {id:'cons',label:'Construção',col:0xd49a1f,acc:0x30343a,n:['Cimentos Nova Esperança','Madeireira Três Lagoas','Pedreira Bela Vista','Materiais São Bento']}];
 const CITY=['Vila Nova','São Bento','Porto Seco','Campo Alto','Rio Claro','Santa Aurora','Monte Real','Três Lagoas','Bela Vista','Serra Dourada','Pedra Branca','Nova Esperança'];
-const cityIdx=s=>Math.floor((s+4500)/9000),cityName=s=>{const i=cityIdx(s);return CITY[((i*7+3)%CITY.length+CITY.length)%CITY.length]};
+const cityIdx=s=>Math.floor((s+4500)/9000),cityName=s=>{const i=cityIdx(s);return CITY[((i*7+3+(WSEED.n%CITY.length))%CITY.length+CITY.length)%CITY.length]};
 const CO_D=2000,COM=new Map(),COG=new Map();let coSig='',lastCity=null;
 const BXG=new THREE.BoxGeometry(1,1,1),CYG=new THREE.CylinderGeometry(1,1,1,12),CNG=new THREE.ConeGeometry(1,1,12),MC=new Map();
 const mat=hex=>{let m=MC.get(hex);if(!m){m=new THREE.MeshStandardMaterial({color:C(hex),roughness:.85,flatShading:true});MC.set(hex,m)}return m};
@@ -30,7 +30,7 @@ function signTex(name,bg,fg){const cv=document.createElement('canvas');cv.width=
 const BZ_X=-29,PBW=13.6,PBH=2.6,PREAR=11.5,PCEN=PREAR-PBW/2+.1,PCOL=[0x1f5fa8,0xb3261e,0x2e7d32,0xd9822b,0x4a5560,0x7a3b8c,0xc9b037],DECOR=[[29.5,-8,1],[29.5,8,0]];
 const slotCol=(c,i)=>Math.floor(hh(c.k,(c.nonce||0)*4+i,24)*PCOL.length);
 function coGet(k){let c=COM.get(k);if(c)return c;const s=k===0?0:k*CO_D+(hh(k,1,7)-.5)*500,side=k===0?1:hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)];
- ensureRoad(s-60,s+60);roadPt(s,side*46);const o=samp(Math.round(s/RDS));
+ ensureRoad(s-60,s+60);const hwc=hwAt(s);roadPt(s,side*(34.5+hwc));const o=samp(Math.round(s/RDS));
  c={k,s,side,t,name:t.n[Math.floor(hh(k,4,7)*t.n.length)],x:RPx,z:RPz,h:o.h,y:yR(s)+.1,rot:o.h+(side<0?Math.PI:0),ann:false,cols:[],bays:[],city:cityName(s)};
  // coordenadas locais: +x = para longe da pista, z = ao longo da pista
  const cr=Math.cos(c.rot),sr=Math.sin(c.rot);c.cr=cr;c.sr=sr;c.loc=(lx,lz)=>({x:c.x+lx*cr+lz*sr,z:c.z-lx*sr+lz*cr});
@@ -45,8 +45,9 @@ function coGet(k){let c=COM.get(k);if(c)return c;const s=k===0?0:k*CO_D+(hh(k,1,
  COM.set(k,c);return c}
 function buildCo(c){const g=new THREE.Group(),T=c.t,W=mat(T.col),A=mat(T.acc),DK=mat(0x2a2d33),CO=mat(0x8d9096),WH=mat(0xe9e9e4),YL=mat(0xf2c200),disp=[];
  g.position.set(c.x,c.y,c.z);g.rotation.y=c.rot;g.userData.batch=[];g.userData.disp=disp;
- cBx(g,W,19.5,0,0,14,9,30);cBx(g,CO,19.5,9,0,14.6,.5,30.6);cBx(g,A,12.3,5,0,.3,.5,30.2);
- cBx(g,CO,22,9.5,-7,3,1.4,3);cBx(g,CO,22,9.5,8,3,1.4,3);
+ const dep=WSEED.n?12+hh(c.k,3,61)*7:14,BH=WSEED.n?8.6+hh(c.k,4,61)*4.4:9,bcx=12.5+dep/2;cBx(g,W,bcx,0,0,dep,BH,30);cBx(g,CO,bcx,BH,0,dep+.6,.5,30.6);cBx(g,A,12.3,5,0,.3,.5,30.2);
+ cBx(g,CO,22,BH+.5,-7,3,1.4,3);cBx(g,CO,22,BH+.5,8,3,1.4,3);
+  if(WSEED.n){const v=hh(c.k,5,61);if(v<.5)cBx(g,W,bcx+dep/2+4,0,v<.25?-9:9,8,BH*.55,12);if(hh(c.k,6,61)<.6)for(let q=0;q<2;q++)cBx(g,DK,bcx-2+q*5,BH+.5,q?9:-9,3.6,1.2,3.6)}
  for(const z of[-10,0,10]){cBx(g,DK,12.3,0,z,.4,4.4,5);cBx(g,CO,11.2,4.6,z,2.6,.3,6.2);cBx(g,mat(0x15171a),12.1,.5,z-2.2,.3,1.6,.5);cBx(g,mat(0x15171a),12.1,.5,z+2.2,.3,1.6,.5);
   cBx(g,YL,-3,.02,z-2.9,30,.04,.25);cBx(g,YL,-3,.02,z+2.9,30,.04,.25);cBx(g,YL,11.4,.02,z,.6,.04,5.8)}
  // placas
@@ -70,7 +71,8 @@ function buildCo(c){const g=new THREE.Group(),T=c.t,W=mat(T.col),A=mat(T.acc),DK
  const mkTr=(x,zc,sgn)=>mkTrailer(g,x,zc,sgn);
  g.userData.slots=[];
  for(let i=0;i<3;i++){const t=mkTr(PCEN,c.bays[i].lz,1);t.rotation.y=Math.PI/2;t.visible=!!(c.spawn&&c.spawn.slot===i);if(t.visible)setTrCargo(t,c.spawn.name,c.spawn.tons);g.userData.slots.push(t)}
- DECOR.forEach(([dx,dz,full],i)=>{const t=mkTr(dx,dz,1);if(full){const L=CARGOS[T.id];setTrCargo(t,L[Math.floor(hh(c.k,i,31)*L.length)],18)}});
+ g.userData.decor=[];
+  DECOR.forEach(([dx,dz,full],i)=>{const t=mkTr(dx,dz,1);g.userData.decor.push(t);if(full){const L=CARGOS[T.id];setTrCargo(t,L[Math.floor(hh(c.k,i,31)*L.length)],18)}});
  flushBatch(g,disp);scene.add(g);return g}
 // carretas estacionadas usam EXATAMENTE o mesmo modelo da carreta engatada (trl): malhas fundidas por material, geometria compartilhada
 let TPL=null;
