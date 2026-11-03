@@ -32,7 +32,8 @@ const Hx=(x,z,phys)=>{let b=Hb(x,z);if(RIVA.length)b=riverH(x,z,b);let r=b;RIN=r
 // atlas da pista: 4 faixas de 512 px (0 autoestrada, 1 pista simples, 2 avenida, 3 reserva), cada uma cobrindo a largura total da malha do tipo
 const RK=[{hw:11.5,A:9.4,gw:1.3,tr:[-6.6,-2.2,2.2,6.6],edge:[-8.8,8.8],edgeW:.27,dash:[-4.4,4.4],ctr:[-.3,.3],side:false},
  {hw:6.3,A:4.7,gw:.95,tr:[-1.9,1.9],edge:[-4.05,4.05],edgeW:.16,dash:[],ctr:[-.2,.2],side:false},
- {hw:9.5,A:8.1,gw:0,tr:[-5.4,-1.8,1.8,5.4],edge:[-7.5,7.5],edgeW:.2,dash:[-3.6,3.6],ctr:[-.3,.3],side:true}];
+ {hw:9.5,A:8.1,gw:0,tr:[-5.4,-1.8,1.8,5.4],edge:[-7.5,7.5],edgeW:.2,dash:[-3.6,3.6],ctr:[-.3,.3],side:true},
+ {hw:5.2,A:4.4,gw:.8,tr:[-1.6,1.6],edge:[-3.9,3.9],edgeW:.16,dash:[],ctr:[],side:false}]; // 3 = ramais e pátios: só linhas de borda
 const rMat=new THREE.MeshStandardMaterial({roughness:.85,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,alphaTest:.5});
 {const AW=2048,SW=512,Hh=1024,cv=document.createElement('canvas');cv.width=AW;cv.height=Hh;const g=cv.getContext('2d'),rnd=(a,b)=>a+Math.random()*(b-a),
  wob=(y,ph,A)=>{let v=0;[3,7,13,29].forEach((k,i)=>{v+=Math.sin(6.2832*k*y/Hh+ph*(i+1.3))*A/(i+1.4)});return v};
@@ -43,14 +44,14 @@ const rMat=new THREE.MeshStandardMaterial({roughness:.85,polygonOffset:true,poly
   if(!K.side)for(let i=0;i<2200*(K.hw/11.5)+300;i++){const sd=Math.random()<.5?-1:1,s=rnd(2,4);g.fillStyle='rgb('+(90+Math.random()*50|0)+','+(82+Math.random()*44|0)+','+(66+Math.random()*34|0)+')';g.fillRect(cx+sd*rnd(K.A+.8,K.A+1.1+K.gw)*PX,rnd(0,Hh),s,s)}
   else{g.strokeStyle='rgba(60,60,60,.35)';g.lineWidth=1;for(let y=0;y<Hh;y+=40){g.beginPath();g.moveTo(cx-K.hw*PX,y);g.lineTo(cx-(K.A+.3)*PX,y);g.moveTo(cx+(K.A+.3)*PX,y);g.lineTo(cx+K.hw*PX,y);g.stroke()}}
   g.globalCompositeOperation='source-atop';
-  for(let i=0;i<14000*(K.hw/11.5)+2000;i++){const v=rnd(25,80)|0;g.fillStyle='rgba('+v+','+v+','+(v+4)+','+rnd(.15,.6)+')';g.fillRect(rnd(x0,x0+SW),rnd(0,Hh),rnd(1,3),rnd(1,3))}
-  for(const xc of K.tr)for(const o of[-.9,.9]){const x=cx+(xc+o*(K.hw<8?.8:1))*PX,w=.55*PX,gr=g.createLinearGradient(x-w,0,x+w,0);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.5,'rgba(0,0,0,.2)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(x-w,0,2*w,Hh)}
-  for(let i=0;i<16;i++){const w=rnd(.8,3)*PX*(K.A/9.4)**.5,h=rnd(40,260),x=cx+rnd(-K.A+1,K.A-1)*PX,y=rnd(0,Hh-h);g.fillStyle=Math.random()<.6?'rgba(18,18,20,.32)':'rgba(80,82,86,.22)';g.fillRect(x,y,w,h);g.strokeStyle='rgba(8,8,8,.35)';g.strokeRect(x,y,w,h)}
-  for(let i=0;i<26;i++){let x=cx+rnd(-K.A,K.A)*PX,y=rnd(0,Hh-200);g.strokeStyle='rgba(10,10,10,.65)';g.lineWidth=rnd(.8,1.6);g.beginPath();g.moveTo(x,y);const n=rnd(6,14);for(let k=0;k<n;k++){x+=rnd(-8,8);y+=rnd(5,18);g.lineTo(x,y)}g.stroke()}
-  for(let i=0;i<7;i++){g.fillStyle='rgba(8,8,10,.22)';g.beginPath();g.ellipse(cx+rnd(-K.A+1,K.A-1)*PX,rnd(60,Hh-60),rnd(6,16),rnd(20,60),0,0,6.2832);g.fill()}
+  for(let i=0;i<9000*(K.hw/11.5)+1500;i++){const v=rnd(25,80)|0;g.fillStyle='rgba('+v+','+v+','+(v+4)+','+rnd(.1,.4)+')';g.fillRect(rnd(x0,x0+SW),rnd(0,Hh),rnd(1,3),rnd(1,3))}
+  for(const xc of K.tr)for(const o of[-.9,.9]){const x=cx+(xc+o*(K.hw<8?.8:1))*PX,w=.55*PX,gr=g.createLinearGradient(x-w,0,x+w,0);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.5,'rgba(0,0,0,.14)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(x-w,0,2*w,Hh)}
+  for(let i=0;i<7;i++){const w=rnd(.8,3)*PX*(K.A/9.4)**.5,h=rnd(40,260),x=cx+rnd(-K.A+1,K.A-1)*PX,y=rnd(0,Hh-h);g.fillStyle=Math.random()<.6?'rgba(18,18,20,.2)':'rgba(80,82,86,.14)';g.fillRect(x,y,w,h);g.strokeStyle='rgba(8,8,8,.2)';g.strokeRect(x,y,w,h)}
+  for(let i=0;i<10;i++){let x=cx+rnd(-K.A,K.A)*PX,y=rnd(0,Hh-200);g.strokeStyle='rgba(10,10,10,.45)';g.lineWidth=rnd(.7,1.3);g.beginPath();g.moveTo(x,y);const n=rnd(6,14);for(let k=0;k<n;k++){x+=rnd(-8,8);y+=rnd(5,18);g.lineTo(x,y)}g.stroke()}
+  for(let i=0;i<3;i++){g.fillStyle='rgba(8,8,10,.14)';g.beginPath();g.ellipse(cx+rnd(-K.A+1,K.A-1)*PX,rnd(60,Hh-60),rnd(6,16),rnd(20,60),0,0,6.2832);g.fill()}
   const Ln=(x,w,y0,y1)=>{g.fillRect(cx+x*PX-w/2,y0,w,y1-y0)};g.fillStyle='rgba(232,232,226,.92)';for(const x of K.edge)Ln(x,K.edgeW*PX,0,Hh);for(const y0 of[0,512])for(const x of K.dash)Ln(x,.22*PX,y0,y0+128);
   g.fillStyle='rgba(230,184,0,.92)';for(const x of K.ctr)Ln(x,.18*PX,0,Hh);
-  g.fillStyle='rgba(58,60,64,.7)';const xs=K.edge.concat(K.dash,K.ctr);for(let i=0;i<260;i++)g.fillRect(cx+xs[i%xs.length]*PX-4+rnd(-2,2),rnd(0,Hh),rnd(3,8),rnd(4,26));
+  g.fillStyle='rgba(58,60,64,.7)';const xs=K.edge.concat(K.dash,K.ctr);for(let i=0;i<120;i++)g.fillRect(cx+xs[i%xs.length]*PX-4+rnd(-2,2),rnd(0,Hh),rnd(3,8),rnd(4,26));
   g.restore()});
  const t=new THREE.CanvasTexture(cv);t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;rMat.map=t;rMat.needsUpdate=true}
 // malha da pista: 4 vértices por trecho de 5 m (cada trecho usa a faixa do atlas do seu tipo; largura varia nos vértices)

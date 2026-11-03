@@ -14,6 +14,15 @@ let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch
 function saveG(){if(typeof ready==='undefined'||!ready)return;try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,hd,th,s:curS,hitched,cargo,tl:tLeft};
  if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.nonce=job.from.nonce||0;d.job=j}
  localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
+// reiniciar (R/↺): volta à empresa mais próxima mantendo frete e carreta engatada; sem carga, o menu de fretes abre ali
+function respawn(){if(!ready){reset();return}
+ let b=null,bd=1e18;const k0=Math.floor(curS/CO_D);for(let k=k0-2;k<=k0+3;k++){const c=coGet(k),d=Math.abs(c.s-curS);if(d<bd){bd=d;b=c}}
+ const km=bd/1000,cost=bd<60?0:Math.round((200+km*120)/10)*10;
+ if(!cost){doRespawn(b,0);return}
+ cmShow('Chamar o guincho','Levar o caminhão até '+b.name+' ('+b.city+') · '+km.toFixed(1)+' km',[{html:'<b>Confirmar</b><span>'+money(Math.min(cost,score))+'</span><small>'+(score<cost?'Saldo insuficiente: cobra o que você tem':'Taxa por distância · frete e carreta engatada vão junto')+'</small>',fn:()=>doRespawn(b,cost)},{html:'<b>Cancelar</b><small>Esc</small>',fn:closeCm}],'Taxa: R$ 200 + R$ 120 por km')}
+function doRespawn(b,cost){const paid=Math.min(cost,score);score-=paid;
+ const q=b.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(b.cr,-b.sr);camH=hd;curS=b.s;vel.x=vel.z=0;steer=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;yawKick=0;gear=0;eRpm=650;shiftT=0;thrS=0;brkP=0;
+ hb=null;th=hd;autoBoard=!job&&!hitched;tcx=1e9;ocx=1e9;closeCm();saveG();msg((job?'Guincho · frete mantido':'Guincho')+(paid?' · -'+money(paid):''))}
 // restaura posição, carreta, frete e dano salvos (chamado após reset() no boot)
 function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
  try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);fuel=typeof sv.fuel==='number'?Math.max(0,Math.min(FUELMAX,sv.fuel)):FUELMAX;tcx=1e9;ocx=1e9;
@@ -42,6 +51,9 @@ function setPark(c,bi){const q=c.loc(PCEN,c.bays[bi].lz);tgt.x=q.x;tgt.z=q.z;tgt
  pbox.position.set(q.x,c.y+.12,q.z);pbox.rotation.y=c.rot;pbox.visible=true;ocx=1e9}
 function dockErr(c,bi){const rx=pos.x+14.2*Math.sin(th),rz=pos.z+14.2*Math.cos(th),dx=rx-c.x,dz=rz-c.z,cr=Math.cos(c.rot),sr=Math.sin(c.rot),lx=dx*cr-dz*sr,lz=dx*sr+dz*cr,tt=Math.atan2(cr,-sr);
  return{ex:Math.abs(lx-PREAR),el:Math.abs(lz-c.bays[bi].lz),ea:Math.abs(wrap(th-tt))}}
+// lado para sair da empresa rumo ao destino: leva em conta para onde o caminhão está virado agora
+function exitDir(c,to){const sg=to.s>c.s?1:-1,dx=-Math.sin(c.h)*sg,dz=-Math.cos(c.h)*sg,fx=-Math.sin(hd),fz=-Math.cos(hd),toRoadX=-c.cr,toRoadZ=c.sr,fr=fx*toRoadX+fz*toRoadZ>=0,rt=dx*Math.cos(hd)-dz*Math.sin(hd)>0;
+ return(fr?rt:!rt)?'<b style="color:#ffb400">➡ virar à DIREITA</b> ao sair':'<b style="color:#ffb400">⬅ virar à ESQUERDA</b> ao sair'}
 function offersFor(c){const n=c.nonce||0,offs=[-3,-2,-1,1,2,3,4],st=Math.floor(hh(c.k,n,21)*7),list=[],cl=CARGOS[c.t.id];
  for(let i=0;i<3;i++){const to=coGet(c.k+offs[(st+i*2)%7]),name=cl[Math.floor(hh(c.k,n*4+i,22)*cl.length)],tons=[6,12,18][Math.floor(hh(c.k,n*4+i,23)*3)],dm=Math.abs(to.s-c.s),km=dm/1000;
   list.push({from:c,to,name,tons,dist:dm,reward:Math.round((600+km*(300+tons*45))/10)*10,limit:dm/15+70,slot:i,col:slotCol(c,i),toBay:(i+1)%3})}
@@ -56,7 +68,7 @@ function openBoard(){if(Math.hypot(vel.x,vel.z)>1){msg('Pare o caminhão');retur
  const c=yardCo();if(!c){msg('Pare no ponto amarelo entre os cones');return}
  if(job&&job.phase==='deliver'&&job.mode!=='park'&&c===job.to){deliverMenu();return}
  if(job){cmShow('Frete em andamento',job.name+' · '+job.tons+' t · '+job.from.name+' → '+job.to.name,[{html:'<b>Continuar</b>',fn:closeCm},{html:'<b>Cancelar frete</b><span>-R$ 300</span><small>Perde a carga</small>',fn:()=>cancelJob(false)}],'');return}
- const btns=offersFor(c).map(o=>({html:'<b>'+o.name+' · '+o.tons+' t</b><span>'+money(o.reward)+'</span><small>→ '+o.to.name+' ('+o.to.city+') · '+(o.dist/1000).toFixed(1)+' km · prazo '+fmtT(o.limit)+'</small>',fn:()=>acceptJob(o)}));
+ const btns=offersFor(c).map(o=>({html:'<b>'+o.name+' · '+o.tons+' t</b><span>'+money(o.reward)+'</span><small>→ '+o.to.name+' ('+o.to.city+') · '+(o.dist/1000).toFixed(1)+' km · '+exitDir(o.from,o.to)+' · prazo '+fmtT(o.limit)+'</small>',fn:()=>acceptJob(o)}));
  if(dmg>1){const cost=Math.round(dmg*30);btns.push({html:'<b>Oficina</b><span>'+money(cost)+'</span><small>Reparar '+Math.round(dmg)+'% de dano</small>',fn:()=>{if(score<cost){msg('Dinheiro insuficiente');return}score-=cost;dmg=0;saveG();closeCm();msg('Caminhão reparado')}})}
  btns.push({html:'<b>Fechar</b><small>Esc</small>',fn:closeCm});
  cmShow(c.name,c.t.label+' · '+c.city+' · '+money(score),btns,'Toque, clique ou tecle 1–'+btns.length)}
