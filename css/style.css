@@ -174,3 +174,22 @@ body.home .p,body.home .ctl,body.home .tb,body.home #gbtn,body.home #vig,body.ho
 /* botões laterais descem junto com o painel (GPS aumenta a altura) */
 #tt,#gbtn{top:calc(var(--mb,122px) + 8px)}
 @media (orientation:portrait){.mob #tt{top:calc(var(--mb,176px) + 8px)}}
+/* mapa do GPS dentro do fluxo do painel (a regra global de canvas o deixava fixo sobre o texto) */
+#mis #gmap{position:relative;inset:auto;width:100%;height:auto;aspect-ratio:1/1}
+/* painel do canto: só o GPS (KM, frete, tempo e dinheiro ficam ocultos) */
+#mis #kmrow,#mis #jn,#mis #mx,#mis .mrow:not(#gpsh){display:none!important}
+/* GPS retangular: só o mapa, sem título nem textos */
+#mis #gpsh,#mis #gmh{display:none!important}
+#mis{width:min(290px,46vw);padding:5px}
+.mob #mis{width:min(210px,46vw);padding:4px}
+#mis #gmap{aspect-ratio:3/2}
+/* sem a seta ▶/◀ no centro da tela */
+#dir,#dir.on{display:none!important}
+/* botão ⓘ do GPS e painel de informações expandido */
+#mis{position:fixed}
+#gpsx{position:absolute;left:10px;top:10px;z-index:3;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(14,17,22,.82);color:var(--fg);font-size:16px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+body.home #gpsx{display:none}
+body.gpsx #mis #gmh{display:block!important;text-align:left;font-size:12px;margin:5px 2px 0}
+body.gpsx #mis #kmrow,body.gpsx #mis .mrow:not(#gpsh){display:flex!important}
+body.gpsx #mis #jn,body.gpsx #mis #mx{display:block!important}
+body.gpsx #mis #jn{margin-top:4px}

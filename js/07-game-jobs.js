@@ -14,7 +14,7 @@ const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/
 score=2000;try{const sv=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
 var RESTY=null;let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch(e){}
 function saveG(){if(typeof ready==='undefined'||!ready||VEH.car)return; /* Civic não grava: preserva o jogo da carreta */try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:HREF>-1e5&&HREF<1e5?Math.round(HREF*100)/100:undefined,hd,th,s:curS,hitched,cargo,tl:tLeft};
- if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.nonce=job.from.nonce||0;d.job=j}
+ if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.v=2;j.nonce=job.from.nonce||0;d.job=j}
  localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
 // reiniciar (R/↺): volta à empresa mais próxima mantendo frete e carreta engatada; sem carga, o menu de fretes abre ali
 function respawn(){if(!ready){reset();return}
@@ -29,7 +29,7 @@ function doRespawn(b,cost){const paid=Math.min(cost,score);score-=paid;
 // restaura posição, carreta, frete e dano salvos (chamado após reset() no boot)
 function restoreG(){if(window.GRID_ON&&!window.gridCoBase){window.__rgPending=true;return}const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
  try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);fuel=typeof sv.fuel==='number'?Math.max(0,Math.min(FUELMAX,sv.fuel)):FUELMAX;tcx=1e9;ocx=1e9;if(typeof sv.y==='number'&&isFinite(sv.y)&&sv.y>-1e5&&sv.y<1e5){HREF=sv.y;RESTY={y:sv.y,t:6}}
-  const j=sv.job;if(j&&coGet(j.fk)&&coGet(j.tk)){const f=coGet(j.fk),t=coGet(j.tk);f.nonce=j.nonce|0;job=Object.assign({},j,{from:f,to:t});delete job.fk;delete job.tk;delete job.nonce;
+  const j=window.GRID_ON&&sv.job&&sv.job.v!==2&&!(window.gridKeyOk&&gridKeyOk(sv.job.fk)&&gridKeyOk(sv.job.tk))?null:sv.job;if(j&&coGet(j.fk)&&coGet(j.tk)){const f=coGet(j.fk),t=coGet(j.tk);f.nonce=j.nonce|0;job=Object.assign({},j,{from:f,to:t});delete job.fk;delete job.tk;delete job.nonce;
    if(job.phase==='pickup'){f.spawn={slot:job.slot,name:job.name,tons:job.tons};setTargetP(f.slotK[job.slot],f.y);beacon.visible=false}
    else{setHitched(true);gearSnap(1);setTrailerCargo(job.name,job.tons);loadCargo(job.tons);tLeft=+sv.tl||job.limit;if(job.mode==='park')setPark(t,job.toBay);else{job.mode='';job.asked=false;setTargetP(t.board,t.y)}}}
   else if(sv.hitched){setHitched(false)}}catch(e){}}

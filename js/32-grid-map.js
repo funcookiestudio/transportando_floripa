@@ -184,44 +184,48 @@ var gmT=0,gmR=1500,gmOn=true;try{gmOn=localStorage.getItem('fh16gps')!=='0'}catc
 // ---- rota até o destino: pela rodovia atual até um trevo, e dali pela rodovia da empresa (com rodovia de ligação se forem paralelas) ----
 var gmRd=null,gmRt=null,gmRtT=0;
 function gridRPts(ax,idx,t0,t1,step){const o=[],n=Math.max(1,Math.ceil(Math.abs(t1-t0)/step));for(let i=0;i<=n;i++){const p=gridPt({ax,idx},t0+(t1-t0)*i/n);o.push([p.x,p.z])}return o}
-function gridRoute(c){const cur=gmRd,tpf=(ax)=>ax?pos.z:pos.x,td=c.ax?c.z:c.x;let pts,first=null;
- if(!cur){return{pts:[[pos.x,pos.z],[c.x,c.z]],dist:Math.hypot(c.x-pos.x,c.z-pos.z),cx:null}}
- const tp=tpf(cur.ax);
- if(cur.ax===c.ax&&cur.idx===c.idx){pts=gridRPts(cur.ax,cur.idx,tp,td,300)}
- else if(cur.ax!==c.ax){const x1=cur.ax?gx(cur.idx,c.idx):gx(c.idx,cur.idx),tc=cur.ax?x1.z:x1.x,td2=cur.ax?x1.x:x1.z;first=x1;
-  pts=gridRPts(cur.ax,cur.idx,tp,tc,300).concat(gridRPts(c.ax,c.idx,td2,td,300))}
- else{const mid=(tp+td)/2;let k;if(cur.ax===0){let i=GRID.idxX(mid);if(Math.abs(GRID.XL(i+1)-mid)<Math.abs(GRID.XL(i)-mid))i++;k=i;const a=gx(k,cur.idx),b=gx(k,c.idx);first=a;
-   pts=gridRPts(0,cur.idx,tp,a.x,300).concat(gridRPts(1,k,a.z,b.z,300),gridRPts(0,c.idx,b.x,td,300))}
-  else{let j=GRID.idxZ(mid);if(Math.abs(GRID.ZL(j+1)-mid)<Math.abs(GRID.ZL(j)-mid))j++;k=j;const a=gx(cur.idx,k),b=gx(c.idx,k);first=a;
-   pts=gridRPts(1,cur.idx,tp,a.z,300).concat(gridRPts(0,k,a.x,b.x,300),gridRPts(1,c.idx,b.z,td,300))}}
+function gridRoute(c){const cur=gmRd,td=c.ax?c.z:c.x;
+ if(!cur)return{pts:[[pos.x,pos.z],[c.x,c.z]],dist:Math.hypot(c.x-pos.x,c.z-pos.z),cx:null};
+ const tp=cur.ax?pos.z:pos.x;let roads=[cur],crs=[];
+ if(cur.ax===c.ax&&cur.idx===c.idx){}
+ else if(cur.ax!==c.ax){roads.push({ax:c.ax,idx:c.idx});crs.push(cur.ax?gx(cur.idx,c.idx):gx(c.idx,cur.idx))}
+ else{const mid=(tp+td)/2;
+  if(cur.ax===0){let i=GRID.idxX(mid);if(Math.abs(GRID.XL(i+1)-mid)<Math.abs(GRID.XL(i)-mid))i++;roads.push({ax:1,idx:i},{ax:0,idx:c.idx});crs.push(gx(i,cur.idx),gx(i,c.idx))}
+  else{let j=GRID.idxZ(mid);if(Math.abs(GRID.ZL(j+1)-mid)<Math.abs(GRID.ZL(j)-mid))j++;roads.push({ax:0,idx:j},{ax:1,idx:c.idx});crs.push(gx(cur.idx,j),gx(c.idx,j))}}
+ // sequência: trecho de rodovia até o ramal, ramal (com o sentido de saída pela direita) e continua na rodovia seguinte
+ let pts=[],t=tp,from=roads[0],first=null;
+ for(let k=0;k<crs.length;k++){const cr=crs[k],fa=from.ax,sg=Math.sign(t-(fa?cr.z:cr.x))||1;let sN,sE,S;
+  if(fa===1){sN=sg;sE=sg;S=gridRamp(cr,sN,sE)}else{sE=sg;sN=-sg;S=gridRamp(cr,sN,sE).slice().reverse()}
+  const entry=fa?cr.z+sN*460:cr.x+sE*UB,exit=fa?cr.x+sE*UB:cr.z+sN*460;
+  pts=pts.concat(gridRPts(fa,from.idx,t,entry,300));
+  if(!first)first={x:S[0].x,z:S[0].z,dir:fa?(sE>0?'Leste':'Oeste'):(sN>0?'Sul':'Norte')};
+  for(const o of S)pts.push([o.x,o.z]);t=exit;from=roads[k+1]}
+ pts=pts.concat(gridRPts(from.ax,from.idx,t,td,300));
  let dist=0;for(let i=1;i<pts.length;i++)dist+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
- let tx=null;if(first){const dc=Math.hypot(first.x-pos.x,first.z-pos.z);let ni=0,bd=1e18;for(let i=0;i<pts.length;i++){const d=Math.hypot(pts[i][0]-first.x,pts[i][1]-first.z);if(d<bd){bd=d;ni=i}}
-  const q=pts[Math.min(pts.length-1,ni+2)],dx=q[0]-first.x,dz=q[1]-first.z,dir=Math.abs(dx)>Math.abs(dz)?(dx>0?'Leste':'Oeste'):(dz<0?'Norte':'Sul'),ahead=((first.x-pos.x)*-Math.sin(hd)+(first.z-pos.z)*-Math.cos(hd))>0;
-  tx={km:dc,dir,ahead}}
+ let tx=null;if(first){tx={km:Math.hypot(first.x-pos.x,first.z-pos.z),dir:first.dir,ahead:((first.x-pos.x)*-Math.sin(hd)+(first.z-pos.z)*-Math.cos(hd))>0}}
  return{pts,dist,cx:tx}}
 var gmB=-1,gmReg=null;
 function gridMap(dt){gmT-=dt;if(gmT>0)return;gmT=.2;{if(GRB&&(GRB.ax===0||GRB.ax===1))gmRd={ax:GRB.ax,idx:GRB.id};const rg=gridReg(pos.x,pos.z),sp=document.querySelector('#gpsh span');if(sp){const tx='🧭 GPS · '+rg.name;if(sp.textContent!==tx)sp.textContent=tx}gmRt=job?gridRoute(job.phase==='pickup'?job.from:job.to):null}
  {const m=document.getElementById('mis');if(m){const b=Math.round(m.getBoundingClientRect().bottom);if(b!==gmB){gmB=b;document.documentElement.style.setProperty('--mb',b+'px')}}}const cv=document.getElementById('gmap'),hd0=document.getElementById('gpsh');if(!cv||!hd0)return;
  hd0.style.display='';const gh=document.getElementById('gmh');cv.style.display=gmOn?'block':'none';gh.style.display=gmOn?'block':'none';document.getElementById('gpsc').textContent=gmOn?'▾':'▸';if(!gmOn)return;
- const g=cv.getContext('2d'),W=cv.width,R=W/2-4,SC=R/gmR,ch=Math.cos(hd),sh=Math.sin(hd);
- const T=(x,z)=>{const dx=x-pos.x,dz=z-pos.z;return[W/2+(dx*ch-dz*sh)*SC,W/2+(dx*sh+dz*ch)*SC]};
- g.clearRect(0,0,W,W);g.save();g.beginPath();g.arc(W/2,W/2,R+2,0,6.2832);g.clip();g.fillStyle='rgba(18,26,34,.78)';g.fillRect(0,0,W,W);
+ const g=cv.getContext('2d'),W=cv.width,H=cv.height,CX=W/2,CY=H*.72,SC=(W/2)/(gmR*1.15),QR=gmR*1.7,ch=Math.cos(hd),sh=Math.sin(hd);
+ const T=(x,z)=>{const dx=x-pos.x,dz=z-pos.z;return[CX+(dx*ch-dz*sh)*SC,CY+(dx*sh+dz*ch)*SC]};
+ g.clearRect(0,0,W,H);g.save();g.beginPath();if(g.roundRect)g.roundRect(1,1,W-2,H-2,16);else g.rect(1,1,W-2,H-2);g.clip();g.fillStyle='rgba(18,26,34,.82)';g.fillRect(0,0,W,H);
  g.lineCap='round';g.lineJoin='round';const step=gmR>8000?500:gmR>4000?300:gmR>2000?150:60;
- for(const r of GRID.near(pos.x,pos.z,gmR*1.3)){const cur=GRB&&GRB.ax===r.ax&&GRB.id===r.idx;g.beginPath();const t0=Math.round((r.t-gmR*1.3)/step)*step;let first=true;
-  for(let t=t0;t<=r.t+gmR*1.3;t+=step){const x=r.ax===1?GRID.ns(r.idx,t):t,z=r.ax===1?t:GRID.ew(r.idx,t),p=T(x,z);if(first){g.moveTo(p[0],p[1]);first=false}else g.lineTo(p[0],p[1])}
+ for(const r of GRID.near(pos.x,pos.z,QR)){const cur=GRB&&GRB.ax===r.ax&&GRB.id===r.idx;g.beginPath();const t0=Math.round((r.t-QR)/step)*step;let first=true;
+  for(let t=t0;t<=r.t+QR;t+=step){const x=r.ax===1?GRID.ns(r.idx,t):t,z=r.ax===1?t:GRID.ew(r.idx,t),p=T(x,z);if(first){g.moveTo(p[0],p[1]);first=false}else g.lineTo(p[0],p[1])}
   g.strokeStyle=cur?'#ffb400':(r.kind?'#7d8b99':'#c4d0dc');g.lineWidth=(cur?4.5:3.2)*(r.kind?.7:1);g.stroke()}
  // ramais dos trevos (só nos zooms próximos)
- g.lineWidth=2.4;if(gmR<=3500)for(const c of GRID.crossNear(pos.x,pos.z,gmR*1.3))for(const sN of[-1,1])for(const sE of[-1,1]){const S=gridRamp(c,sN,sE);g.beginPath();for(let q=0;q<S.length;q+=3){const p=T(S[q].x,S[q].z);if(q)g.lineTo(p[0],p[1]);else g.moveTo(p[0],p[1])}
+ g.lineWidth=2.4;if(gmR<=3500)for(const c of GRID.crossNear(pos.x,pos.z,QR))for(const sN of[-1,1])for(const sE of[-1,1]){const S=gridRamp(c,sN,sE);g.beginPath();for(let q=0;q<S.length;q+=3){const p=T(S[q].x,S[q].z);if(q)g.lineTo(p[0],p[1]);else g.moveTo(p[0],p[1])}
   const e=T(S[S.length-1].x,S[S.length-1].z);g.lineTo(e[0],e[1]);const onR=GRB&&S.indexOf(GRB)>=0;g.strokeStyle=onR?'#ffb400':'#9fb0c0';g.stroke()}
  // rota até o destino
- if(gmRt&&gmRt.pts.length>1){g.beginPath();gmRt.pts.forEach((q,i)=>{const p=T(q[0],q[1]);if(i)g.lineTo(p[0],p[1]);else g.moveTo(p[0],p[1])});g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=8;g.stroke();g.strokeStyle='#ffb400';g.lineWidth=4.5;g.stroke()}
+ if(gmRt&&gmRt.pts.length>1){g.beginPath();gmRt.pts.forEach((q,i)=>{const p=T(q[0],q[1]);if(i)g.lineTo(p[0],p[1]);else g.moveTo(p[0],p[1])});g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=8;g.stroke();g.strokeStyle=job&&job.phase==='deliver'?'#2f9bff':'#ffb400';g.lineWidth=4.5;g.stroke()}
  // empresas e destino do frete
  for(const c of COACT){const p=T(c.x,c.z);g.fillStyle=job&&(c===job.from||c===job.to)?'#ffb400':'#7ee08a';g.fillRect(p[0]-4,p[1]-4,8,8)}
- if(job){const c=job.phase==='pickup'?job.from:job.to,dx=c.x-pos.x,dz=c.z-pos.z;let p=T(c.x,c.z);const dd2=Math.hypot(p[0]-W/2,p[1]-W/2);if(dd2>R-10){const k=(R-10)/dd2;p=[W/2+(p[0]-W/2)*k,W/2+(p[1]-W/2)*k]}g.fillStyle='#ffb400';g.beginPath();g.arc(p[0],p[1],7,0,6.2832);g.fill();g.strokeStyle='#000';g.lineWidth=2;g.stroke()}
+ if(job){const c=job.phase==='pickup'?job.from:job.to;let p=T(c.x,c.z);const ux=p[0]-CX,uy=p[1]-CY,kx=ux?(ux>0?W-14-CX:14-CX)/ux:1e9,ky=uy?(uy>0?H-14-CY:14-CY)/uy:1e9,k=Math.min(1,kx,ky);p=[CX+ux*k,CY+uy*k];g.fillStyle='#ffb400';g.beginPath();g.arc(p[0],p[1],7,0,6.2832);g.fill();g.strokeStyle='#000';g.lineWidth=2;g.stroke()}
  g.restore();
- g.fillStyle='#ff5a3c';g.beginPath();g.moveTo(W/2,W/2-12);g.lineTo(W/2+9,W/2+10);g.lineTo(W/2,W/2+5);g.lineTo(W/2-9,W/2+10);g.closePath();g.fill();
- {const nx=W/2+(0*ch-(-1)*sh)*(R-14),ny=W/2+(0*sh+(-1)*ch)*(R-14);g.fillStyle='#ffb400';g.font='700 22px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('N',nx,ny)}
- g.fillStyle='#c4d0dc';g.font='600 16px system-ui,sans-serif';g.textAlign='left';g.fillText((gmR/1000).toFixed(1).replace('.',',')+' km',8,W-14);
+ g.fillStyle='#ff5a3c';g.beginPath();g.moveTo(CX,CY-13);g.lineTo(CX+9,CY+10);g.lineTo(CX,CY+5);g.lineTo(CX-9,CY+10);g.closePath();g.fill();g.strokeStyle='#000';g.lineWidth=1.5;g.stroke();
+ {const bx=W-26,by=26;g.fillStyle='rgba(18,26,34,.8)';g.beginPath();g.arc(bx,by,18,0,6.2832);g.fill();const nx=bx+(sh)*12,ny=by-ch*12;g.fillStyle='#ffb400';g.font='700 16px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('N',nx,ny)}
  const dg=((-hd*57.2958)%360+360)%360,pts=['N','NE','L','SE','S','SO','O','NO'];const rt=gmRt&&job?('<b style="color:#ffb400">Destino '+(gmRt.dist/1000).toFixed(1).replace('.',',')+' km</b>'+(gmRt.cx?' · '+(gmRt.cx.ahead?'trevo em '+(gmRt.cx.km/1000).toFixed(1).replace('.',',')+' km → '+gmRt.cx.dir:'trevo atrás · retorne no próximo'):'')+'<br>'):'';
  gh.innerHTML=rt+'Rumo '+String(Math.round(dg)%360).padStart(3,'0')+'° '+pts[Math.round(dg/45)%8]+' · toque no mapa: zoom'}
 function gridFrame(){if(gbv<0||Math.hypot(pos.x-gbx,pos.z-gbz)>40){gbx=pos.x;gbz=pos.z;gridBuild(pos.x,pos.z)}
@@ -244,6 +248,8 @@ const gridSegN=(ax,idx,m)=>1+Math.floor(hh(gridSegKey(ax,idx,m),41,7)*Math.min(6
 const gridReg=(x,z)=>{const rx=Math.floor(GRID.idxX(x)/3),rz=Math.floor(GRID.idxZ(z)/3);return gridRegAt(rx,rz)};
 const GRRG=new Map();
 function gridRegAt(rx,rz){const k=rx+','+rz;let r=GRRG.get(k);if(!r){if(GRRG.size>300)GRRG.clear();r={rx,rz,key:k,name:CITY[Math.floor(hh(rx,rz,9)*CITY.length)%CITY.length],hue:Math.floor(hh(rx,rz,10)*360)};GRRG.set(k,r)}return r}
+// chave de empresa válida na numeração atual (descarta chaves de versões antigas)
+function gridKeyOk(k){if(!(k>=0)||k!==Math.floor(k))return false;const u=k%8,bs=Math.floor(k/8),m=bs%4000-2000,r=Math.floor(bs/4000),idx=r%4000-2000,ax=Math.floor(r/4000);return ax<2&&Math.abs(idx)<300&&Math.abs(m)<300&&u<gridSegN(ax,idx,m)}
 function gridCoBase(k){const u=k%8,bs=Math.floor(k/8),m=bs%4000-2000,r=Math.floor(bs/4000),idx=r%4000-2000,ax=Math.floor(r/4000),n=gridSegN(ax,idx,m);
  const side=hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)],us=gridSegUse(ax,m),tc=gridSegA(ax,m)+1500+(u+.5+(hh(k,8,7)-.5)*.5)*(us/n),p=gridPt({ax,idx},tc),
   cs=Math.cos(p.h),sn=Math.sin(p.h),off=side*(34.5+p.hw),x=p.x+cs*off,z=p.z-sn*off;
@@ -282,5 +288,11 @@ function gridCoFrame(){if(!ready)return;
  {const rg=gridReg(pos.x,pos.z);if(gmReg&&gmReg.key!==rg.key)msg('📍 '+rg.name);gmReg=rg}
  for(const c of COACT)if(!c.ann&&Math.hypot(c.x-pos.x,c.z-pos.z)<300){c.ann=true;msg(c.name+' · '+c.t.label)}
  if(++coTick%180==0&&COM.size>60)for(const[k,c]of COM)if(Math.hypot(c.x-pos.x,c.z-pos.z)>4500&&!COG.has(k)&&!coKeep(c))COM.delete(k)}
+
+// botão ⓘ sobre o mapa: expande/recolhe as informações do GPS (rota, KM, frete, tempo e dinheiro)
+(function(){const m=document.getElementById('mis');if(!m||document.getElementById('gpsx'))return;const b=document.createElement('button');b.type='button';b.id='gpsx';b.textContent='ⓘ';b.setAttribute('aria-label','Informações do GPS');
+ let on=false;try{on=localStorage.getItem('fh16gpsx')==='1'}catch(e){}const ap=()=>{document.body.classList.toggle('gpsx',on);b.textContent=on?'✕':'ⓘ';gmT=0;gmB=-1};ap();
+ const tg=e=>{e.stopPropagation();e.preventDefault();on=!on;try{localStorage.setItem('fh16gpsx',on?'1':'0')}catch(x){}ap()};
+ b.addEventListener('pointerdown',e=>e.stopPropagation());b.addEventListener('click',tg);m.insertBefore(b,m.firstChild)})();
 if(window.__rgPending){window.__rgPending=false;try{restoreG()}catch(e){console.log(e)}}
 if(window.GRID_ON)try{if(!(typeof SAVED!=='undefined'&&SAVED&&typeof SAVED.x==='number'&&isFinite(SAVED.x+SAVED.z)))gridStart();gridBuild(pos.x,pos.z)}catch(e){console.log(e)}
