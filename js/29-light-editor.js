@@ -5,6 +5,21 @@ const LPG=[['headBeam','Feixe do farol'],['headGlow','Lâmpada do farol'],['brak
 const LPK=[['x','X lateral',-6,6,.01],['y','Y altura',0,5,.01],['z','Z frente(−) / trás(+)',-9,3,.01],['p','Inclinação °',-90,90,.5],['w','Ângulo °',-180,180,.5],['r','Rotação °',-180,180,.5],['s','Tamanho',.05,3,.01]];
 const LPD=Math.PI/180;
 LPDEF.truck={"headBeam":{"x":1.11,"y":0.97,"z":-5.44,"p":-1.5,"w":0,"r":0,"s":1,"m":1},"headGlow":{"x":1.11,"y":0.93,"z":-5.44,"p":0,"w":0,"r":0,"s":0.9,"m":1},"brake":{"x":0.89,"y":0.93,"z":0.94,"p":0,"w":180,"r":0,"s":0.7,"m":1},"rev":{"x":0.83,"y":0.88,"z":0.89,"p":0,"w":180,"r":0,"s":0.4,"m":1},"sigF":{"x":1.17,"y":0.76,"z":-5.44,"p":0,"w":0,"r":0,"s":0.42,"m":1},"sigR":{"x":1.17,"y":0.88,"z":0.83,"p":0,"w":180,"r":0,"s":0.42,"m":1},"exh":{"x":1.28,"y":0.21,"z":-1.17,"p":-27.5,"w":-113.5,"r":-110,"s":0.45,"m":0}};
+/* ----- caixas de colisão (editáveis): largura e extensão em z (eixo traseiro = 0, frente = −z). A física usa uma fila de círculos que preenche a caixa. ----- */
+const COLDEF={truck:{cab:{w:2.54,zf:-5.43,zb:1.07},trl:{w:2.67,zs:0,ze:13.23}},civic:{cab:{w:1.58,zf:-3.5,zb:.71}}};
+const COLK={cab:[['w','Largura',1,4.5,.01],['zf','Frente (z)',-12,0,.01],['zb','Traseira (z)',-3,6,.01]],trl:[['w','Largura',1,4.5,.01],['zs','Início (z)',0,10,.01],['ze','Fim (z)',5,25,.01]]};
+var COLU={},colKey='',colCZ=null,colShow=false,colBox={},colSel='cab',colShownV=null;
+try{COLU=JSON.parse(localStorage.getItem('fh16col'))||{}}catch(e){COLU={}}
+const colSave=()=>{try{localStorage.setItem('fh16col',JSON.stringify(COLU))}catch(e){}};
+function colCur(v,g){const d=COLDEF[v]&&COLDEF[v][g];if(!d)return null;return Object.assign({},d,(COLU[v]||{})[g]||{})}
+function colSet(v,g,k,val){const o=COLU[v]=COLU[v]||{};o[g]=Object.assign(o[g]||{},{[k]:val});colSave()}
+function colCirc(a,b,r){const len=b-a;if(len<=2*r)return[(a+b)/2];const n=Math.max(2,Math.ceil((len-2*r)/(r*1.3))+1),o=[];for(let i=0;i<n;i++)o.push(a+r+(len-2*r)*i/(n-1));return o}
+function colSync(){const v=VEH.car?'civic':'truck',c=colCur(v,'cab'),t=colCur(v,'trl'),k=v+JSON.stringify(c)+JSON.stringify(t);if(k===colKey&&CZ===colCZ)return;colKey=k;
+ CR=c.w/2;CZ=colCirc(Math.min(c.zf,c.zb-.2),c.zb,CR);colCZ=CZ;if(t){TR=t.w/2;TZ=colCirc(Math.min(t.zs,t.ze-.2),t.ze,TR)}}
+function colVis(F){const v=VEH.car?'civic':'truck';
+ for(const g of ['cab','trl']){let b=colBox[g];if(!b){b=colBox[g]=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1,1,1)),new THREE.LineBasicMaterial({color:g==='cab'?0x00ff88:0xffaa00,depthTest:false,transparent:true}));b.renderOrder=98;b.visible=false;(g==='cab'?pivot:trl).add(b)}
+  const c=colCur(v,g);if(!c||!F||(g==='trl'&&VEH.car)){b.visible=false;continue}
+  const z0=g==='cab'?c.zf:c.zs,z1=g==='cab'?c.zb:c.ze,h=g==='trl'?4.2:(v==='civic'?1.5:3.6);b.visible=true;b.scale.set(c.w,h,Math.max(.1,z1-z0));b.position.set(0,h/2,(z0+z1)/2)}}
 var LPU={},lpAll=false,lpSel='headBeam',lpShownV=null,LPSP={truck:null,civic:null};
 try{LPU=JSON.parse(localStorage.getItem('fh16lp'))||{}}catch(e){LPU={}}
 const lpSave=()=>{try{localStorage.setItem('fh16lp',JSON.stringify(LPU))}catch(e){}};
@@ -20,7 +35,7 @@ function lpBuild(v){if(LPSP[v]||!LPDEF[v])return;const tex=civGlowTex(),S={axes:
 function lpAimSpot(s,i){const v=lpV(),c=lpCur(v,'headGlow'),b=lpCur(v,'headBeam');if(!c||!b)return;const sg=i?1:-1,p=(b.p+(hiB?4.5:.8))*LPD,w=(b.m&&!i?-1:1)*b.w*LPD;
  s.position.set(sg*c.x,c.y,c.z);s.target.position.set(s.position.x-Math.sin(w)*Math.cos(p)*40,s.position.y+Math.sin(p)*40,s.position.z-Math.cos(w)*Math.cos(p)*40)}
 var lpT=0;
-function lpFrame(dt,vf){if(typeof scene==='undefined'||typeof pivot==='undefined')return;const v=lpV();lpBuild('truck');lpBuild('civic');
+function lpFrame(dt,vf){if(typeof scene==='undefined'||typeof pivot==='undefined')return;const v=lpV();lpBuild('truck');lpBuild('civic');colVis(colShow||!!(window.HOME&&$('hpan').style.display==='block'&&hpTab==='col'));if(window.HOME&&hpTab==='col'&&$('hpan').style.display==='block'&&colShownV!==v){colShownV=v;if(!colCur(v,colSel))colSel='cab';colUI()}
  for(const k of ['truck','civic']){const S=LPSP[k];if(S&&k!==v){for(const g in S){if(g==='axes'){for(const q in S.axes)S.axes[q].forEach(a=>a.visible=false)}else S[g].forEach(sp=>sp.visible=false)}}}
  const S=LPSP[v];if(!CFX&&typeof civFxInit==='function')civFxInit();if(!S){civFxPool(dt);return}
  const F=!!(window.HOME&&$('hpan').style.display==='block'&&hpTab==='lp'),bl=Math.floor(performance.now()/400)%2,brk=(K.down&&vf>.5)||K.hb,rev=K.down&&vf<=.5&&engineOn,on=typeof lightsOn!=='undefined'&&lightsOn,sL=!!(bl&&sigL),sR=!!(bl&&sigR);
@@ -48,8 +63,8 @@ function lpLeave(){if(!lpSaved)return;hourT=lpSaved.hourT;hour=lpSaved.hour;ligh
 ['hback','hplay'].forEach(i=>{const b=$(i);if(b)b.addEventListener('click',lpLeave)});
 /* ---------- interface ---------- */
 const lpR=n=>+(+n).toFixed(3);
-function lpCode(){const o={};for(const v of ['truck','civic']){if(!LPDEF[v])continue;o[v]={};for(const [g] of LPG){const c=lpCur(v,g);o[v][g]={};for(const k in c)o[v][g][k]=lpR(c[k])}}return JSON.stringify(o)}
-function lpUI(){const box=$('lpe');if(!box)return;const v=lpV(),c=lpCur(v,lpSel);box.innerHTML='';
+function lpCode(){const o={};for(const v of ['truck','civic']){if(!LPDEF[v])continue;o[v]={};o[v].col={};for(const g in COLDEF[v]){const c=colCur(v,g);o[v].col[g]={};for(const k in c)o[v].col[g][k]=lpR(c[k])}for(const [g] of LPG){const c=lpCur(v,g);o[v][g]={};for(const k in c)o[v][g][k]=lpR(c[k])}}return JSON.stringify(o)}
+function lpUI(){const box=$('lpe');if(!box)return;const v=lpV(),c=lpCur(v,lpSel);if(!c){lpSel='headBeam';return lpUI()}box.innerHTML='';
  const hd0=document.createElement('div');hd0.className='lph';const bk=document.createElement('button');bk.textContent='← Voltar';bk.onclick=()=>$('hback').click();const tt=document.createElement('b');tt.textContent='Editor de luzes · '+(v==='civic'?'Civic':'Caminhão');const al=document.createElement('button');al.textContent=lpAll?'Só o selecionado':'Ligar todas';al.className=lpAll?'on':'';al.onclick=()=>{lpAll=!lpAll;lpUI()};hd0.append(bk,tt,al);box.appendChild(hd0);
  const row=document.createElement('div');row.className='lpg';LPG.forEach(([g,n])=>{const b=document.createElement('button');b.textContent=n;b.className=g===lpSel?'on':'';b.onclick=()=>{lpSel=g;lpUI()};row.appendChild(b)});box.appendChild(row);
  const t=document.createElement('div');t.className='lpt';t.textContent=LPG.find(x=>x[0]===lpSel)[1];box.appendChild(t);
@@ -62,6 +77,21 @@ function lpUI(){const box=$('lpe');if(!box)return;const v=lpV(),c=lpCur(v,lpSel)
  const bt=document.createElement('div');bt.className='lpb';
  const btn=(txt,fn)=>{const b=document.createElement('button');b.textContent=txt;b.onclick=fn;bt.appendChild(b);return b};
  btn('Copiar código',()=>{cd.value=lpCode();const ok=()=>{if(typeof msg==='function')msg('Código copiado')};try{navigator.clipboard.writeText(cd.value).then(ok,()=>{cd.select();document.execCommand('copy');ok()})}catch(e){cd.select();try{document.execCommand('copy')}catch(e2){}ok()}});
- btn('Aplicar código',()=>{try{const o=JSON.parse(cd.value);for(const vv of ['truck','civic'])if(o[vv]&&LPDEF[vv])for(const g in o[vv])if(LPDEF[vv][g])for(const k in o[vv][g])if(isFinite(o[vv][g][k])){(LPU[vv]=LPU[vv]||{});(LPU[vv][g]=LPU[vv][g]||{})[k]=+o[vv][g][k]}lpSave();lpUI();if(typeof msg==='function')msg('Código aplicado')}catch(e){if(typeof msg==='function')msg('Código inválido')}});
+ btn('Aplicar código',()=>{try{const o=JSON.parse(cd.value);for(const vv of ['truck','civic'])if(o[vv]&&o[vv].col&&COLDEF[vv])for(const g in o[vv].col)if(COLDEF[vv][g])for(const k in o[vv].col[g])if(isFinite(o[vv].col[g][k])){(COLU[vv]=COLU[vv]||{});(COLU[vv][g]=COLU[vv][g]||{})[k]=+o[vv].col[g][k]}colSave();for(const vv of ['truck','civic'])if(o[vv]&&LPDEF[vv])for(const g in o[vv])if(LPDEF[vv][g])for(const k in o[vv][g])if(isFinite(o[vv][g][k])){(LPU[vv]=LPU[vv]||{});(LPU[vv][g]=LPU[vv][g]||{})[k]=+o[vv][g][k]}lpSave();lpUI();if(typeof msg==='function')msg('Código aplicado')}catch(e){if(typeof msg==='function')msg('Código inválido')}});
  btn('Resetar ponto',()=>{if(LPU[v])delete LPU[v][lpSel];lpSave();lpUI()});btn('Resetar veículo',()=>{delete LPU[v];lpSave();lpUI()});
+ box.append(cd,bt)}
+
+/* ---------- aba "Colisão" ---------- */
+function colUI(){const box=$('lpe');if(!box)return;const v=lpV();if(!colCur(v,colSel))colSel='cab';const sub=colSel,c=colCur(v,sub);box.innerHTML='';
+ const hd0=document.createElement('div');hd0.className='lph';const bk=document.createElement('button');bk.textContent='← Voltar';bk.onclick=()=>$('hback').click();const tt=document.createElement('b');tt.textContent='Caixa de colisão · '+(v==='civic'?'Civic':'Caminhão');hd0.append(bk,tt);box.appendChild(hd0);
+ const rc=document.createElement('div');rc.className='lpg';
+ Object.keys(COLDEF[v]).forEach(g=>{const b=document.createElement('button');b.textContent=g==='cab'?(v==='civic'?'Carro':'Cabine'):'Carreta';b.className=colSel===g?'on':'';b.onclick=()=>{colSel=g;colUI()};rc.appendChild(b)});
+ {const b=document.createElement('button');b.textContent=colShow?'Ocultar no jogo':'Mostrar no jogo';b.className=colShow?'on':'';b.onclick=()=>{colShow=!colShow;colUI()};rc.appendChild(b)}box.appendChild(rc);
+ const grid=document.createElement('div');grid.className='lpgrid';
+ COLK[sub].forEach(([k,n,mn,mx,st])=>{const r=document.createElement('label');r.className='lpr';const sp=document.createElement('span');sp.textContent=n;const rg=document.createElement('input');rg.type='range';rg.min=mn;rg.max=mx;rg.step=st;rg.value=c[k];const nm=document.createElement('input');nm.type='number';nm.min=mn;nm.max=mx;nm.step=st;nm.value=lpR(c[k]);
+  const set=val=>{if(!isFinite(val))return;colSet(v,sub,k,val);rg.value=val;nm.value=lpR(val);cd.value=lpCode()};rg.oninput=()=>set(+rg.value);nm.onchange=()=>set(+nm.value);r.append(sp,rg,nm);grid.appendChild(r)});box.appendChild(grid);
+ const cd=document.createElement('textarea');cd.id='lpcode';cd.rows=3;cd.value=lpCode();cd.spellcheck=false;
+ const bt=document.createElement('div');bt.className='lpb';const btn=(txt,fn)=>{const b=document.createElement('button');b.textContent=txt;b.onclick=fn;bt.appendChild(b);return b};
+ btn('Copiar código',()=>{cd.value=lpCode();const ok=()=>{if(typeof msg==='function')msg('Código copiado')};try{navigator.clipboard.writeText(cd.value).then(ok,()=>{cd.select();document.execCommand('copy');ok()})}catch(e){cd.select();try{document.execCommand('copy')}catch(e2){}ok()}});
+ btn('Resetar caixa',()=>{if(COLU[v])delete COLU[v][sub];colSave();colUI()});btn('Resetar veículo',()=>{delete COLU[v];colSave();colUI()});
  box.append(cd,bt)}

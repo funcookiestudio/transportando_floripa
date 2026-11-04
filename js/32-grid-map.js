@@ -240,12 +240,6 @@ function gridKm(){if(!GRB)return;const r=document.getElementById('kmrow');if(r&&
  const b=GRB,fx=-Math.sin(hd),fz=-Math.cos(hd);let nm,km,dr;
  if(b.ax===1){nm='N-S '+b.id;km=Math.abs(pos.z-gx(b.id,-1).z)/1000;dr=fz<0?'N':'S'}else if(b.ax===0){nm='L-O '+b.id;km=Math.abs(pos.x-gx(0,b.id).x)/1000;dr=fx>0?'L':'O'}else{hset('kmr','Ramal');hset('kmv','');return}
  const k=Math.floor(km*10)/10,s=(k<10?'0':'')+k.toFixed(1).replace('.',',');hset('kmr','Rod. '+nm);hset('kmv','KM '+s+' - '+dr)}
-// botão de teste na tela inicial: liga/desliga a grade (recarrega a página)
-(function(){const h=document.getElementById('home');if(!h)return;const b=document.createElement('button');b.type='button';
- b.style.cssText='position:absolute;left:12px;bottom:12px;z-index:50;height:36px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(11,17,24,.7);color:#f2f5f8;font:600 12px system-ui,sans-serif;cursor:pointer';
- const on=!!window.GRID_ON;b.textContent='🧪 Rodovias em grade: '+(on?'LIGADA':'desligada')+' (toque para '+(on?'desligar':'ligar')+')';
- b.onclick=()=>{try{localStorage.setItem('fh16grid',on?'0':'1')}catch(e){}location.reload()};h.appendChild(b)})();
-
 // ===== empresas na grade: 1 a 6 por trecho entre dois trevos (sorteio fixo), regiões de 3x3 linhas =====
 const gridSegKey=(ax,idx,m)=>(ax*4000+idx+2000)*4000+m+2000,gridCoKey=(ax,idx,m,u)=>gridSegKey(ax,idx,m)*8+u;
 const gridSegA=(ax,m)=>ax?GRID.ZL(m):GRID.XL(m),gridSegUse=(ax,m)=>gridSegA(ax,m+1)-gridSegA(ax,m)-3000;
