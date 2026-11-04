@@ -41,7 +41,12 @@ var GRID=(function(){
 
 // ---- Etapas 2 e 3: pista da grade por blocos + viaduto (L-O por cima) com 4 ramais por cruzamento ----
 var gridY=(function(){const o=(x,z)=>7*Math.sin(x*.00071+z*.00043+1.3)+4*Math.sin(x*.0017-z*.0013+1)+1.5*Math.sin(x*.0043+z*.0039+.5),y0=o(0,0);return(x,z)=>o(x,z)-y0})();
-var gridStart=function(){const h=Math.atan(GRID.dns(0,0));pos.x=GRID.ns(0,0);pos.z=0;hd=h;th=h;camH=h;curS=0;autoBoard=false;vel.x=vel.z=0;tcx=1e9;ocx=1e9;gbv=-1};
+var GRVIS=new Set();try{if(typeof SAVED!=='undefined'&&SAVED&&Array.isArray(SAVED.vis))for(const k of SAVED.vis)if(typeof k==='number')GRVIS.add(k)}catch(e){}
+// início: empresa aleatória perto da origem (a que você nasce já conta como visitada)
+var gridStart=function(){const ax=Math.random()<.5?0:1,idx=Math.floor(Math.random()*7)-3,m=Math.floor(Math.random()*7)-3,c=coGet(gridCoKey(ax,idx,m,Math.floor(Math.random()*gridSegN(ax,idx,m)))),q=c.loc(BZ_X,0);
+ pos.x=q.x;pos.z=q.z;hd=Math.atan2(c.cr,-c.sr);th=hd;camH=hd;curS=0;autoBoard=true;vel.x=vel.z=0;tcx=1e9;ocx=1e9;gbv=-1;GRVIS.add(c.k)};
+// empresa já visitada mais próxima da posição atual (usada ao reiniciar/guincho)
+function gridNearVisited(){let b=null,bd=1e18;for(const k of GRVIS){if(!gridKeyOk(k))continue;const c=coGet(k),d=Math.hypot(c.x-pos.x,c.z-pos.z);if(d<bd){bd=d;b=c}}return b}
 var GRSG=null,GRB=null,gbv=-1,gbx=0,gbz=0,GRMS=null,GRAMP=null,GRRAIL=null,GRBR=null,GRCOLS=[];const GRQ=450,GRM=6,GRR=1100,RQ=4800,LIFT=7,LR=380,LS=300,UB=200,DK=4.8;
 const XCM=new Map(),gx=(i,j)=>{const k=i+','+j;let c=XCM.get(k);if(!c){if(XCM.size>400)XCM.clear();XCM.set(k,c=GRID.cross(i,j))}return c};
 const gsm=t=>t*t*(3-2*t);var RAMP_PUSH=.35;
@@ -286,6 +291,7 @@ function gridCoFrame(){if(!ready)return;
  else if(best){const gp=buildCo(best);gp.visible=false;COG.set(best.k,gp);coPend=true}
  if(changed){const prev=new Set(COACT);COACT.length=0;for(const c of want)if(COG.has(c.k))COACT.push(c);rbI=1e9;ocx=1e9;for(const c of COACT)if(!prev.has(c))terrMark(c.x,c.z,70);tcx=1e9;placeCones()}
  {const rg=gridReg(pos.x,pos.z);if(gmReg&&gmReg.key!==rg.key)msg('📍 '+rg.name);gmReg=rg}
+ for(const c of COACT)if(!GRVIS.has(c.k)&&Math.hypot(c.x-pos.x,c.z-pos.z)<130)GRVIS.add(c.k);
  for(const c of COACT)if(!c.ann&&Math.hypot(c.x-pos.x,c.z-pos.z)<300){c.ann=true;msg(c.name+' · '+c.t.label)}
  if(++coTick%180==0&&COM.size>60)for(const[k,c]of COM)if(Math.hypot(c.x-pos.x,c.z-pos.z)>4500&&!COG.has(k)&&!coKeep(c))COM.delete(k)}
 

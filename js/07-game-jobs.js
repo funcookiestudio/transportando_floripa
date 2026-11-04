@@ -13,13 +13,14 @@ var cargoCol=null,hitched=false,autoBoard=false;let job=null,deliveries=0,dd=0,d
 const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/60)+' min '+String(Math.round(t%60)).padStart(2,'0')+' s';
 score=2000;try{const sv=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
 var RESTY=null;let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch(e){}
-function saveG(){if(typeof ready==='undefined'||!ready||VEH.car)return; /* Civic não grava: preserva o jogo da carreta */try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:HREF>-1e5&&HREF<1e5?Math.round(HREF*100)/100:undefined,hd,th,s:curS,hitched,cargo,tl:tLeft};
+function saveG(){if(typeof ready==='undefined'||!ready||VEH.car)return; /* Civic não grava: preserva o jogo da carreta */try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:HREF>-1e5&&HREF<1e5?Math.round(HREF*100)/100:undefined,hd,th,s:curS,hitched,cargo,tl:tLeft,vis:window.GRVIS?[...GRVIS].slice(-400):undefined};
  if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.v=2;j.nonce=job.from.nonce||0;d.job=j}
  localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
 // reiniciar (R/↺): volta à empresa mais próxima mantendo frete e carreta engatada; sem carga, o menu de fretes abre ali
 function respawn(){if(!ready){reset();return}
- if(window.GRID_ON){gridStart();msg('Voltou ao ponto de partida');return}
- let b=null,bd=1e18;const k0=Math.floor(curS/CO_D);for(let k=k0-2;k<=k0+3;k++){const c=coGet(k),d=Math.abs(c.s-curS);if(d<bd){bd=d;b=c}}
+ let b=null,bd=1e18;
+ if(window.GRID_ON){b=gridNearVisited();if(!b){gridStart();msg('Voltou ao início');return}bd=Math.hypot(b.x-pos.x,b.z-pos.z)}
+ else{const k0=Math.floor(curS/CO_D);for(let k=k0-2;k<=k0+3;k++){const c=coGet(k),d=Math.abs(c.s-curS);if(d<bd){bd=d;b=c}}}
  const km=bd/1000,cost=bd<60?0:Math.round((200+km*120)/10)*10;
  if(!cost){doRespawn(b,0);return}
  cmShow('Chamar o guincho','Levar o caminhão até '+b.name+' ('+b.city+') · '+km.toFixed(1)+' km',[{html:'<b>Confirmar</b><span>'+money(Math.min(cost,score))+'</span><small>'+(score<cost?'Saldo insuficiente: cobra o que você tem':'Taxa por distância · frete e carreta engatada vão junto')+'</small>',fn:()=>doRespawn(b,cost)},{html:'<b>Cancelar</b><small>Esc</small>',fn:closeCm}],'Taxa: R$ 200 + R$ 120 por km')}
