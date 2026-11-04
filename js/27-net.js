@@ -72,11 +72,11 @@ function netLeave(){if(!NET.on)return;NET.on=false;NET.timers.forEach(t=>{if(t&&
  const link=()=>location.origin+location.pathname+'?sala='+NET.code;
  $$('hmp').onclick=()=>{$$('hmain').style.display='none';$$('hnet').style.display='block';netUI()};
  $$('hnback').onclick=()=>{$$('hnet').style.display='none';$$('hmain').style.display='flex';netUI()};
- $$('hcreate').onclick=()=>{nm();const L='ABCDEFGHJKLMNPQRSTUVWXYZ',c=Array.from({length:4},()=>L[Math.floor(Math.random()*L.length)]).join('');netStart(c,true)};
- $$('hjoin').onclick=()=>{nm();const c=($$('hcode').value||'').toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){netStatus('Digite o código de 4 letras');return}netStart(c,false)};
+ $$('hcreate').onclick=()=>{nm();const L='ABCDEFGHJKLMNPQRSTUVWXYZ',c=Array.from({length:4},()=>L[Math.floor(Math.random()*L.length)]).join('');netStart(c,true);try{navigator.clipboard.writeText(location.origin+location.pathname+'?sala='+c).catch(()=>{})}catch(e){}$$('hplay').click();setTimeout(()=>netToast('Sala '+c+' criada · link copiado'),400)};
+ $$('hjoin').onclick=()=>{nm();const c=($$('hcode').value||'').toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){netStatus('Digite o código de 4 letras');return}netStart(c,false);$$('hplay').click()};
  $$('hcode').oninput=e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z]/g,'')};
  $$('hshare').onclick=async()=>{const u=link(),tx='Entre na minha sala do Volvo FH16 · código '+NET.code;try{if(navigator.share){await navigator.share({title:'Volvo FH16',text:tx,url:u});return}}catch(e){if(e&&e.name==='AbortError')return}try{await navigator.clipboard.writeText(u);netToast('Link copiado')}catch(e){netToast(u)}};
  $$('hcopy').onclick=async()=>{try{await navigator.clipboard.writeText(NET.code);netToast('Código copiado')}catch(e){netToast('Código: '+NET.code)}};
- $$('hnleave').onclick=netLeave;$$('hname').onchange=nm;netUI();
+ $$('hnplay').onclick=()=>$$('hplay').click();$$('hnleave').onclick=netLeave;$$('hname').onchange=nm;netUI();
  try{const q=(new URLSearchParams(location.search).get('sala')||'').toUpperCase().replace(/[^A-Z]/g,'');if(q.length===4){$$('hmain').style.display='none';$$('hnet').style.display='block';$$('hcode').value=q;netStart(q,false)}}catch(e){}}
 function netToast(s){try{msg(s)}catch(e){}const st=document.getElementById('hns');if(st&&window.HOME){st.textContent=s;setTimeout(netUI,1500)}}
