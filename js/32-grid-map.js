@@ -297,7 +297,8 @@ function gridCoFrame(){if(!ready)return;
 
 // botão ⓘ sobre o mapa: expande/recolhe as informações do GPS (rota, KM, frete, tempo e dinheiro)
 (function(){const m=document.getElementById('mis');if(!m||document.getElementById('gpsx'))return;const b=document.createElement('button');b.type='button';b.id='gpsx';b.textContent='ⓘ';b.setAttribute('aria-label','Informações do GPS');
- let on=false;try{on=localStorage.getItem('fh16gpsx')==='1'}catch(e){}const ap=()=>{document.body.classList.toggle('gpsx',on);b.textContent=on?'✕':'ⓘ';gmT=0;gmB=-1};ap();
+ const ov=document.createElement('div');ov.id='gpsinfo';['gmh','kmrow','jn','mk','mx'].forEach(i=>{let e=document.getElementById(i);if(e&&i==='mk')e=e.closest('.mrow')||e;if(e)ov.appendChild(e)});m.appendChild(ov);
+ let on=false;try{on=localStorage.getItem('fh16gpsx')==='1'}catch(e){}const ap=()=>{document.body.classList.toggle('gpsx',on);b.textContent=on?'🗺':'ⓘ';gmT=0;gmB=-1};ap();
  const tg=e=>{e.stopPropagation();e.preventDefault();on=!on;try{localStorage.setItem('fh16gpsx',on?'1':'0')}catch(x){}ap()};
  b.addEventListener('pointerdown',e=>e.stopPropagation());b.addEventListener('click',tg);m.insertBefore(b,m.firstChild)})();
 if(window.__rgPending){window.__rgPending=false;try{restoreG()}catch(e){console.log(e)}}

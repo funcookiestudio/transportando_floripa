@@ -193,3 +193,10 @@ body.gpsx #mis #gmh{display:block!important;text-align:left;font-size:12px;margi
 body.gpsx #mis #kmrow,body.gpsx #mis .mrow:not(#gpsh){display:flex!important}
 body.gpsx #mis #jn,body.gpsx #mis #mx{display:block!important}
 body.gpsx #mis #jn{margin-top:4px}
+
+/* ⓘ alterna entre o mapa e as informações, no mesmo espaço */
+
+#gpsinfo{display:none}
+body.gpsx #mis #gmap{visibility:hidden}
+body.gpsx #mis #gpsinfo{display:block;position:absolute;left:5px;right:5px;bottom:5px;aspect-ratio:3/2;overflow:auto;box-sizing:border-box;padding:42px 10px 8px;border-radius:10px;background:rgba(14,17,22,.92)}
+body.gpsx #mis #gpsinfo #gmh{margin:0 0 4px}

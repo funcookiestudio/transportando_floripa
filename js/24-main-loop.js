@@ -21,7 +21,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?(hiB?3.6:1.9):0;s.distance=hiB?95:44;lpAimSpot(s,i)});beamStep();lpFrame(dt,vf);HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);{const bl=Math.floor(now/400)%2; // setas: < esquerda · > direita (desligam sozinhas depois da curva)
  if(sigL){if(steer>.22)sigTL=1;else if(sigTL&&steer<.05){sigL=false;sigTL=0}}if(sigR){if(steer<-.22)sigTR=1;else if(sigTR&&steer>-.05){sigR=false;sigTR=0}}
  AM.emissiveIntensity=bl&&sigL?2.2:.4;AR.emissiveIntensity=bl&&sigR?2.2:.4}
- roadFrame();trfUpd(dt);if(!window.GRID_ON)stFrame(dt);updTerrain();if(window.g3Frame)g3Frame(dt);updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
+ roadFrame();trfUpd(dt);if(window.GRID_ON)fuelFrame(dt);else stFrame(dt);updTerrain();if(window.g3Frame)g3Frame(dt);updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
  jobFrame(dt);
  // câmera
  camH+=wrap(hd-camH)*Math.min(1,dt*3.5);const cfx=-Math.sin(camH+(camMode<2?orbYaw:0)),cfz=-Math.cos(camH+(camMode<2?orbYaw:0)),cx=pos.x+fx*VEH.ca,cz=pos.z+fz*VEH.ca,cy=yr+VEH.cy;
@@ -38,10 +38,10 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  audioStep(dt,now,vf,thr);
  // HUD
  HUD.tS+=dt;HUD.tP+=dt;HUD.tA+=dt;
- if(HUD.tS>=.066){HUD.tS=0;const kmh=Math.round(Math.abs(vf)*3.6);hset('kmh',kmh);hgauge(kmh);hcls('gauge','hot',kmh>105);hset('gr',vf<-.5?'R':g+1);hcls('gb2','rev',vf<-.5);
+ if(HUD.tS>=.066){HUD.tS=0;const kmh=Math.round(Math.abs(vf)*3.6);hset('kmh',kmh);{const rf=engineOn?eRpm/VEH.lim:0;hgauge(rf);hcls('gauge','hot',rf>.88)}hset('gr',vf<-.5?'R':g+1);hcls('gb2','rev',vf<-.5);
   hcls('hbi','on',K.hb);hcls('pa','on',cruiseS>0);if(cruiseS)hset('pa',cruiseS===2?'PA '+Math.round(cruiseV*3.6):'PA…')}
  if(HUD.tP>=.1){HUD.tP=0;{const sb=stBay(),k=yardCo()?'📦':sb?(sb.k==='shop'?'🔧':'⛽'):coFuelZone()?'⛽':'',on=!menuOpen&&!HOME&&!!k;if(on!==HUD.cmb||k!==HUD.cmk){HUD.cmb=on;HUD.cmk=k;const e=document.getElementById('cmb');e.style.display=on?'':'none';if(k)e.textContent=k}}hcls('wf','on',fuel<FUELMAX*.15);hcls('wd','on',dmg>=60);
-  if(HUD.sx){hset('fl',Math.round(fuel));hbar('fb',fuel/FUELMAX);hcls('fbw','low',fuel<FUELMAX*.15);hset('dm',Math.round(dmg));hbar('db',dmg/100);hset('cg',cargo);const ag=Math.round(Math.abs(th-hd)*57.3);hcls('agw','on',hitched&&ag>10);hset('ag',ag)}
+  if(HUD.sx){hset('fl',Math.round(fuel));hset('fkm',String(Math.round(fuelKm)).padStart(4,'0'));hbar('fb',fuel/FUELMAX);hcls('fbw','low',fuel<FUELMAX*.15);hset('dm',Math.round(dmg));hbar('db',dmg/100);hset('cg',cargo);const ag=Math.round(Math.abs(th-hd)*57.3);hcls('agw','on',hitched&&ag>10);hset('ag',ag)}
   
   hset('mk',job?(dd>=1000?(dd/1000).toFixed(1)+' km':Math.round(dd)+' m'):'Vá a uma empresa');hset('jn',job?(job.phase==='pickup'?job.from.name:job.to.name):'Sem frete');
   hset('tm',job&&job.phase==='deliver'?Math.ceil(tLeft):'--');hset('sc',score);hset('cn',deliveries);hset('ps',stNear)}

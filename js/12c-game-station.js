@@ -25,10 +25,16 @@ function coFuelMenu(c){const btns=[],need=FUELMAX-fuel,pr=CPRICE.toFixed(2).repl
  btns.push({html:'<b>Fechar</b><small>Esc</small>',fn:closeCm});
  cmShow(c.name+' · bomba','Combustível '+Math.round(fuel)+' / '+FUELMAX+' L · '+money(score),btns,'Toque, clique ou tecle 1–'+btns.length)}
 let coPIn=false;
-function stFrame(dt){if(!ready||menuOpen)return;const sp=Math.hypot(vel.x,vel.z);
+// consumo, pane seca, aviso e autonomia (roda também no modo grade, onde stFrame não roda)
+let fuelKm=0,fuelLpk=0;
+function fuelFrame(dt,sp){if(!ready||menuOpen)return;if(sp===undefined)sp=Math.hypot(vel.x,vel.z);const f0=fuel;
  if(engineOn)fuel=Math.max(0,fuel-VEH.fc*dt*(.02+sp*.0011*(1+cargo*.01)+thrS*.05*(1+(VEH.car?boost*.7+wsp*.5:0)))*(VEH.car&&thrS<.05&&sp>5?.35:1));
  if(fuel<=0){fuelDead=sp<1?fuelDead+dt:0;if(fuelDead>6){fuelDead=0;score=Math.max(0,score-500);fuel=40;saveG();msg('Sem combustível! O guincho trouxe 40 L (-R$ 500)')}}else fuelDead=0;
  if(fuel<45&&fuel>0){fuelWarn-=dt;if(fuelWarn<=0){fuelWarn=40;msg('Combustível baixo — procure um posto')}}
+ fuelKm=Math.min(9999,fuel/((VEH.car?.45:2.6)*(1+cargo*.01)));
+ if(window.GRID_ON){const cz=coFuelZone();if(cz){if(!coPIn){coPIn=true;msg('Pare e aperte G para abastecer (R$ '+CPRICE.toFixed(2).replace('.',',')+'/L)')}}else coPIn=false}}
+function stFrame(dt){if(!ready||menuOpen)return;const sp=Math.hypot(vel.x,vel.z);
+ fuelFrame(dt,sp);
  {const z=stBay();if(z){if(z!==stIn){stIn=z;msg(z.k==='shop'?'Pare e aperte G para a oficina':'Pare e aperte G para abastecer')}}else stIn=false}
  {const g=icGate();if(g)regGo(g);else if(REG.hist&&REG.hist.length&&curS<REG.arr-40&&RD<14)regBack()}
  {const cz=coFuelZone();if(cz){if(!coPIn){coPIn=true;msg('Pare e aperte G para abastecer (R$ '+CPRICE.toFixed(2).replace('.',',')+'/L)')}}else coPIn=false}
