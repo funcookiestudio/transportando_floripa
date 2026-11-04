@@ -82,7 +82,7 @@ function buildCo(c){const g=new THREE.Group(),T=c.t,W=mat(T.col),A=mat(T.acc),DK
  if(!window.GRID_ON)coLane(c,g,disp);flushBatch(g,disp);scene.add(g);return g}
 // carretas estacionadas usam EXATAMENTE o mesmo modelo da carreta engatada (trl): malhas fundidas por material, geometria compartilhada
 const TPLC=[null,null]; // 0 = apoio arriado (estacionada) · 1 = recolhido (engatada)
-function trailerTpl(up){const kk=up?1:0;if(TPLC[kk])return TPLC[kk];const e0=GEAR.e;gearSet(kk);trl.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(trl.matrixWorld).invert(),by=new Map(),skip=trl.userData.cg;
+function trailerTpl(up){const kk=up?1:0;if(TPLC[kk])return TPLC[kk];const e0=GEAR.e;gearSet(kk);const wv=tS.map(q=>q.g.visible);tS.forEach(q=>q.g.visible=true); /* nas telas de pintura as rodas ficam ocultas: sem isto o molde sairia sem pneus */trl.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(trl.matrixWorld).invert(),by=new Map(),skip=trl.userData.cg;
  const add=(m,e)=>{let a=by.get(m);if(!a)by.set(m,a=[]);a.push(e)};
  trl.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.attributes.position)return;for(let p=o;p&&p!==trl;p=p.parent)if(p===skip||!p.visible)return;const g=o.geometry,tot=g.index?g.index.count:g.attributes.position.count;
   if(Array.isArray(o.material)){for(const gr of g.groups){const m=o.material[gr.materialIndex];if(m)add(m,{o,s:gr.start,n:Math.min(gr.count,tot-gr.start)})}}else add(o.material,{o,s:0,n:tot})});
@@ -93,6 +93,6 @@ function trailerTpl(up){const kk=up?1:0;if(TPLC[kk])return TPLC[kk];const e0=GEA
    for(let k=0;k<cnt;k++){v.fromBufferAttribute(pa,k).applyMatrix4(mx);P[(vo+k)*3]=v.x;P[(vo+k)*3+1]=v.y;P[(vo+k)*3+2]=v.z;if(na){v.fromBufferAttribute(na,k).applyMatrix3(nm).normalize();N[(vo+k)*3]=v.x;N[(vo+k)*3+1]=v.y;N[(vo+k)*3+2]=v.z}if(ua){U[(vo+k)*2]=ua.getX(k);U[(vo+k)*2+1]=ua.getY(k)}}
    for(let k=0;k<e.n;k+=3){const q=e.s+k,a=ix?ix.getX(q):q,b=ix?ix.getX(q+1):q+1,c=ix?ix.getX(q+2):q+2;I[io+k]=a+vo;I[io+k+1]=(flip?c:b)+vo;I[io+k+2]=(flip?b:c)+vo}io+=e.n;vo+=cnt}
   const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(P,3));bg.setAttribute('normal',new THREE.BufferAttribute(N,3));bg.setAttribute('uv',new THREE.BufferAttribute(U,2));bg.setIndex(new THREE.BufferAttribute(I,1));TPL.push([bg,m])}
- TPLC[kk]=TPL;gearSet(e0);trl.updateMatrixWorld(true);return TPL}
+ {let mn=1e9;for(const[bg]of TPL){const q=bg.attributes.position.array;for(let i=1;i<q.length;i+=3)if(q[i]<mn)mn=q[i]}if(tS.length&&mn<.25)TPLC[kk]=TPL} /* só guarda o molde se as rodas (que descem até o chão) entraram nele */ /* sem as rodas montadas (boot incompleto) o molde não é guardado: nenhuma carreta fica sem pneus */tS.forEach((q,i)=>q.g.visible=wv[i]);gearSet(e0);trl.updateMatrixWorld(true);return TPL}
 function mkTrailer(g,x,zc,sgn,up){const t=new THREE.Group(),inn=new THREE.Group();t.position.set(x,0,zc);t.userData.sgn=sgn;inn.position.set(0,.1,-sgn*6.75);inn.rotation.y=sgn>0?0:Math.PI;
  for(const[bg,m]of trailerTpl(up)){const o=new THREE.Mesh(bg,m);o.receiveShadow=true;inn.add(o)}t.add(inn);g.add(t);return t}

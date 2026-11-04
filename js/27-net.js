@@ -7,7 +7,7 @@ const nWrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
 function nTick(fn,ms){try{const w=new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),'+ms+')'])));w.onmessage=()=>fn();return w}catch(e){return setInterval(fn,ms)}}
 function nSend(o){o.id=NET.id;if(NET.bc)try{NET.bc.postMessage(o)}catch(e){}if(NET.sendT)try{const r=NET.sendT(o);if(r&&r.catch)r.catch(()=>{})}catch(e){}}
 function nPaint(){let cab=null;try{const v=localStorage.getItem('fh16paint');if(v)cab=+v}catch(e){}return{cab,trl:HPS.t==null?null:HPS.t,rim:HPS.r==null?null:HPS.r}}
-function nHello(){const p=nPaint();nSend({t:'h',v:NETV,n:NET.name||'Motorista',cab:p.cab,trl:p.trl,rim:p.rim,host:NET.host?1:0,hr:NET.host?hourT:null})}
+function nHello(){const p=nPaint();nSend({t:'h',v:NETV,n:NET.name||'Motorista',cab:p.cab,trl:p.trl,rim:p.rim,cg:(hitched&&typeof job!=='undefined'&&job&&job.name)||null,ct:(typeof job!=='undefined'&&job&&job.tons)||0,host:NET.host?1:0,hr:NET.host?hourT:null})}
 function nState(){if(!ready)return;if(!NET.x0)NET.x0={x:pos.x,z:pos.z};if(Math.hypot(pos.x-NET.x0.x,pos.z-NET.x0.z)>12)NET.moved=true;
  nSend({t:'s',x:+pos.x.toFixed(2),z:+pos.z.toFixed(2),a:+hd.toFixed(3),b:+th.toFixed(3),p:hitched?1:0,v:+Math.hypot(vel.x,vel.z).toFixed(1),m:NET.moved?1:0})}
 function nRecv(o){if(!o||o.id===NET.id||!NET.on)return;const now=performance.now();
@@ -15,7 +15,7 @@ function nRecv(o){if(!o||o.id===NET.id||!NET.on)return;const now=performance.now
  let p=NET.peers.get(o.id);
  if(o.t==='h'){if(o.v!==NETV)return;
   if(!p){if(NET.peers.size>=NETMAX-1){nSend({t:'f',to:o.id});return}p=nNew(o.id);nHello();if(!window.HOME)netToast((o.n||'Motorista')+' entrou')}
-  p.name=String(o.n||'Motorista').slice(0,14);const ch=p.cab!=o.cab||p.trl!=o.trl||p.rim!=o.rim;p.cab=o.cab;p.trl=o.trl;p.rim=o.rim;if(ch&&p.av)nKillAv(p);
+  p.name=String(o.n||'Motorista').slice(0,14);const ch=p.cab!=o.cab||p.trl!=o.trl||p.rim!=o.rim;p.cab=o.cab;p.trl=o.trl;p.rim=o.rim;p.cg=o.cg||null;p.ct=+o.ct||0;if(ch&&p.av)nKillAv(p);
   if(o.host&&o.hr!=null&&!NET.host&&!NET.hr){NET.hr=true;try{hourT=o.hr}catch(e){}}
   p.last=now;netUI();return}
  if(!p){if(o.t!=='s'||NET.peers.size>=NETMAX-1)return;p=nNew(o.id);nHello()}p.last=now;
@@ -25,14 +25,14 @@ function nNew(id){const p={id,name:'Motorista',cab:null,trl:null,rim:null,buf:[]
 function nKillAv(p){if(p.av){scene.remove(p.av.g);p.av=null;ocx=1e9}}
 function nTag(name){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.fillStyle='rgba(14,17,22,.7)';g.fillRect(0,8,256,48);g.font='bold 28px system-ui,sans-serif';g.fillStyle='#fff';g.textAlign='center';g.textBaseline='middle';g.fillText(name,128,33);
  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));s.scale.set(5,1.25,1);s.position.set(0,5.6,0);return s}
-function nMake(p){const m=trfBuild({cab:p.cab,trl:p.trl,rim:p.rim}),P=new THREE.Group();m.g.remove(m.t);P.add(m.t);m.g.add(P);m.g.add(nTag(p.name));m.g.traverse(o=>{if(o.isMesh)o.castShadow=false});scene.add(m.g);p.av={g:m.g,P,sps:m.sps};ocx=1e9}
+function nMake(p){const m=trfBuild({cab:p.cab,trl:p.trl,rim:p.rim}),P=new THREE.Group();m.g.remove(m.t);P.add(m.t);m.g.add(P);m.g.add(nTag(p.name));m.g.traverse(o=>{if(o.isMesh)o.castShadow=false});scene.add(m.g);p.av={g:m.g,P,sps:m.sps,t:m.t,cgk:null};ocx=1e9}
 function nSample(p,t){const b=p.buf;if(!b.length)return null;const T=t-120;let i=b.length-1;if(T>=b[i].t){const q=b[i],dt=Math.min(.25,(T-q.t)/1000);return{x:q.x-Math.sin(q.a)*p.sp*dt,z:q.z-Math.cos(q.a)*p.sp*dt,a:q.a,b:q.b}}
  while(i>0&&b[i-1].t>T)i--;if(i===0)return b[0];const A=b[i-1],B=b[i],k=Math.max(0,Math.min(1,(T-A.t)/Math.max(1,B.t-A.t)));return{x:A.x+(B.x-A.x)*k,z:A.z+(B.z-A.z)*k,a:A.a+nWrap(B.a-A.a)*k,b:A.b+nWrap(B.b-A.b)*k}}
 let nLst=0;
 function netFrame(dt,now){if(!NET.on)return;const t=performance.now();
  for(const[id,p]of NET.peers){if(t-p.last>12000){nKillAv(p);NET.peers.delete(id);ocx=1e9;netUI();if(!window.HOME)netToast(p.name+' saiu');continue}
   if(!ready||!TRUCKM)continue;const s=nSample(p,t);if(!s)continue;if(!p.av){nMake(p)}const g=p.av.g,yr=H(s.x,s.z);
-  g.visible=!window.HOME;g.position.set(s.x,yr,s.z);g.rotation.y=s.a;p.av.P.visible=!!p.hitched;p.av.P.rotation.y=nWrap(s.b-s.a);p.spin-=p.sp*dt/.55;for(const q of p.av.sps)q.rotation.x=p.spin;
+  {const k=(p.cg||'')+'|'+p.ct;if(p.av.cgk!==k){p.av.cgk=k;try{setTrCargo(p.av.t,p.cg,p.ct)}catch(e){}}}g.visible=!window.HOME;g.position.set(s.x,yr,s.z);g.rotation.y=s.a;p.av.P.visible=!!p.hitched;p.av.P.rotation.y=nWrap(s.b-s.a);p.spin-=p.sp*dt/.55;for(const q of p.av.sps)q.rotation.x=p.spin;
   const arm=p.moved&&NET.moved&&!window.HOME,sa=Math.sin(s.a),ca=Math.cos(s.a),sb=Math.sin(s.b),cb=Math.cos(s.b),Z=[.3,-1.9,-3.9,-5.3],TZ=[3.5,7,10.5,13];
   p.cols.forEach((c,i)=>{if(i<4){c.x=s.x+Z[i]*sa;c.z=s.z+Z[i]*ca}else{const d=TZ[i-4]||3.5;c.x=s.x+d*sb;c.z=s.z+d*cb}c.off=!arm||(i>=4&&!p.hitched)});p.x=s.x;p.z=s.z}
  if(!window.HOME&&now-nLst>=500){nLst=now;nList()}nMarks(now)}
