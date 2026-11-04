@@ -38,3 +38,12 @@ function homeFrame(dt,now){if(!hpInit){hpInit=true;hpS={th,tv:trl.visible,cb:car
  if(hpAuto)hpA+=dt*.18;const a=hpA+orbYaw,P=tp+Math.max(-.15,Math.min(.8,orbPitch)),d=hpD*zoom;
  cam.fov=40;{const W=innerWidth,Hh=innerHeight,pn=$('hpan').style.display==='block';if(pn)cam.setViewOffset(W,Hh,W>Hh*1.1?((hpTab==='lp'||hpTab==='sn')?$('hpan').offsetWidth/2:W*.2):0,W>Hh*1.1?0:Hh*(hpTab==='lp'?.27:.18),W,Hh);else cam.clearViewOffset()}cam.updateProjectionMatrix();
  cam.position.set(hpC.x+Math.sin(a)*d*Math.cos(P),Math.max(hpC.y+d*Math.sin(P),H(hpC.x,hpC.z)+.4),hpC.z+Math.cos(a)*d*Math.cos(P));cam.lookAt(hpC);lpFrame(dt,0);if(window.hzFrame)hzFrame(dt,0)}
+
+/* ===== Catálogo de cargas na tela inicial: todas as cargas dos fretes, com prévia 3D sobre a carreta; toque de novo na mesma carga para trocar 6/12/18 t ===== */
+(function(){const b=document.getElementById('hcargo');if(!b)return;
+ b.onclick=()=>{try{audio()}catch(e){}
+  const names=[],lab={};for(const k in CARGOS)for(const n of CARGOS[k]){if(!lab[n]){lab[n]=[];names.push(n)}const t=CT.find(c=>c.id===k);lab[n].push(t?t.label:k)}
+  const pv=names.map(n=>({name:n,tons:18,sub:'Oferecida por: '+lab[n].join(', ')+' · toque de novo: 6 / 12 / 18 t'})),
+   btns=names.map((n,i)=>({html:'<b>'+n+'</b><small>'+lab[n].join(' · ')+'</small>',fn:()=>closeCm()}));
+  cmCat=true;cmShow('Cargas','Modelos de todos os fretes disponíveis',btns,'Arraste a prévia para girar',pv);
+  const g=$('cmg');if(!g._cat){g._cat=1;g.addEventListener('pointerdown',ev=>{if(!cmCat)return;const e=ev.target.closest('button');if(!e)return;const i=[...g.children].indexOf(e);if(i===PV.i&&PV.list[i]){const o=PV.list[i];o.tons=o.tons===18?6:o.tons===6?12:18}},true)}}})();

@@ -67,8 +67,9 @@ function cmShow(t,p,btns,foot,pv){$('cmt').textContent=t;$('cmp').textContent=p;
  boardKeys=btns.map(b=>b.fn);$('cmf').textContent=foot||'';menuOpen=true;for(const k in K)K[k]=false;$('cm').style.display='flex';
  if(typeof pvClose==='function')pvClose();const on=full&&pvOpen(pv);$('cm').classList.toggle('full',on);if(on)cmAcc(btns,pv);else $('cma').style.display='none'}
 /* painel de fretes: clicar na carga só seleciona e mostra a prévia; quem aceita é o botão "Aceitar frete" */
-function cmAcc(btns,pv){const a=$('cma'),o=pv[PV.i];a.style.display='block';a.textContent='✔ Aceitar frete · '+o.name+' ('+o.tons+' t)';a.onpointerdown=ev=>{audio();ev.preventDefault();btns[PV.i].fn()}}
-function closeCm(){$('cma').style.display='none';menuOpen=false;boardKeys=null;$('cm').style.display='none';$('cm').classList.remove('full');if(typeof pvClose==='function')pvClose()}
+var cmCat=false; /* modo catálogo (tela inicial): o botão só fecha */
+function cmAcc(btns,pv){const a=$('cma'),o=pv[PV.i];a.style.display='block';a.textContent=cmCat?'✖ Fechar catálogo':'✔ Aceitar frete · '+o.name+' ('+o.tons+' t)';a.onpointerdown=ev=>{audio();ev.preventDefault();btns[PV.i].fn()}}
+function closeCm(){cmCat=false;$('cma').style.display='none';menuOpen=false;boardKeys=null;$('cm').style.display='none';$('cm').classList.remove('full');if(typeof pvClose==='function')pvClose()}
 function boardKey(i){if(boardKeys&&boardKeys[i])boardKeys[i]()}
 function yardCo(){let b=null,bd=1e9;for(const c of COACT){const d=Math.hypot(pos.x-c.board.x,pos.z-c.board.z);if(d<6.5&&d<bd){bd=d;b=c}}return b}
 function openBoard(){if(VEH.car){msg('O Civic não faz fretes · recarregue a página e escolha a carreta');return}if(Math.hypot(vel.x,vel.z)>1){msg('Pare o caminhão');return}
