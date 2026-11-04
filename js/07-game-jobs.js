@@ -13,7 +13,7 @@ var cargoCol=null,hitched=false,autoBoard=false;let job=null,deliveries=0,dd=0,d
 const money=n=>'R$ '+Math.round(n).toLocaleString('pt-BR'),fmtT=t=>Math.floor(t/60)+' min '+String(Math.round(t%60)).padStart(2,'0')+' s';
 score=2000;try{const sv=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(sv){if(typeof sv.money==='number')score=sv.money;deliveries=sv.deliveries|0}}catch(e){}
 var RESTY=null;let SAVED=null;try{SAVED=JSON.parse(localStorage.getItem(SAVEKEY)||'null')}catch(e){}
-function saveG(){if(typeof ready==='undefined'||!ready||VEH.car)return; /* Civic não grava: preserva o jogo da carreta */try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:Math.round(HREF*100)/100,hd,th,s:curS,hitched,cargo,tl:tLeft};
+function saveG(){if(typeof ready==='undefined'||!ready||VEH.car)return; /* Civic não grava: preserva o jogo da carreta */try{const d={money:score,deliveries,dmg,fuel,x:pos.x,z:pos.z,y:HREF>-1e5&&HREF<1e5?Math.round(HREF*100)/100:undefined,hd,th,s:curS,hitched,cargo,tl:tLeft};
  if(job){const j={};for(const k in job)if(k!=='from'&&k!=='to'&&typeof job[k]!=='object')j[k]=job[k];j.fk=job.from.k;j.tk=job.to.k;j.nonce=job.from.nonce||0;d.job=j}
  localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
 // reiniciar (R/↺): volta à empresa mais próxima mantendo frete e carreta engatada; sem carga, o menu de fretes abre ali
@@ -27,8 +27,8 @@ function doRespawn(b,cost){const paid=Math.min(cost,score);score-=paid;
  const q=b.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(b.cr,-b.sr);camH=hd;curS=b.s;vel.x=vel.z=0;steer=0;wT=0;rollT=0;vTp=0;decS=0;tipS=0;dmg=0;yawKick=0;gear=0;eRpm=650;engineOn=true;engCrank=0;shiftT=0;thrS=0;brkP=0;
  hb=null;th=hd;autoBoard=!job&&!hitched;tcx=1e9;ocx=1e9;closeCm();saveG();msg((job?'Guincho · frete mantido':'Guincho')+(paid?' · -'+money(paid):''))}
 // restaura posição, carreta, frete e dano salvos (chamado após reset() no boot)
-function restoreG(){const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
- try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);fuel=typeof sv.fuel==='number'?Math.max(0,Math.min(FUELMAX,sv.fuel)):FUELMAX;tcx=1e9;ocx=1e9;if(typeof sv.y==='number'&&isFinite(sv.y)){HREF=sv.y;RESTY={y:sv.y,t:6}}
+function restoreG(){if(window.GRID_ON&&!window.gridCoBase){window.__rgPending=true;return}const sv=SAVED;if(!sv||typeof sv.x!=='number'||typeof sv.z!=='number'||!isFinite(sv.x+sv.z+sv.hd+sv.th))return;
+ try{pos.x=sv.x;pos.z=sv.z;hd=sv.hd;th=sv.th;camH=hd;vel.x=vel.z=0;curS=+sv.s||0;autoBoard=false;dmg=Math.max(0,+sv.dmg||0);fuel=typeof sv.fuel==='number'?Math.max(0,Math.min(FUELMAX,sv.fuel)):FUELMAX;tcx=1e9;ocx=1e9;if(typeof sv.y==='number'&&isFinite(sv.y)&&sv.y>-1e5&&sv.y<1e5){HREF=sv.y;RESTY={y:sv.y,t:6}}
   const j=sv.job;if(j&&coGet(j.fk)&&coGet(j.tk)){const f=coGet(j.fk),t=coGet(j.tk);f.nonce=j.nonce|0;job=Object.assign({},j,{from:f,to:t});delete job.fk;delete job.tk;delete job.nonce;
    if(job.phase==='pickup'){f.spawn={slot:job.slot,name:job.name,tons:job.tons};setTargetP(f.slotK[job.slot],f.y);beacon.visible=false}
    else{setHitched(true);gearSnap(1);setTrailerCargo(job.name,job.tons);loadCargo(job.tons);tLeft=+sv.tl||job.limit;if(job.mode==='park')setPark(t,job.toBay);else{job.mode='';job.asked=false;setTargetP(t.board,t.y)}}}
@@ -57,7 +57,7 @@ function dockErr(c,bi){const rx=pos.x+14.2*Math.sin(th),rz=pos.z+14.2*Math.cos(t
 // lado para sair da empresa rumo ao destino: leva em conta para onde o caminhão está virado agora
 function exitDir(c,to){const sg=window.GRID_ON?((to.x-c.x)*-Math.sin(c.h)+(to.z-c.z)*-Math.cos(c.h)>0?1:-1):to.s>c.s?1:-1,dx=-Math.sin(c.h)*sg,dz=-Math.cos(c.h)*sg,fx=-Math.sin(hd),fz=-Math.cos(hd),toRoadX=-c.cr,toRoadZ=c.sr,fr=fx*toRoadX+fz*toRoadZ>=0,rt=dx*Math.cos(hd)-dz*Math.sin(hd)>0;
  return(fr?rt:!rt)?'<b style="color:#ffb400">➡ virar à DIREITA</b> ao sair':'<b style="color:#ffb400">⬅ virar à ESQUERDA</b> ao sair'}
-function offersFor(c){const n=c.nonce||0,offs=[-3,-2,-1,1,2,3,4],st=Math.floor(hh(c.k,n,21)*7),list=[],cl=CARGOS[c.t.id];
+function offersFor(c){if(window.GRID_ON)return gridOffers(c);const n=c.nonce||0,offs=[-3,-2,-1,1,2,3,4],st=Math.floor(hh(c.k,n,21)*7),list=[],cl=CARGOS[c.t.id];
  for(let i=0;i<3;i++){const to=coGet(c.k+offs[(st+i*2)%7]),name=cl[Math.floor(hh(c.k,n*4+i,22)*cl.length)],tons=[6,12,18][Math.floor(hh(c.k,n*4+i,23)*3)],dm=window.GRID_ON?Math.hypot(to.x-c.x,to.z-c.z)*1.12:Math.abs(to.s-c.s),km=dm/1000;
   list.push({from:c,to,name,tons,dist:dm,reward:Math.round((600+km*(300+tons*45))/10)*10,limit:dm/15+70,slot:i,col:slotCol(c,i),toBay:(i+1)%3})}
  return list}
@@ -77,10 +77,10 @@ function openBoard(){if(VEH.car){msg('O Civic não faz fretes · recarregue a p�
  const c=yardCo();if(!c){msg('Pare no ponto amarelo entre os cones');return}
  if(job&&job.phase==='deliver'&&job.mode!=='park'&&c===job.to){deliverMenu();return}
  if(job){cmShow('Frete em andamento',job.name+' · '+job.tons+' t · '+job.from.name+' → '+job.to.name,[{html:'<b>Continuar</b>',fn:closeCm},{html:'<b>Cancelar frete</b><span>-R$ 300</span><small>Perde a carga</small>',fn:()=>cancelJob(false)}],'');return}
- const offs=offersFor(c),btns=offs.map(o=>({html:'<b>'+o.name+' · '+o.tons+' t</b><span>'+money(o.reward)+'</span><small>→ '+o.to.name+' ('+o.to.city+') · '+(o.dist/1000).toFixed(1)+' km · '+exitDir(o.from,o.to)+' · prazo '+fmtT(o.limit)+'</small>',fn:()=>acceptJob(o)}));
+ const offs=offersFor(c),btns=offs.map(o=>({html:'<b>'+o.name+' · '+o.tons+' t</b><span>'+money(o.reward)+'</span><small>'+(o.tag?o.tag+' · ':'')+'→ '+o.to.name+' ('+o.to.city+') · '+(o.dist/1000).toFixed(1)+' km · '+exitDir(o.from,o.to)+' · prazo '+fmtT(o.limit)+'</small>',fn:()=>acceptJob(o)}));
  if(dmg>1){const cost=Math.round(dmg*30);btns.push({html:'<b>Oficina</b><span>'+money(cost)+'</span><small>Reparar '+Math.round(dmg)+'% de dano</small>',fn:()=>{if(score<cost){msg('Dinheiro insuficiente');return}score-=cost;dmg=0;saveG();closeCm();msg('Caminhão reparado')}})}
  btns.push({html:'<b>Fechar</b><small>Esc</small>',fn:closeCm});
- cmShow(c.name,c.t.label+' · '+c.city+' · '+money(score),btns,'Clique em uma carga para ver a prévia · depois toque em “Aceitar frete” · ou tecle 1–'+btns.length,offs.map(o=>({name:o.name,tons:o.tons,sub:'→ '+o.to.name+' ('+o.to.city+')'})))}
+ cmShow(c.name,c.t.label+' · '+c.city+' · '+money(score),btns,'Clique em uma carga para ver a prévia · depois toque em “Aceitar frete” · ou tecle 1–'+btns.length,offs.map(o=>({name:o.name,tons:o.tons,sub:(o.tag?o.tag+' · ':'')+'→ '+o.to.name+' ('+o.to.city+')'})))}
 function acceptJob(o){job=Object.assign({phase:'pickup'},o);{const d=o.from.drop&&o.from.drop[o.slot];if(d){d.visible=false;o.from.drop[o.slot]=null}}o.from.nonce=(o.from.nonce||0)+1;dockT=0;o.from.spawn={slot:o.slot,name:o.name,tons:o.tons};{const gp=COG.get(o.from.k);if(gp){const t=gp.userData.slots[o.slot];t.visible=true;setTrCargo(t,o.name,o.tons)}}setTargetP(o.from.slotK[o.slot],o.from.y);beacon.visible=false;ocx=1e9;closeCm();msg('Frete aceito · dê ré até o anel, cabine virada para fora da carreta')}
 function cancelJob(free){if(!job)return;if(job.phase==='pickup'){const f=job.from;f.spawn=null;const gp=COG.get(f.k);if(gp)gp.userData.slots[job.slot].visible=false}else setHitched(false);endPark();job=null;loadCargo(0);setTarget(null);if(!free)score=Math.max(0,score-300);saveG();closeCm();msg(free?'Frete cancelado':'Frete cancelado · -R$ 300')}
 function jobLabel(){return job?(job.phase==='pickup'?'Engatar '+job.name+' · '+job.from.name:'Entregar '+job.tons+' t · '+job.to.name):'Sem frete · vá a uma empresa'}

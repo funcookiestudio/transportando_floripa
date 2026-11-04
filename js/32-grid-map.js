@@ -3,7 +3,7 @@
 // Eixos: rodovias L-O (EW) em z ≈ (j+.5)·G e N-S (NS) em x ≈ i·G; cada uma serpenteia suavemente.
 // A rodovia NS 0 passa por x=0 em z=0 (ponto de partida); o primeiro cruzamento fica a G/2 à frente (z=-G/2).
 var GRID=(function(){
- const G=2400,AMP=120,HW=[11.5,6.3];
+ const G=13000,AMP=120,HW=[11.5,6.3];
  const hs=(a,b,c)=>{let h=Math.imul(a|0,374761393)^Math.imul(b|0,668265263)^Math.imul(c|0,2147483647);h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296};
  const SEED=()=>((window.WSEED&&WSEED.n)|0);
  // deslocamento lateral suave da rodovia (axis 0=EW,1=NS; idx; t = coordenada ao longo da via); zero em t=0 para a rodovia 0 de NS
@@ -12,23 +12,31 @@ var GRID=(function(){
  const dwob=(ax,k,t)=>AMP*(.5*.0008*Math.cos(t*.0008+ph(ax,k,1))+.3*.0021*Math.cos(t*.0021+ph(ax,k,2))+.2*.0047*Math.cos(t*.0047+ph(ax,k,3)));
  const jit=(ax,k)=>(hs(ax*131+k,7,SEED()+5)-.5)*300; // desloca a linha-base de cada rodovia (±150 m)
  // z do eixo da rodovia EW j na posição x ; x do eixo da rodovia NS i na posição z
- const ew=(j,x)=>(j+.5)*G+jit(0,j)+wob(0,j,x)-wob(0,j,0);
- const ns=(i,z)=>i*G+(i===0?0:jit(1,i))+wob(1,i,z)-wob(1,i,0);
+ // linhas-base irregulares: distância entre trevos sorteada entre 8 e 18 km (por coluna/linha), acumulada sob demanda
+ const gapX=i=>8000+hs(i,11,SEED()+77)*10000,gapZ=j=>j===0?8000:8000+hs(j,13,SEED()+79)*10000;
+ const XA={p:0,n:0,v:{0:0}},ZA={p:0,n:-1,v:{0:4000,'-1':-4000}};
+ let SEEDK=null;const chk=()=>{const k=SEED();if(SEEDK!==k){SEEDK=k;XA.p=0;XA.n=0;XA.v={0:0};ZA.p=0;ZA.n=-1;ZA.v={0:4000,'-1':-4000}}};
+ const XL=i=>{chk();const a=XA;if(a.v[i]!==undefined)return a.v[i];if(i>0){while(a.p<i){a.p++;a.v[a.p]=a.v[a.p-1]+gapX(a.p)}}else{while(a.n>i){a.n--;a.v[a.n]=a.v[a.n+1]-gapX(a.n+1)}}return a.v[i]};
+ const ZL=j=>{chk();const a=ZA;if(a.v[j]!==undefined)return a.v[j];if(j>0){while(a.p<j){a.p++;a.v[a.p]=a.v[a.p-1]+gapZ(a.p)}}else{while(a.n>j){a.n--;a.v[a.n]=a.v[a.n+1]-gapZ(a.n+1)}}return a.v[j]};
+ // índice da coluna/linha imediatamente antes de x/z (XL(i)<=x<XL(i+1))
+ const idxX=x=>{let i=Math.floor(x/13000);while(XL(i)>x)i--;while(XL(i+1)<=x)i++;return i},idxZ=z=>{let j=Math.floor(z/13000);while(ZL(j)>z)j--;while(ZL(j+1)<=z)j++;return j};
+ const ew=(j,x)=>ZL(j)+jit(0,j)+wob(0,j,x)-wob(0,j,0);
+ const ns=(i,z)=>XL(i)+(i===0?0:jit(1,i))+wob(1,i,z)-wob(1,i,0);
  // derivadas (inclinação) para direção
  const dew=(j,x)=>dwob(0,j,x),dns=(i,z)=>dwob(1,i,z);
  const kind=(ax,k)=>(ax===1&&k===0)?0:hs(ax*53+k,3,SEED()+9)<.6?0:1;           // 0 autoestrada, 1 pista simples
  const hw=(ax,k)=>HW[kind(ax,k)];
  // cruzamento (i,j): ponto fixo x=ns(i,z), z=ew(j,x)
- function cross(i,j){let x=i*G,z=(j+.5)*G;for(let n=0;n<12;n++){x=ns(i,z);z=ew(j,x)}return{i,j,x,z,hEW:Math.atan2(dew(j,x),1),hNS:Math.atan2(dns(i,z),1)}}
+ function cross(i,j){let x=XL(i),z=ZL(j);for(let n=0;n<12;n++){x=ns(i,z);z=ew(j,x)}return{i,j,x,z,hEW:Math.atan2(dew(j,x),1),hNS:Math.atan2(dns(i,z),1)}}
  // rodovias a até R metros de (x,z): lateral aproximada d = distância ao eixo na direção perpendicular
- function near(x,z,R){const out=[],i0=Math.floor(x/G),j0=Math.floor(z/G);
-  for(let j=j0-1;j<=j0+2;j++){const zc=ew(j,x),a=Math.atan(dew(j,x)),d=(z-zc)*Math.cos(a);if(Math.abs(d)<=R)out.push({ax:0,idx:j,d,t:x,hw:hw(0,j),kind:kind(0,j),h:a})}
-  for(let i=i0-1;i<=i0+2;i++){const xc=ns(i,z),a=Math.atan(dns(i,z)),d=(x-xc)*Math.cos(a);if(Math.abs(d)<=R)out.push({ax:1,idx:i,d,t:z,hw:hw(1,i),kind:kind(1,i),h:a})}
+ function near(x,z,R){const out=[],i0=idxX(x-R-200),i1=idxX(x+R+200)+1,j0=idxZ(z-R-200),j1=idxZ(z+R+200)+1;
+  for(let j=j0;j<=j1;j++){const zc=ew(j,x),a=Math.atan(dew(j,x)),d=(z-zc)*Math.cos(a);if(Math.abs(d)<=R)out.push({ax:0,idx:j,d,t:x,hw:hw(0,j),kind:kind(0,j),h:a})}
+  for(let i=i0;i<=i1;i++){const xc=ns(i,z),a=Math.atan(dns(i,z)),d=(x-xc)*Math.cos(a);if(Math.abs(d)<=R)out.push({ax:1,idx:i,d,t:z,hw:hw(1,i),kind:kind(1,i),h:a})}
   return out}
  // cruzamentos a até R metros de (x,z)
- function crossNear(x,z,R){const out=[],i0=Math.floor(x/G),j0=Math.floor(z/G);
-  for(let i=i0-1;i<=i0+2;i++)for(let j=j0-1;j<=j0+2;j++){const c=cross(i,j);if(Math.hypot(c.x-x,c.z-z)<=R)out.push(c)}return out}
- return{G,AMP,ew,ns,dew,dns,kind,hw,cross,near,crossNear,hs}
+ function crossNear(x,z,R){const out=[],i0=idxX(x-R-300),i1=idxX(x+R+300)+1,j0=idxZ(z-R-300),j1=idxZ(z+R+300)+1;
+  for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const c=cross(i,j);if(Math.hypot(c.x-x,c.z-z)<=R)out.push(c)}return out}
+ return{G,AMP,ew,ns,dew,dns,kind,hw,cross,near,crossNear,hs,XL,ZL,idxX,idxZ}
 })();
 
 // ---- Etapas 2 e 3: pista da grade por blocos + viaduto (L-O por cima) com 4 ramais por cruzamento ----
@@ -38,7 +46,7 @@ var GRSG=null,GRB=null,gbv=-1,gbx=0,gbz=0,GRMS=null,GRAMP=null,GRRAIL=null,GRBR=
 const XCM=new Map(),gx=(i,j)=>{const k=i+','+j;let c=XCM.get(k);if(!c){if(XCM.size>400)XCM.clear();XCM.set(k,c=GRID.cross(i,j))}return c};
 const gsm=t=>t*t*(3-2*t);var RAMP_PUSH=.35;
 // elevação do tabuleiro da rodovia L-O j em x (sobe LIFT m ao chegar em cada cruzamento)
-function liftEW(j,x){let m=0;const i0=Math.floor(x/GRID.G);for(let i=i0-1;i<=i0+2;i++){const u=Math.abs(x-gx(i,j).x);if(u<LR)m=Math.max(m,LIFT*gsm(Math.min(1,(LR-u)/LS)))}return m}
+function liftEW(j,x){let m=0;const i0=GRID.idxX(x);for(let i=i0-1;i<=i0+2;i++){const u=Math.abs(x-gx(i,j).x);if(u<LR)m=Math.max(m,LIFT*gsm(Math.min(1,(LR-u)/LS)))}return m}
 function gridInit(){GRMS=[];const mk=(nq)=>{const idx=[];for(let i=0;i<nq;i++){const a=i*4;idx.push(a,a+1,a+2,a+1,a+3,a+2)}const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(nq*12),3));g.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(nq*8),2));
   g.setAttribute('normal',new THREE.BufferAttribute(Float32Array.from({length:nq*12},(_,i)=>i%3==1?1:0),3));g.setIndex(idx);g.setDrawRange(0,0);
@@ -141,10 +149,10 @@ function rampRd(S){const m=S.meta,k='r'+m.i+','+m.j+','+m.sN+','+m.sE;let r=GRRD
 function gridCrossAt(i,j){return gx(i,j)}
 // próximo trevo à frente (saída à direita) para o veículo v na rodovia rd; devolve {k,take,tp,ramp,rev} ou null
 function gridPlan(v){const rd=v.rd,G=GRID.G,id=rd.idx;let t=-v.s;const out=[];
- if(rd.ax===1){const nb=v.dir>0,j0=Math.floor(t/G);let best=null;
+ if(rd.ax===1){const nb=v.dir>0,j0=GRID.idxZ(t);let best=null;
   for(let j=j0-2;j<=j0+2;j++){const c=gx(id,j),sN=nb?1:-1,tA=c.z+sN*460;if(nb?tA<t-1:tA>t+1){if(!best||(nb?c.z>best.c.z:c.z<best.c.z))best={c,j,sN,tA}}}
   if(!best)return null;const sE=nb?1:-1;return{key:'n'+id+':'+best.j,tp:best.tA,ramp:gridRamp(best.c,best.sN,sE),c:best.c}}
- else{const eb=v.dir<0,i0=Math.floor(t/G);let best=null;
+ else{const eb=v.dir<0,i0=GRID.idxX(t);let best=null;
   for(let i=i0-2;i<=i0+2;i++){const c=gx(i,id),sE=eb?-1:1,tB=c.x+sE*UB;if(eb?tB>t+1:tB<t-1){if(!best||(eb?c.x<best.c.x:c.x>best.c.x))best={c,i,sE,tB}}}
   if(!best)return null;const sN=eb?1:-1;return{key:'e'+id+':'+best.i,tp:best.tB,ramp:gridRamp(best.c,sN,eb?-1:1),c:best.c}}}
 function gridTake(v,key){let h=0;const q=key+'|'+(v.hid||0);for(let k=0;k<q.length;k++)h=Math.imul(h^q.charCodeAt(k),16777619);return((h>>>0)%1000)/1000<.32}
@@ -171,20 +179,42 @@ function gridTraffic(){}
 var gmT=0,gmR=1500,gmOn=true;try{gmOn=localStorage.getItem('fh16gps')!=='0'}catch(e){}
 (function(){const h=document.getElementById('gpsh'),cv=document.getElementById('gmap');if(!h||!cv)return;
  h.addEventListener('click',e=>{e.stopPropagation();gmOn=!gmOn;try{localStorage.setItem('fh16gps',gmOn?'1':'0')}catch(e){}gmT=0});
- cv.addEventListener('click',e=>{e.stopPropagation();gmR=gmR===1500?3000:gmR===3000?700:1500;gmT=0})})();
-var gmB=-1;
-function gridMap(dt){gmT-=dt;if(gmT>0)return;gmT=.2;{const m=document.getElementById('mis');if(m){const b=Math.round(m.getBoundingClientRect().bottom);if(b!==gmB){gmB=b;document.documentElement.style.setProperty('--mb',b+'px')}}}const cv=document.getElementById('gmap'),hd0=document.getElementById('gpsh');if(!cv||!hd0)return;
+ cv.addEventListener('click',e=>{e.stopPropagation();{const Z=[700,1500,3000,6000,12000];gmR=Z[(Z.indexOf(gmR)+1)%Z.length]}gmT=0})})();
+
+// ---- rota até o destino: pela rodovia atual até um trevo, e dali pela rodovia da empresa (com rodovia de ligação se forem paralelas) ----
+var gmRd=null,gmRt=null,gmRtT=0;
+function gridRPts(ax,idx,t0,t1,step){const o=[],n=Math.max(1,Math.ceil(Math.abs(t1-t0)/step));for(let i=0;i<=n;i++){const p=gridPt({ax,idx},t0+(t1-t0)*i/n);o.push([p.x,p.z])}return o}
+function gridRoute(c){const cur=gmRd,tpf=(ax)=>ax?pos.z:pos.x,td=c.ax?c.z:c.x;let pts,first=null;
+ if(!cur){return{pts:[[pos.x,pos.z],[c.x,c.z]],dist:Math.hypot(c.x-pos.x,c.z-pos.z),cx:null}}
+ const tp=tpf(cur.ax);
+ if(cur.ax===c.ax&&cur.idx===c.idx){pts=gridRPts(cur.ax,cur.idx,tp,td,300)}
+ else if(cur.ax!==c.ax){const x1=cur.ax?gx(cur.idx,c.idx):gx(c.idx,cur.idx),tc=cur.ax?x1.z:x1.x,td2=cur.ax?x1.x:x1.z;first=x1;
+  pts=gridRPts(cur.ax,cur.idx,tp,tc,300).concat(gridRPts(c.ax,c.idx,td2,td,300))}
+ else{const mid=(tp+td)/2;let k;if(cur.ax===0){let i=GRID.idxX(mid);if(Math.abs(GRID.XL(i+1)-mid)<Math.abs(GRID.XL(i)-mid))i++;k=i;const a=gx(k,cur.idx),b=gx(k,c.idx);first=a;
+   pts=gridRPts(0,cur.idx,tp,a.x,300).concat(gridRPts(1,k,a.z,b.z,300),gridRPts(0,c.idx,b.x,td,300))}
+  else{let j=GRID.idxZ(mid);if(Math.abs(GRID.ZL(j+1)-mid)<Math.abs(GRID.ZL(j)-mid))j++;k=j;const a=gx(cur.idx,k),b=gx(c.idx,k);first=a;
+   pts=gridRPts(1,cur.idx,tp,a.z,300).concat(gridRPts(0,k,a.x,b.x,300),gridRPts(1,c.idx,b.z,td,300))}}
+ let dist=0;for(let i=1;i<pts.length;i++)dist+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
+ let tx=null;if(first){const dc=Math.hypot(first.x-pos.x,first.z-pos.z);let ni=0,bd=1e18;for(let i=0;i<pts.length;i++){const d=Math.hypot(pts[i][0]-first.x,pts[i][1]-first.z);if(d<bd){bd=d;ni=i}}
+  const q=pts[Math.min(pts.length-1,ni+2)],dx=q[0]-first.x,dz=q[1]-first.z,dir=Math.abs(dx)>Math.abs(dz)?(dx>0?'Leste':'Oeste'):(dz<0?'Norte':'Sul'),ahead=((first.x-pos.x)*-Math.sin(hd)+(first.z-pos.z)*-Math.cos(hd))>0;
+  tx={km:dc,dir,ahead}}
+ return{pts,dist,cx:tx}}
+var gmB=-1,gmReg=null;
+function gridMap(dt){gmT-=dt;if(gmT>0)return;gmT=.2;{if(GRB&&(GRB.ax===0||GRB.ax===1))gmRd={ax:GRB.ax,idx:GRB.id};const rg=gridReg(pos.x,pos.z),sp=document.querySelector('#gpsh span');if(sp){const tx='🧭 GPS · '+rg.name;if(sp.textContent!==tx)sp.textContent=tx}gmRt=job?gridRoute(job.phase==='pickup'?job.from:job.to):null}
+ {const m=document.getElementById('mis');if(m){const b=Math.round(m.getBoundingClientRect().bottom);if(b!==gmB){gmB=b;document.documentElement.style.setProperty('--mb',b+'px')}}}const cv=document.getElementById('gmap'),hd0=document.getElementById('gpsh');if(!cv||!hd0)return;
  hd0.style.display='';const gh=document.getElementById('gmh');cv.style.display=gmOn?'block':'none';gh.style.display=gmOn?'block':'none';document.getElementById('gpsc').textContent=gmOn?'▾':'▸';if(!gmOn)return;
  const g=cv.getContext('2d'),W=cv.width,R=W/2-4,SC=R/gmR,ch=Math.cos(hd),sh=Math.sin(hd);
  const T=(x,z)=>{const dx=x-pos.x,dz=z-pos.z;return[W/2+(dx*ch-dz*sh)*SC,W/2+(dx*sh+dz*ch)*SC]};
  g.clearRect(0,0,W,W);g.save();g.beginPath();g.arc(W/2,W/2,R+2,0,6.2832);g.clip();g.fillStyle='rgba(18,26,34,.78)';g.fillRect(0,0,W,W);
- g.lineCap='round';g.lineJoin='round';const step=gmR>2000?150:60;
+ g.lineCap='round';g.lineJoin='round';const step=gmR>8000?500:gmR>4000?300:gmR>2000?150:60;
  for(const r of GRID.near(pos.x,pos.z,gmR*1.3)){const cur=GRB&&GRB.ax===r.ax&&GRB.id===r.idx;g.beginPath();const t0=Math.round((r.t-gmR*1.3)/step)*step;let first=true;
   for(let t=t0;t<=r.t+gmR*1.3;t+=step){const x=r.ax===1?GRID.ns(r.idx,t):t,z=r.ax===1?t:GRID.ew(r.idx,t),p=T(x,z);if(first){g.moveTo(p[0],p[1]);first=false}else g.lineTo(p[0],p[1])}
   g.strokeStyle=cur?'#ffb400':(r.kind?'#7d8b99':'#c4d0dc');g.lineWidth=(cur?4.5:3.2)*(r.kind?.7:1);g.stroke()}
- // ramais dos trevos
- g.lineWidth=2.4;for(const c of GRID.crossNear(pos.x,pos.z,gmR*1.3))for(const sN of[-1,1])for(const sE of[-1,1]){const S=gridRamp(c,sN,sE);g.beginPath();for(let q=0;q<S.length;q+=3){const p=T(S[q].x,S[q].z);if(q)g.lineTo(p[0],p[1]);else g.moveTo(p[0],p[1])}
+ // ramais dos trevos (só nos zooms próximos)
+ g.lineWidth=2.4;if(gmR<=3500)for(const c of GRID.crossNear(pos.x,pos.z,gmR*1.3))for(const sN of[-1,1])for(const sE of[-1,1]){const S=gridRamp(c,sN,sE);g.beginPath();for(let q=0;q<S.length;q+=3){const p=T(S[q].x,S[q].z);if(q)g.lineTo(p[0],p[1]);else g.moveTo(p[0],p[1])}
   const e=T(S[S.length-1].x,S[S.length-1].z);g.lineTo(e[0],e[1]);const onR=GRB&&S.indexOf(GRB)>=0;g.strokeStyle=onR?'#ffb400':'#9fb0c0';g.stroke()}
+ // rota até o destino
+ if(gmRt&&gmRt.pts.length>1){g.beginPath();gmRt.pts.forEach((q,i)=>{const p=T(q[0],q[1]);if(i)g.lineTo(p[0],p[1]);else g.moveTo(p[0],p[1])});g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=8;g.stroke();g.strokeStyle='#ffb400';g.lineWidth=4.5;g.stroke()}
  // empresas e destino do frete
  for(const c of COACT){const p=T(c.x,c.z);g.fillStyle=job&&(c===job.from||c===job.to)?'#ffb400':'#7ee08a';g.fillRect(p[0]-4,p[1]-4,8,8)}
  if(job){const c=job.phase==='pickup'?job.from:job.to,dx=c.x-pos.x,dz=c.z-pos.z;let p=T(c.x,c.z);const dd2=Math.hypot(p[0]-W/2,p[1]-W/2);if(dd2>R-10){const k=(R-10)/dd2;p=[W/2+(p[0]-W/2)*k,W/2+(p[1]-W/2)*k]}g.fillStyle='#ffb400';g.beginPath();g.arc(p[0],p[1],7,0,6.2832);g.fill();g.strokeStyle='#000';g.lineWidth=2;g.stroke()}
@@ -192,7 +222,8 @@ function gridMap(dt){gmT-=dt;if(gmT>0)return;gmT=.2;{const m=document.getElement
  g.fillStyle='#ff5a3c';g.beginPath();g.moveTo(W/2,W/2-12);g.lineTo(W/2+9,W/2+10);g.lineTo(W/2,W/2+5);g.lineTo(W/2-9,W/2+10);g.closePath();g.fill();
  {const nx=W/2+(0*ch-(-1)*sh)*(R-14),ny=W/2+(0*sh+(-1)*ch)*(R-14);g.fillStyle='#ffb400';g.font='700 22px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('N',nx,ny)}
  g.fillStyle='#c4d0dc';g.font='600 16px system-ui,sans-serif';g.textAlign='left';g.fillText((gmR/1000).toFixed(1).replace('.',',')+' km',8,W-14);
- const dg=((-hd*57.2958)%360+360)%360,pts=['N','NE','L','SE','S','SO','O','NO'];hset('gmh','Rumo '+String(Math.round(dg)%360).padStart(3,'0')+'° '+pts[Math.round(dg/45)%8]+' · toque no mapa: zoom')}
+ const dg=((-hd*57.2958)%360+360)%360,pts=['N','NE','L','SE','S','SO','O','NO'];const rt=gmRt&&job?('<b style="color:#ffb400">Destino '+(gmRt.dist/1000).toFixed(1).replace('.',',')+' km</b>'+(gmRt.cx?' · '+(gmRt.cx.ahead?'trevo em '+(gmRt.cx.km/1000).toFixed(1).replace('.',',')+' km → '+gmRt.cx.dir:'trevo atrás · retorne no próximo'):'')+'<br>'):'';
+ gh.innerHTML=rt+'Rumo '+String(Math.round(dg)%360).padStart(3,'0')+'° '+pts[Math.round(dg/45)%8]+' · toque no mapa: zoom'}
 function gridFrame(){if(gbv<0||Math.hypot(pos.x-gbx,pos.z-gbz)>40){gbx=pos.x;gbz=pos.z;gridBuild(pos.x,pos.z)}
  RPH=1;if(roadInfo(pos.x,pos.z)){onRoad=RD<10.4;curS=0}else onRoad=false;gridCoFrame();gridKm();gridMap(1/60)}
 // marco quilométrico: KM 0 no trevo de origem (cruzamento N-S 0 × L-O -1); cada rodovia zera onde cruza esse trevo/linha de trevos, contagem infinita; sentido pela direção do caminhão
@@ -206,19 +237,39 @@ function gridKm(){if(!GRB)return;const r=document.getElementById('kmrow');if(r&&
  const on=!!window.GRID_ON;b.textContent='🧪 Rodovias em grade: '+(on?'LIGADA':'desligada')+' (toque para '+(on?'desligar':'ligar')+')';
  b.onclick=()=>{try{localStorage.setItem('fh16grid',on?'0':'1')}catch(e){}location.reload()};h.appendChild(b)})();
 
-// ===== empresas na grade: uma por trecho de rodovia (entre dois trevos), lado e setor determinísticos =====
-const gridCoKey=(ax,idx,m)=>(ax*4000+idx+2000)*4000+m+2000;
-function gridCoBase(k){const m=k%4000-2000,r=Math.floor(k/4000),idx=r%4000-2000,ax=Math.floor(r/4000),G=GRID.G;
- const side=hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)],tc=(ax?m*G:(m+.5)*G)+(hh(k,8,7)-.5)*520,p=gridPt({ax,idx},tc),
+// ===== empresas na grade: 1 a 6 por trecho entre dois trevos (sorteio fixo), regiões de 3x3 linhas =====
+const gridSegKey=(ax,idx,m)=>(ax*4000+idx+2000)*4000+m+2000,gridCoKey=(ax,idx,m,u)=>gridSegKey(ax,idx,m)*8+u;
+const gridSegA=(ax,m)=>ax?GRID.ZL(m):GRID.XL(m),gridSegUse=(ax,m)=>gridSegA(ax,m+1)-gridSegA(ax,m)-3000;
+const gridSegN=(ax,idx,m)=>1+Math.floor(hh(gridSegKey(ax,idx,m),41,7)*Math.min(6,gridSegUse(ax,m)/1500));
+const gridReg=(x,z)=>{const rx=Math.floor(GRID.idxX(x)/3),rz=Math.floor(GRID.idxZ(z)/3);return gridRegAt(rx,rz)};
+const GRRG=new Map();
+function gridRegAt(rx,rz){const k=rx+','+rz;let r=GRRG.get(k);if(!r){if(GRRG.size>300)GRRG.clear();r={rx,rz,key:k,name:CITY[Math.floor(hh(rx,rz,9)*CITY.length)%CITY.length],hue:Math.floor(hh(rx,rz,10)*360)};GRRG.set(k,r)}return r}
+function gridCoBase(k){const u=k%8,bs=Math.floor(k/8),m=bs%4000-2000,r=Math.floor(bs/4000),idx=r%4000-2000,ax=Math.floor(r/4000),n=gridSegN(ax,idx,m);
+ const side=hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)],us=gridSegUse(ax,m),tc=gridSegA(ax,m)+1500+(u+.5+(hh(k,8,7)-.5)*.5)*(us/n),p=gridPt({ax,idx},tc),
   cs=Math.cos(p.h),sn=Math.sin(p.h),off=side*(34.5+p.hw),x=p.x+cs*off,z=p.z-sn*off;
- const cx=Math.floor(x/4800),cz=Math.floor(z/4800);
- return{k,s:0,side,t,name:t.n[Math.floor(hh(k,4,7)*t.n.length)],x,z,h:p.h,y:p.y,rot:p.h+(side<0?Math.PI:0),ann:false,cols:[],bays:[],ax,idx,m,city:CITY[Math.floor(hh(cx,cz,9)*CITY.length)%CITY.length]}}
+ return{k,s:0,side,t,name:t.n[Math.floor(hh(k,4,7)*t.n.length)],x,z,h:p.h,y:p.y,rot:p.h+(side<0?Math.PI:0),ann:false,cols:[],bays:[],ax,idx,m,u,reg:gridReg(x,z),city:gridReg(x,z).name}}
 // empresas a até R metros (varre as rodovias próximas)
-function gridCoNear(R){const out=[],G=GRID.G;
- for(const r of GRID.near(pos.x,pos.z,R+60)){const t=r.t,m0=r.ax?Math.floor((t-R)/G)-1:Math.floor((t-R)/G-.5)-1,m1=r.ax?Math.ceil((t+R)/G)+1:Math.ceil((t+R)/G-.5)+1;
-  for(let m=m0;m<=m1;m++){const c=coGet(gridCoKey(r.ax,r.idx,m));if(Math.hypot(c.x-pos.x,c.z-pos.z)<R)out.push(c)}}
+function gridCoNear(R){const out=[];
+ for(const r of GRID.near(pos.x,pos.z,R+60)){const t=r.t,m0=r.ax?GRID.idxZ(t-R-200):GRID.idxX(t-R-200),m1=r.ax?GRID.idxZ(t+R+200):GRID.idxX(t+R+200);
+  for(let m=m0;m<=m1;m++){const n=gridSegN(r.ax,r.idx,m);for(let u=0;u<n;u++){const c=coGet(gridCoKey(r.ax,r.idx,m,u));if(Math.hypot(c.x-pos.x,c.z-pos.z)<R)out.push(c)}}}
  return out}
-function gridNearCo(){let b=null,bd=1e18;for(const c of gridCoNear(3500)){const d=Math.hypot(c.x-pos.x,c.z-pos.z);if(d<bd){bd=d;b=c}}return b}
+let gnT=0,gnC=null,gnX=0,gnZ=0;
+function gridNearCo(){const now=performance.now();if(gnC&&now-gnT<600&&Math.hypot(pos.x-gnX,pos.z-gnZ)<60)return gnC;let b=null,bd=1e18;for(const c of gridCoNear(6000)){const d=Math.hypot(c.x-pos.x,c.z-pos.z);if(d<bd){bd=d;b=c}}gnT=now;gnC=b;gnX=pos.x;gnZ=pos.z;return b}
+// ---- fretes: local (mesma rodovia), regional (mesma região), entre regiões ----
+const GR_TAG=['Local','Regional','Entre regiões'];
+function gridCoPick(ax,idx,m,uh){const n=gridSegN(ax,idx,m);return coGet(gridCoKey(ax,idx,m,Math.floor(uh*n)%n))}
+function gridDest(c,kind,n,i){const h=a=>hh(c.k,n*8+i,60+a);
+ if(kind===0){const m=c.m+(h(1)<.5?-1:1);return gridCoPick(c.ax,c.idx,m,h(2))}
+ const R=c.reg,D=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]],dd=kind===2?D[Math.floor(h(6)*8)%8]:[0,0],rx=R.rx+dd[0],rz=R.rz+dd[1],ax=h(3)<.5?0:1;
+ let best=null,bd=1e18;const K=kind===2?10:4;
+ for(let q=0;q<K;q++){const ax2=h(3+q*7)<.5?0:1,idx=3*(ax2?rx:rz)+Math.floor(h(4+q*7)*3),m=3*(ax2?rz:rx)+Math.floor(h(5+q*7)*3),d=gridCoPick(ax2,idx,m,h(7+q*7));
+  if(d.k===c.k)continue;const dist=Math.hypot(d.x-c.x,d.z-c.z);if(dist<bd){bd=dist;best=d}}
+ return best||gridCoPick(c.ax,c.idx,c.m+1,h(2))}
+function gridOffers(c){const n=c.nonce||0,st=Math.floor(hh(c.k,n,21)*3),list=[],cl=CARGOS[c.t.id];
+ for(let i=0;i<3;i++){const kind=(i+st)%3;let to=null;for(let q=0;q<5;q++){to=gridDest(c,kind,n+q*13,i);if(!list.some(o=>o.to===to))break}const name=cl[Math.floor(hh(c.k,n*4+i,22)*cl.length)],tons=[6,12,18][Math.floor(hh(c.k,n*4+i,23)*3)],dm=Math.hypot(to.x-c.x,to.z-c.z)*1.15,km=dm/1000,
+  far=to.reg.key!==c.reg.key;
+  list.push({from:c,to,name,tons,dist:dm,reward:Math.round((600+km*(300+tons*45))*(far?1.3:1)/10)*10,limit:dm/15+90,slot:i,col:slotCol(c,i),toBay:(i+1)%3,tag:far?GR_TAG[2]:kind===0?GR_TAG[0]:GR_TAG[1]})}
+ return list}
 // versão da grade de coFrame: no máximo 1 empresa construída por quadro, a mais próxima primeiro
 function gridCoFrame(){if(!ready)return;
  const want=gridCoNear(900);let changed=false;
@@ -228,6 +279,8 @@ function gridCoFrame(){if(!ready)return;
  if(coPend){coPend=false;for(const gp of COG.values())gp.visible=true;changed=true}
  else if(best){const gp=buildCo(best);gp.visible=false;COG.set(best.k,gp);coPend=true}
  if(changed){const prev=new Set(COACT);COACT.length=0;for(const c of want)if(COG.has(c.k))COACT.push(c);rbI=1e9;ocx=1e9;for(const c of COACT)if(!prev.has(c))terrMark(c.x,c.z,70);tcx=1e9;placeCones()}
+ {const rg=gridReg(pos.x,pos.z);if(gmReg&&gmReg.key!==rg.key)msg('📍 '+rg.name);gmReg=rg}
  for(const c of COACT)if(!c.ann&&Math.hypot(c.x-pos.x,c.z-pos.z)<300){c.ann=true;msg(c.name+' · '+c.t.label)}
  if(++coTick%180==0&&COM.size>60)for(const[k,c]of COM)if(Math.hypot(c.x-pos.x,c.z-pos.z)>4500&&!COG.has(k)&&!coKeep(c))COM.delete(k)}
+if(window.__rgPending){window.__rgPending=false;try{restoreG()}catch(e){console.log(e)}}
 if(window.GRID_ON)try{if(!(typeof SAVED!=='undefined'&&SAVED&&typeof SAVED.x==='number'&&isFinite(SAVED.x+SAVED.z)))gridStart();gridBuild(pos.x,pos.z)}catch(e){console.log(e)}
