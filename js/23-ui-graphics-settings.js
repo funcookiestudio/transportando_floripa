@@ -3,7 +3,7 @@ const PRE=[
  {pr:.75,sh:0,spot:false,post:false,bloom:false,msaa:false,grade:false,motion:false,reflex:false,beams:false,lamps:false,pool:0,trees:true,bushes:true,parts:true,view:1,tone:true,hz:false},
  {pr:1,sh:1024,spot:false,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:2,trees:true,bushes:true,parts:true,view:1,tone:true,hz:true},
  {pr:1.5,sh:2048,spot:true,post:true,bloom:true,msaa:true,grade:true,motion:true,reflex:true,beams:true,lamps:true,pool:4,trees:true,bushes:true,parts:true,view:1,tone:true,hz:true}];
-const GS=Object.assign({auto:true,fps:false,preset:1,fov:69},PRE[1]);
+const GS=Object.assign({auto:true,fps:false,preset:1,fov:69,tcar:6,ttruck:5},PRE[1]);
 let gfxOpen=false,gfxEl=null,fpsEl=null,fpsRun=false;
 function setQ(i){setQBase(i);Object.assign(GS,PRE[i],{preset:i});GS.auto=qAuto;applyGfx()}
 function gfxMatch(){for(let i=0;i<PRE.length;i++){let ok=true;for(const k in PRE[i])if(GS[k]!==PRE[i][k]){ok=false;break}if(ok)return i}return -1}
@@ -30,6 +30,7 @@ const GSC=[
  ['Efeitos',[{k:'post',t:'sw',l:'Pós-processamento',h:'Necessário para bloom, suavização, cor e desfoque'},{k:'bloom',t:'sw',l:'Brilho (bloom)',d:1},{k:'msaa',t:'sw',l:'Suavização de bordas (MSAA)',d:1},{k:'motion',t:'sw',l:'Desfoque em alta velocidade',d:1},{k:'reflex',t:'sw',l:'Reflexos dinâmicos',h:'Atualiza o reflexo do cenário na lataria'},{k:'parts',t:'sw',l:'Poeira e fumaça'}]],
  ['Iluminação',[{k:'beams',t:'sw',l:'Feixes e brilho dos faróis'},{k:'lamps',t:'sw',l:'Luzes de freio e de neblina'},{k:'pool',t:'seg',l:'Luzes dos postes',o:[['Nenhuma',0],['2',2],['4',4]]}]],
  ['Cenário',[{k:'trees',t:'sw',l:'Árvores e pedras'},{k:'bushes',t:'sw',l:'Arbustos'},{k:'hz',t:'sw',l:'Horizonte (morros e ilhas)',h:'Camadas distantes com parallax'}]],
+ ['Tráfego',[{k:'tcar',t:'seg',l:'Carros',h:'Quantidade ao mesmo tempo ao redor de você',o:[['0',0],['3',3],['6',6],['10',10],['16',16],['24',24],['36',36]]},{k:'ttruck',t:'seg',l:'Carretas',h:'Mais carretas pesam mais no desempenho',o:[['0',0],['2',2],['5',5],['8',8],['12',12],['18',18]]}]],
  ['Desempenho',[{k:'hudmin',t:'sw',l:'HUD mínimo',h:'Esconde dano, carga, dinheiro e avisos secundários'},{k:'fps',t:'sw',l:'Mostrar FPS na tela'}]]];
 function gfxRender(){const cur=gfxMatch();let h='';
  for(const[sec,items]of GSC){h+='<h3>'+sec+'</h3>';
@@ -41,7 +42,7 @@ function gfxSet(k,v){
  if(k==='rd'){try{localStorage.setItem('fh16rd',String(v))}catch(e){}try{saveG()}catch(e){}location.reload();return}
  if(k==='preset'){qAuto=false;setQ(v)}
  else if(k==='auto'){GS.auto=v;qAuto=v}
- else if(k==='fov'||k==='hudmin')GS[k]=v;
+ else if(k==='fov'||k==='hudmin'||k==='tcar'||k==='ttruck')GS[k]=v;
  else{GS[k]=v;if(v===true&&(k==='bloom'||k==='msaa'||k==='grade'||k==='motion'))GS.post=true;GS.auto=false;qAuto=false}
  applyGfx();gfxSave();gfxRender()}
 function gfxReset(){try{localStorage.removeItem('fh16gfx')}catch(e){}qAuto=true;GS.fps=false;setQ(MOB?1:2);GS.auto=true;gfxRender()}

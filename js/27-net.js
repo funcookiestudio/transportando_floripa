@@ -56,10 +56,10 @@ function netUI(){const st=document.getElementById('hns');if(!st)return;const on=
  {const dt=document.getElementById('hdot');if(dt)dt.className=on?(NET.peers.size?'ok':'wait'):''}
  document.body.classList.toggle('hnetopen',document.getElementById('hnet').style.display==='block')}
 async function netStart(code,create){if(NET.on)return;NET.on=true;NET.code=code;NET.host=!!create;NET.peers=new Map();NET.moved=false;NET.x0=null;NET.hr=false;NET.msg='Conectando…';
- try{NET.bc=new BroadcastChannel('fh16-'+code);NET.bc.onmessage=e=>nRecv(e.data)}catch(e){NET.bc=null}
+ try{NET.bc=new BroadcastChannel('fh16-'+code+(window.GRID_ON?'g':''));NET.bc.onmessage=e=>nRecv(e.data)}catch(e){NET.bc=null}
  NET.timers=[setInterval(()=>{if(ready)nState()},66),setInterval(nHello,3000)];netUI();nHello();
  try{const mod=await import('https://cdn.jsdelivr.net/npm/trystero@0.26.0/+esm');if(!NET.on||NET.code!==code)return;
-  const room=mod.joinRoom({appId:'transportando-floripa-v1'},'fh16-'+code),act=room.makeAction('fh16');let send;
+  const room=mod.joinRoom({appId:'transportando-floripa-v1'},'fh16-'+code+(window.GRID_ON?'g':'')),act=room.makeAction('fh16');let send;
   if(Array.isArray(act)){send=act[0];act[1](d=>nRecv(d))}else{send=d=>act.send(d);act.onMessage=d=>nRecv(d)} // API antiga (lista) e nova (objeto, 0.26)
   const pj=()=>{nHello();netUI()};if(Array.isArray(act))room.onPeerJoin(pj);else room.onPeerJoin=pj;
   NET.room=room;NET.sendT=send;NET.msg='procurando jogadores…';netUI();setTimeout(()=>{if(NET.on&&NET.code===code&&!NET.peers.size){NET.msg='aguardando outros jogadores';netUI()}},8000)}

@@ -29,10 +29,11 @@ function signTex(name,bg,fg){const cv=document.createElement('canvas');cv.width=
  const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t}
 const PUMP={x:-20,z:19.5,L:11,W:5.4},BZ_X=-29,PBW=13.6,PBH=2.6,PREAR=11.5,PCEN=PREAR-PBW/2+.1,PCOL=[0x1f5fa8,0xb3261e,0x2e7d32,0xd9822b,0x4a5560,0x7a3b8c,0xc9b037],DECOR=[[29.5,-8,1],[29.5,8,0]];
 const slotCol=(c,i)=>Math.floor(hh(c.k,(c.nonce||0)*4+i,24)*PCOL.length);
-function coGet(k){let c=COM.get(k);if(c)return c;const s=k===0?0:k*CO_D+(hh(k,1,7)-.5)*500,side=k===0?1:hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)];
+function coGet(k){let c=COM.get(k);if(c)return c;
+ if(window.GRID_ON&&window.gridCoBase)c=gridCoBase(k);else{const s=k===0?0:k*CO_D+(hh(k,1,7)-.5)*500,side=k===0?1:hh(k,2,7)<.5?-1:1,t=CT[Math.floor(hh(k,3,7)*CT.length)];
  ensureRoad(s-60,s+60);const hwc=hwAt(s);roadPt(s,side*(34.5+hwc));const o=samp(Math.round(s/RDS));
- c={k,s,side,t,name:t.n[Math.floor(hh(k,4,7)*t.n.length)],x:RPx,z:RPz,h:o.h,y:yR(s)+.1,rot:o.h+(side<0?Math.PI:0),ann:false,cols:[],bays:[],city:cityName(s)};
- // coordenadas locais: +x = para longe da pista, z = ao longo da pista
+ c={k,s,side,t,name:t.n[Math.floor(hh(k,4,7)*t.n.length)],x:RPx,z:RPz,h:o.h,y:yR(s)+.1,rot:o.h+(side<0?Math.PI:0),ann:false,cols:[],bays:[],city:cityName(s)}}
+ const t=c.t;// coordenadas locais: +x = para longe da pista, z = ao longo da pista
  const cr=Math.cos(c.rot),sr=Math.sin(c.rot);c.cr=cr;c.sr=sr;c.loc=(lx,lz)=>({x:c.x+lx*cr+lz*sr,z:c.z-lx*sr+lz*cr});
  c.board=c.loc(BZ_X,0);for(const lz of[-13,-6.5,0,6.5,13]){const q=c.loc(19.5,lz);c.cols.push({x:q.x,z:q.z,r:6.4,k:1})}
  for(const lz of[-10,0,10]){const q=c.loc(12,lz);c.bays.push({x:q.x,z:q.z,lz})}
@@ -78,7 +79,7 @@ function buildCo(c){const g=new THREE.Group(),T=c.t,W=mat(T.col),A=mat(T.acc),DK
  for(let i=0;i<3;i++){const t=mkTr(PCEN,c.bays[i].lz,1);t.rotation.y=Math.PI/2;t.visible=!!(c.spawn&&c.spawn.slot===i);if(t.visible)setTrCargo(t,c.spawn.name,c.spawn.tons);g.userData.slots.push(t)}
  g.userData.decor=[];
   DECOR.forEach(([dx,dz,full],i)=>{const t=mkTr(dx,dz,1);g.userData.decor.push(t);if(full){const L=CARGOS[T.id];setTrCargo(t,L[Math.floor(hh(c.k,i,31)*L.length)],18)}});
- coLane(c,g,disp);flushBatch(g,disp);scene.add(g);return g}
+ if(!window.GRID_ON)coLane(c,g,disp);flushBatch(g,disp);scene.add(g);return g}
 // carretas estacionadas usam EXATAMENTE o mesmo modelo da carreta engatada (trl): malhas fundidas por material, geometria compartilhada
 const TPLC=[null,null]; // 0 = apoio arriado (estacionada) · 1 = recolhido (engatada)
 function trailerTpl(up){const kk=up?1:0;if(TPLC[kk])return TPLC[kk];const e0=GEAR.e;gearSet(kk);trl.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(trl.matrixWorld).invert(),by=new Map(),skip=trl.userData.cg;

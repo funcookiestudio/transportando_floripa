@@ -18,6 +18,7 @@ function saveG(){if(typeof ready==='undefined'||!ready||VEH.car)return; /* Civic
  localStorage.setItem(SAVEKEY,JSON.stringify(d))}catch(e){}}
 // reiniciar (R/↺): volta à empresa mais próxima mantendo frete e carreta engatada; sem carga, o menu de fretes abre ali
 function respawn(){if(!ready){reset();return}
+ if(window.GRID_ON){gridStart();msg('Voltou ao ponto de partida');return}
  let b=null,bd=1e18;const k0=Math.floor(curS/CO_D);for(let k=k0-2;k<=k0+3;k++){const c=coGet(k),d=Math.abs(c.s-curS);if(d<bd){bd=d;b=c}}
  const km=bd/1000,cost=bd<60?0:Math.round((200+km*120)/10)*10;
  if(!cost){doRespawn(b,0);return}
@@ -37,7 +38,7 @@ beacon.visible=ring.visible=false;
 function loadCargo(t){cargo=t;MASS=hitched?VEH.mh+t*1000:VEH.m0;setCont()}
 let hb=null,navCo=null; // acoplamento suave: a carreta mantém a pose parada e só encosta no caminhão aos poucos
 function setHitched(v){const was=hitched;hb=null;hitched=v;trl.visible=v;if(v){if(!was)gearHitch(true)}else gearHitch(false);if(!v){th=hd;wT=0;cargo=0;setTrailerCargo(null)}MASS=v?VEH.mh+cargo*1000:VEH.m0;setCont()}
-function placeStart(){const c=coGet(0),q=c.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(c.cr,-c.sr);th=hd;camH=hd;curS=0;autoBoard=true}
+function placeStart(){if(window.GRID_ON){if(window.gridStart)gridStart();return}const c=coGet(0),q=c.loc(BZ_X,0);pos.x=q.x;pos.z=q.z;hd=Math.atan2(c.cr,-c.sr);th=hd;camH=hd;curS=0;autoBoard=true}
 function setTargetP(q,y){tgt.x=q.x;tgt.z=q.z;tgt.y=y;beacon.position.set(q.x,y+45,q.z);ring.position.set(q.x,y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}
 function setTarget(c,bi){if(!c){beacon.visible=ring.visible=false;return}const q=c.loc(10,c.bays[bi].lz);tgt.x=q.x;tgt.z=q.z;tgt.y=c.y;beacon.position.set(q.x,c.y+45,q.z);ring.position.set(q.x,c.y+.6,q.z);beacon.visible=ring.visible=true;ocx=1e9}
 // ---- destaque da vaga de estacionamento na doca (tamanho real da carreta) ----
@@ -54,10 +55,10 @@ function setPark(c,bi){const q=c.loc(PCEN,c.bays[bi].lz);tgt.x=q.x;tgt.z=q.z;tgt
 function dockErr(c,bi){const rx=pos.x+14.2*Math.sin(th),rz=pos.z+14.2*Math.cos(th),dx=rx-c.x,dz=rz-c.z,cr=Math.cos(c.rot),sr=Math.sin(c.rot),lx=dx*cr-dz*sr,lz=dx*sr+dz*cr,tt=Math.atan2(cr,-sr);
  return{ex:Math.abs(lx-PREAR),el:Math.abs(lz-c.bays[bi].lz),ea:Math.abs(wrap(th-tt))}}
 // lado para sair da empresa rumo ao destino: leva em conta para onde o caminhão está virado agora
-function exitDir(c,to){const sg=to.s>c.s?1:-1,dx=-Math.sin(c.h)*sg,dz=-Math.cos(c.h)*sg,fx=-Math.sin(hd),fz=-Math.cos(hd),toRoadX=-c.cr,toRoadZ=c.sr,fr=fx*toRoadX+fz*toRoadZ>=0,rt=dx*Math.cos(hd)-dz*Math.sin(hd)>0;
+function exitDir(c,to){const sg=window.GRID_ON?((to.x-c.x)*-Math.sin(c.h)+(to.z-c.z)*-Math.cos(c.h)>0?1:-1):to.s>c.s?1:-1,dx=-Math.sin(c.h)*sg,dz=-Math.cos(c.h)*sg,fx=-Math.sin(hd),fz=-Math.cos(hd),toRoadX=-c.cr,toRoadZ=c.sr,fr=fx*toRoadX+fz*toRoadZ>=0,rt=dx*Math.cos(hd)-dz*Math.sin(hd)>0;
  return(fr?rt:!rt)?'<b style="color:#ffb400">➡ virar à DIREITA</b> ao sair':'<b style="color:#ffb400">⬅ virar à ESQUERDA</b> ao sair'}
 function offersFor(c){const n=c.nonce||0,offs=[-3,-2,-1,1,2,3,4],st=Math.floor(hh(c.k,n,21)*7),list=[],cl=CARGOS[c.t.id];
- for(let i=0;i<3;i++){const to=coGet(c.k+offs[(st+i*2)%7]),name=cl[Math.floor(hh(c.k,n*4+i,22)*cl.length)],tons=[6,12,18][Math.floor(hh(c.k,n*4+i,23)*3)],dm=Math.abs(to.s-c.s),km=dm/1000;
+ for(let i=0;i<3;i++){const to=coGet(c.k+offs[(st+i*2)%7]),name=cl[Math.floor(hh(c.k,n*4+i,22)*cl.length)],tons=[6,12,18][Math.floor(hh(c.k,n*4+i,23)*3)],dm=window.GRID_ON?Math.hypot(to.x-c.x,to.z-c.z)*1.12:Math.abs(to.s-c.s),km=dm/1000;
   list.push({from:c,to,name,tons,dist:dm,reward:Math.round((600+km*(300+tons*45))/10)*10,limit:dm/15+70,slot:i,col:slotCol(c,i),toBay:(i+1)%3})}
  return list}
 // pv (opcional): lista {name,tons,sub} das primeiras N opções; com ela o painel ocupa a tela toda e mostra a carga sobre o chassi (passe o mouse; no toque, 1º toque mostra e 2º aceita)
@@ -111,7 +112,7 @@ function jobFrame(dt){ring.rotation.z+=dt;arrow.visible=false;beacon.visible=fal
    if(!pk){const e=dockErr(c,job.toBay),near=e.ex<4.5&&e.el<3.2&&e.ea<.35;pbFill.material.color.setHex(ok?0x38e06a:near?0xffc400:0xff4a3a);pbEdge.material.color.copy(pbFill.material.color);pbFill.material.opacity=.28+.35*Math.min(1,dockT/.9)}
    if(ok){if(dockT===0)msg(pk?'Alinhado · aperte T para engatar':'Posição certa · aperte T para desengatar');dockT=Math.min(.9,dockT+dt)}else dockT=0}}
  else{if(autoBoard&&!menuOpen){const y0=yardCo();if(y0&&Math.hypot(vel.x,vel.z)<1){autoBoard=false;openBoard()}}
-  let b=null,bd=1e18;const k0=Math.floor(curS/CO_D);for(let k=k0-1;k<=k0+2;k++){const c=coGet(k),d=Math.abs(c.s-curS);if(d<bd){bd=d;b=c}}
+  let b=null,bd=1e18;if(window.GRID_ON)b=gridNearCo();else{const k0=Math.floor(curS/CO_D);for(let k=k0-1;k<=k0+2;k++){const c=coGet(k),d=Math.abs(c.s-curS);if(d<bd){bd=d;b=c}}}
   if(b){navCo=b;const q=b.loc(0,0);tgt.x=q.x;tgt.z=q.z}dd=Math.hypot(tgt.x-pos.x,tgt.z-pos.z);
   const yc=yardCo();if(yc&&Math.hypot(vel.x,vel.z)<.8){if(promptCo!==yc){promptCo=yc;msg('G ou 📦 · quadro de fretes')}}else if(!yc)promptCo=null}}
 
@@ -121,6 +122,7 @@ function jobFrame(dt){ring.rotation.z+=dt;arrow.visible=false;beacon.visible=fal
 function navPoint(){const r={x:tgt.x,z:tgt.z};const c=navCo;if(!c||dd<70)return r;
  for(const a of COACT){const dx=pos.x-a.x,dz=pos.z-a.z;if(Math.abs(dx)>70||Math.abs(dz)>70)continue;const lx=dx*a.cr-dz*a.sr;
   if(lx>-36&&lx<40&&Math.abs(dx*a.sr+dz*a.cr)<45){if(a===c&&job&&job.phase==='deliver')return r;const q=a.loc(-42,0);r.x=q.x;r.z=q.z;return r}}
+ if(window.GRID_ON)return r;
  const ds=c.s-curS;if(Math.abs(ds)<110)return r;
  roadPt(curS,0);if(Math.hypot(pos.x-RPx,pos.z-RPz)>75)return r;
  roadPt(curS+Math.sign(ds)*70,0);r.x=RPx;r.z=RPz;return r}

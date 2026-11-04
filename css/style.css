@@ -171,3 +171,6 @@ body.home .p,body.home .ctl,body.home .tb,body.home #gbtn,body.home #vig,body.ho
 #hnet input{border-radius:14px;background:#0b1118;border-color:#2a3947;min-height:52px}#hnet button{border-radius:14px;min-height:48px;background:#1b2733;border-color:#2a3947;font-weight:600}
 #hnet #hncode{font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-weight:700;color:var(--ac)}
 @media (max-aspect-ratio:11/10){#hnet{left:0;right:0;transform:none;width:auto;bottom:0;border-radius:24px 24px 0 0;max-height:80vh;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}}
+/* botões laterais descem junto com o painel (GPS aumenta a altura) */
+#tt,#gbtn{top:calc(var(--mb,122px) + 8px)}
+@media (orientation:portrait){.mob #tt{top:calc(var(--mb,176px) + 8px)}}

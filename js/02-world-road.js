@@ -7,16 +7,16 @@ const kap=s=>.0018*(.5*Math.sin(s*.00083+.7+PH(10))+.32*Math.sin(s*.00219+1.9+PH
 const KHW=[11.5,6.3,9.5]; // meia largura da malha por tipo
 function kindAt(s){if(Math.abs(s)<900)return 0;const ci=Math.round(s/9000);if(ci!==0&&Math.abs(s-ci*9000)<800)return 2;const sg=Math.floor((s+2300)/3400);return hh(sg,5,91)<.55?0:1}
 function hwAt(s){let a=0;for(let o=-70;o<=70;o+=10)a+=KHW[kindAt(s+o)];return a/15} // afunila ao longo de ~140 m
-const samp=i=>i>=0?RF[i]:RB[-i-1];
+var GRCX=null;const samp=i=>GRCX?GRCX.pt(i):(i>=0?RF[i]:RB[-i-1]);
 function addS(o){const k=Math.floor(o.x/52)*70001+Math.floor(o.z/52);let a=RC.get(k);if(!a)RC.set(k,a=[]);a.push(o)}addS(RF[0]);
-function ensureRoad(sa,sb){while((RF.length-1)*RDS<sb){const p=RF[RF.length-1],k=kap(p.s+2.5),hm=p.h+k*2.5,n={x:p.x-Math.sin(hm)*RDS,z:p.z-Math.cos(hm)*RDS,h:p.h+k*RDS,s:p.s+RDS};n.hw=hwAt(n.s);n.kd=kindAt(n.s);RF.push(n);addS(n)}
+function ensureRoad(sa,sb){if(window.GRID_ON&&window.gridEnsure)return gridEnsure(sa,sb);while((RF.length-1)*RDS<sb){const p=RF[RF.length-1],k=kap(p.s+2.5),hm=p.h+k*2.5,n={x:p.x-Math.sin(hm)*RDS,z:p.z-Math.cos(hm)*RDS,h:p.h+k*RDS,s:p.s+RDS};n.hw=hwAt(n.s);n.kd=kindAt(n.s);RF.push(n);addS(n)}
  while(-RB.length*RDS>sa){const p=RB.length?RB[RB.length-1]:RF[0],k=kap(p.s-2.5),hm=p.h-k*2.5,n={x:p.x+Math.sin(hm)*RDS,z:p.z+Math.cos(hm)*RDS,h:p.h-k*RDS,s:p.s-RDS};n.hw=hwAt(n.s);n.kd=kindAt(n.s);RB.push(n);addS(n)}}
 function roadPt(s,lat){const o=samp(Math.round(s/RDS)),ds=s-o.s;RPx=o.x-Math.sin(o.h)*ds+Math.cos(o.h)*lat;RPz=o.z-Math.cos(o.h)*ds-Math.sin(o.h)*lat}
-function roadInfo(x,z){const cx=Math.floor(x/52),cz=Math.floor(z/52);let best=null,bd=1e18;
+function roadInfo(x,z){if(window.GRID_ON&&window.gridRoadInfo)return gridRoadInfo(x,z);const cx=Math.floor(x/52),cz=Math.floor(z/52);let best=null,bd=1e18;
  for(let i=cx-1;i<=cx+1;i++)for(let j=cz-1;j<=cz+1;j++){const a=RC.get(i*70001+j);if(!a)continue;for(let q=0;q<a.length;q++){const o=a[q],dx=x-o.x,dz=z-o.z,d2=dx*dx+dz*dz;if(d2<bd){bd=d2;best=o}}}
  if(!best){RW=0;RD=1e9;return false}
  const dx=x-best.x,dz=z-best.z,al=dx*-Math.sin(best.h)+dz*-Math.cos(best.h),cl=Math.max(-2.6,Math.min(2.6,al));RS=best.s+cl;RL=dx*Math.cos(best.h)-dz*Math.sin(best.h);{const lat=Math.hypot(RL,al-cl),hw=best.hw;RHW=hw;RD=lat<=hw?lat*(11.5/hw):11.5+lat-hw}return true}
-const COACT=[],PR1=34,PR2=58;let PADW=0,PADY=0;
+var RPH=1,RYb=0,GRTY=null;const COACT=[],PR1=34,PR2=58;let PADW=0,PADY=0;
 const APR1=13,APR2=19;
 // pátio circular + acesso (apron) retangular ligando o pátio ao asfalto, sem faixa de terra no meio
 function padW(x,z){PADW=0;for(let i=0;i<COACT.length;i++){const c=COACT[i],dx=x-c.x,dz=z-c.z,d=Math.hypot(dx,dz);let w=0;
@@ -27,7 +27,8 @@ function padW(x,z){PADW=0;for(let i=0;i<COACT.length;i++){const c=COACT[i],dx=x-
 function inEntry(x,z,m){for(const c of COACT){const dx=x-c.x,dz=z-c.z;if(Math.abs(dx)>80||Math.abs(dz)>80)continue;const lx=dx*c.cr-dz*c.sr,lz=dx*c.sr+dz*c.cr;if(lx>-52&&lx<-20&&Math.abs(lz)<m)return true}return false}
 const RIVA=[],OVA=[],ICA=[];let RIN=false;
 // phys=1: altura de rodagem (sobre o tabuleiro das pontes); phys=0: malha do terreno (vale natural sob a ponte)
-const Hx=(x,z,phys)=>{let b=Hb(x,z);if(RIVA.length)b=riverH(x,z,b);let r=b;RIN=roadInfo(x,z);if(RIN){let w=1;if(RD>15){const f=Math.max(0,(50-RD)/35);w=f*f*(3-2*f)}RW=w;let wb=1,Yr=yR(RS)+.1;if(RIVA.length){wb=1-bridgeW(RS);Yr=brTarget(Yr)}r=b+(Yr-b)*w;if(phys&&wb<1&&RD<=11.6)r=r*wb+(yR(RS)+.1)*(1-wb)}if(ICA.length)r=icPull(x,z,r,phys);if(COACT.length&&padW(x,z)>0)r+=(PADY-r)*PADW;return r},
+function gYR(x,z){return window.GRID_ON?RYb:yR(RS)}
+const Hx=(x,z,phys)=>{let b=Hb(x,z);if(RIVA.length)b=riverH(x,z,b);let r=b;RPH=phys;RIN=roadInfo(x,z);if(RIN){let w=1;if(RD>15){const f=Math.max(0,(50-RD)/35);w=f*f*(3-2*f)}RW=w;let wb=1,Yr=gYR(x,z)+.1;if(RIVA.length){wb=1-bridgeW(RS);Yr=brTarget(Yr)}r=b+(Yr-b)*w;if(phys&&wb<1&&RD<=11.6)r=r*wb+(gYR(x,z)+.1)*(1-wb)}if(ICA.length)r=icPull(x,z,r,phys);if(COACT.length&&padW(x,z)>0)r+=(PADY-r)*PADW;return r},
  H=(x,z)=>SRY!=null?SRY:Hx(x,z,1);
 // atlas da pista: 4 faixas de 512 px (0 autoestrada, 1 pista simples, 2 avenida, 3 reserva), cada uma cobrindo a largura total da malha do tipo
 const RK=[{hw:11.5,A:9.4,gw:1.3,tr:[-6.6,-2.2,2.2,6.6],edge:[-8.8,8.8],edgeW:.27,dash:[-4.4,4.4],ctr:[-.3,.3],side:false},
@@ -83,6 +84,6 @@ function buildRoad(ci){const P=rg.attributes.position,U=rg.attributes.uv,Dm=new 
  bushes.count=nb;bushes.instanceMatrix.needsUpdate=true;if(bushes.instanceColor)bushes.instanceColor.needsUpdate=true;
   {let nk=0;for(let k=0;k<NS&&nk<12;k++){const o=SL[k];if(o.kd===2)continue;const lx=o.x+o.cs*(o.hw+2.5),lz=o.z-o.sn*(o.hw+2.5);if(Math.abs(o.s%1000)<RDS/2&&Math.abs(o.s)>10&&!inEntry(lx,lz,30)&&!featBlock(lx,lz)){Dm.rotation.set(0,Math.atan2(o.cs,-o.sn),0);Dm.position.set(lx,o.y+.75,lz);Dm.updateMatrix();kmk.setMatrixAt(nk++,Dm.matrix)}}kmk.count=nk;kmk.instanceMatrix.needsUpdate=true}
  posts.count=np;poles.count=heads.count=lpool.count=nl;[posts,poles,heads,lpool].forEach(m=>m.instanceMatrix.needsUpdate=true);P.needsUpdate=U.needsUpdate=true}
-function roadFrame(){if(roadInfo(pos.x,pos.z)){curS=RS;onRoad=RD<10.4}else onRoad=false;ensureRoad(curS-1100,curS+1100);coFrame();const k=Math.round(curS/40);if(k!==rbI){rbI=k;buildRoad(Math.round(curS/RDS))}}
+function roadFrame(){if(window.GRID_ON&&window.gridFrame)return gridFrame();if(roadInfo(pos.x,pos.z)){curS=RS;onRoad=RD<10.4}else onRoad=false;ensureRoad(curS-1100,curS+1100);coFrame();const k=Math.round(curS/40);if(k!==rbI){rbI=k;buildRoad(Math.round(curS/RDS))}}
 ensureRoad(-700,700);
 

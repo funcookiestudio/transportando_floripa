@@ -21,7 +21,7 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  spots.forEach((s,i)=>{const v=lightsOn&&i<QL[qi].sp;if(s.visible!==v)s.visible=v;s.intensity=v?(hiB?3.6:1.9):0;s.distance=hiB?95:44;lpAimSpot(s,i)});beamStep();lpFrame(dt,vf);HL.emissiveIntensity=lightsOn?2.2:.25;TL.emissiveIntensity=(K.down||K.hb)?2.4:(lightsOn?1.1:.4);{const bl=Math.floor(now/400)%2; // setas: < esquerda · > direita (desligam sozinhas depois da curva)
  if(sigL){if(steer>.22)sigTL=1;else if(sigTL&&steer<.05){sigL=false;sigTL=0}}if(sigR){if(steer<-.22)sigTR=1;else if(sigTR&&steer>-.05){sigR=false;sigTR=0}}
  AM.emissiveIntensity=bl&&sigL?2.2:.4;AR.emissiveIntensity=bl&&sigR?2.2:.4}
- roadFrame();trfUpd(dt);stFrame(dt);updTerrain();updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
+ roadFrame();trfUpd(dt);if(!window.GRID_ON)stFrame(dt);updTerrain();updObs();upCones(dt);fxUpd(dt,vf,vl,thr);
  jobFrame(dt);
  // câmera
  camH+=wrap(hd-camH)*Math.min(1,dt*3.5);const cfx=-Math.sin(camH+(camMode<2?orbYaw:0)),cfz=-Math.cos(camH+(camMode<2?orbYaw:0)),cx=pos.x+fx*VEH.ca,cz=pos.z+fz*VEH.ca,cy=yr+VEH.cy;

@@ -3,7 +3,8 @@ const $=id=>document.getElementById(id);
    Tudo (empresas, cidades, relevo, curvas e altimetria da estrada) é função pura de (seed, posição). Seed vazia = mundo clássico (idêntico ao original). */
 const WSEED=(()=>{let t='';try{const q=new URLSearchParams(location.search).get('seed');if(q!==null){t=q;try{localStorage.setItem('fh16seed',q)}catch(e){}}else t=localStorage.getItem('fh16seed')||''}catch(e){}
  t=String(t).trim().slice(0,40);let n=0;if(t&&t.toLowerCase()!=='classico'&&t!=='0'){n=2166136261;for(let i=0;i<t.length;i++){n^=t.charCodeAt(i);n=Math.imul(n,16777619)}n>>>=0;if(!n)n=1}return{txt:n?t:'',n}})();
-const SAVEKEY=WSEED.n?'fh16save:'+WSEED.n:'fh16save';
+var GRID_ON=true;try{GRID_ON=localStorage.getItem('fh16grid')!=='0'}catch(e){}
+const SAVEKEY=(WSEED.n?'fh16save:'+WSEED.n:'fh16save')+(GRID_ON?':grade':'');
 // hash inteiro (idêntico em qualquer navegador, sem Math.sin); o mundo clássico mantém a fórmula original para continuar igual
 function ihash(a,b,c,s){let h=(s^0x9e3779b9)|0;h=Math.imul(h^a,0x85ebca6b);h^=h>>>13;h=Math.imul(h^b,0xc2b2ae35);h^=h>>>16;h=Math.imul(h^c,0x27d4eb2f);h^=h>>>15;h=Math.imul(h,0x165667b1);h^=h>>>13;return(h>>>0)/4294967296}
 // região: ao passar pelo fim da rodovia que cruza um trevo, a estrada principal passa a ser outra (id novo) e é reancorada na posição do caminhão
