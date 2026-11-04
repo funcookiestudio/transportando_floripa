@@ -4,8 +4,7 @@
 const LPG=[['headBeam','Feixe do farol'],['headGlow','Lâmpada do farol'],['brake','Freio'],['rev','Ré'],['sigF','Seta diant.'],['sigR','Seta tras.'],['exh','Escapamento']];
 const LPK=[['x','X lateral',-6,6,.01],['y','Y altura',0,5,.01],['z','Z frente(−) / trás(+)',-9,3,.01],['p','Inclinação °',-90,90,.5],['w','Ângulo °',-180,180,.5],['r','Rotação °',-180,180,.5],['s','Tamanho',.05,3,.01]];
 const LPD=Math.PI/180;
-LPDEF.truck={headBeam:{x:.8,y:1.25,z:-5.7,p:-3.4,w:0,r:0,s:1,m:1},headGlow:{x:.8,y:1.28,z:-5.7,p:0,w:0,r:0,s:.9,m:1},brake:{x:.85,y:.85,z:.6,p:0,w:180,r:0,s:.7,m:1},rev:{x:.5,y:.85,z:.6,p:0,w:180,r:0,s:.4,m:1},
- sigF:{x:1.05,y:1,z:-5.2,p:0,w:0,r:0,s:.42,m:1},sigR:{x:1,y:.9,z:.6,p:0,w:180,r:0,s:.42,m:1},exh:{x:-1.3,y:.95,z:-1.15,p:25,w:90,r:0,s:.6,m:0}};
+LPDEF.truck={"headBeam":{"x":1.11,"y":0.97,"z":-5.44,"p":-1.5,"w":0,"r":0,"s":1,"m":1},"headGlow":{"x":1.11,"y":0.93,"z":-5.44,"p":0,"w":0,"r":0,"s":0.9,"m":1},"brake":{"x":0.89,"y":0.93,"z":0.94,"p":0,"w":180,"r":0,"s":0.7,"m":1},"rev":{"x":0.83,"y":0.88,"z":0.89,"p":0,"w":180,"r":0,"s":0.4,"m":1},"sigF":{"x":1.17,"y":0.76,"z":-5.44,"p":0,"w":0,"r":0,"s":0.42,"m":1},"sigR":{"x":1.17,"y":0.88,"z":0.83,"p":0,"w":180,"r":0,"s":0.42,"m":1},"exh":{"x":1.28,"y":0.21,"z":-1.17,"p":-27.5,"w":-113.5,"r":-110,"s":0.45,"m":0}};
 var LPU={},lpAll=false,lpSel='headBeam',lpShownV=null,LPSP={truck:null,civic:null};
 try{LPU=JSON.parse(localStorage.getItem('fh16lp'))||{}}catch(e){LPU={}}
 const lpSave=()=>{try{localStorage.setItem('fh16lp',JSON.stringify(LPU))}catch(e){}};

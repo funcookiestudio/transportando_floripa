@@ -28,7 +28,7 @@ function inEntry(x,z,m){for(const c of COACT){const dx=x-c.x,dz=z-c.z;if(Math.ab
 const RIVA=[],OVA=[],ICA=[];let RIN=false;
 // phys=1: altura de rodagem (sobre o tabuleiro das pontes); phys=0: malha do terreno (vale natural sob a ponte)
 const Hx=(x,z,phys)=>{let b=Hb(x,z);if(RIVA.length)b=riverH(x,z,b);let r=b;RIN=roadInfo(x,z);if(RIN){let w=1;if(RD>15){const f=Math.max(0,(50-RD)/35);w=f*f*(3-2*f)}RW=w;let wb=1,Yr=yR(RS)+.1;if(RIVA.length){wb=1-bridgeW(RS);Yr=brTarget(Yr)}r=b+(Yr-b)*w;if(phys&&wb<1&&RD<=11.6)r=r*wb+(yR(RS)+.1)*(1-wb)}if(ICA.length)r=icPull(x,z,r,phys);if(COACT.length&&padW(x,z)>0)r+=(PADY-r)*PADW;return r},
- H=(x,z)=>Hx(x,z,1);
+ H=(x,z)=>SRY!=null?SRY:Hx(x,z,1);
 // atlas da pista: 4 faixas de 512 px (0 autoestrada, 1 pista simples, 2 avenida, 3 reserva), cada uma cobrindo a largura total da malha do tipo
 const RK=[{hw:11.5,A:9.4,gw:1.3,tr:[-6.6,-2.2,2.2,6.6],edge:[-8.8,8.8],edgeW:.27,dash:[-4.4,4.4],ctr:[-.3,.3],side:false},
  {hw:6.3,A:4.7,gw:.95,tr:[-1.9,1.9],edge:[-4.05,4.05],edgeW:.16,dash:[],ctr:[-.2,.2],side:false},

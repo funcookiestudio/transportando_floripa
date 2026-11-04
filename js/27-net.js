@@ -53,6 +53,7 @@ function netUI(){const st=document.getElementById('hns');if(!st)return;const on=
  document.getElementById('hnoff').style.display=on?'none':'block';document.getElementById('hnon').style.display=on?'block':'none';document.getElementById('hncode').textContent=NET.code||'----';
  const col=h=>h==null?'#8a9099':'#'+h.toString(16).padStart(6,'0'),pl=(n,c,t)=>'<div class="pl"><i style="background:'+col(c)+'"></i>'+n.replace(/[<>&]/g,'')+(t?'<small>'+t+'</small>':'')+'</div>';
  let h=pl(NET.name||'Você',nPaint().cab,'você'+(NET.host?' · 👑':''));for(const p of NET.peers.values())h+=pl(p.name,p.cab,'');document.getElementById('hnl').innerHTML=on?h:'';
+ {const dt=document.getElementById('hdot');if(dt)dt.className=on?(NET.peers.size?'ok':'wait'):''}
  document.body.classList.toggle('hnetopen',document.getElementById('hnet').style.display==='block')}
 async function netStart(code,create){if(NET.on)return;NET.on=true;NET.code=code;NET.host=!!create;NET.peers=new Map();NET.moved=false;NET.x0=null;NET.hr=false;NET.msg='Conectando…';
  try{NET.bc=new BroadcastChannel('fh16-'+code);NET.bc.onmessage=e=>nRecv(e.data)}catch(e){NET.bc=null}

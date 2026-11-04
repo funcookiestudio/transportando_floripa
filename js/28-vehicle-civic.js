@@ -37,7 +37,8 @@ function vehShow(){const car=!!VEH.car;if(TRUCKP)TRUCKP.visible=!car;for(const w
  spots.forEach((s,i)=>{const x=(i?1:-1)*VEH.spot[0];s.position.set(x,VEH.spot[1]-(VEH.car?.2:0),VEH.spot[2]);s.target.position.set(x*.5,.5,-40)});
  beams.forEach((b,i)=>{b.position.set((i?1:-1)*VEH.spot[0],VEH.spot[1]-(VEH.car?.3:.05),VEH.spot[2]-(VEH.car?2.6:.1));b.rotation.x=VEH.car?-.09:0}); /* cone de luz sai dos faróis do veículo atual */
  const hn=document.querySelectorAll('#hpan .ht button');hn.forEach(b=>{b.style.display=car&&b.dataset.t!=='cab'&&b.dataset.t!=='lp'&&b.dataset.t!=='sn'?'none':''});
- $('hv1').classList.toggle('on',!car);$('hv2').classList.toggle('on',car)}
+ $('hv1').classList.toggle('on',!car);$('hv2').classList.toggle('on',car);
+ {const I=car?['Honda Civic EK9','Type R · motor B16B',['VTEC 5.900 rpm','5 marchas','Corte 8.400 rpm']]:['Volvo FH16','Cavalo mecânico com carreta',['750 cv','I-Shift 12 marchas','Até 18 t']];const n=$('hvn');if(n){n.textContent=I[0];$('hvs').textContent=I[1];$('hch').innerHTML=I[2].map(x=>'<span>'+x+'</span>').join('')}}}
 function vehSwitch(id){if(id===VSEL)return;if(id==='civic'&&!civBuild())return;
  VSEL=id;applyVeh(id);try{localStorage.setItem('fh16veh',id)}catch(e){}
  if(id==='civic'){if(job)cancelJob(true);setHitched(false);placeStart();autoBoard=false;vel.x=vel.z=0;fuel=FUELMAX;dmg=0;hpTab='cab'}
@@ -58,10 +59,7 @@ function civLightsBuild(g,zmax){ /* coordenadas no espaço do veículo (eixo tra
  const surf=(x,y,front)=>{let z=front?1e9:-1e9,n=0;for(let i=0;i<pts.length;i+=3){if(Math.abs(Math.abs(pts[i])-Math.abs(x))<.1&&Math.abs(pts[i+1]-y)<.08){const pz=pts[i+2];if(front?pz<z:pz>z)z=pz;n++}}return n?z:(front?-3.5:.7)},
   oz=g.position.z,tex=civGlowTex();
  /* padrões ajustados à mão pelo Cristiano no editor de luzes (espaço do veículo: eixo traseiro = 0, frente = -z) */
- LPDEF.civic={headBeam:{x:.52,y:.58,z:-3.29,p:-5.2,w:0,r:0,s:1,m:1},headGlow:{x:.52,y:.6,z:-3.26,p:0,w:0,r:0,s:.9,m:1},
-  brake:{x:.67,y:.77,z:.58,p:0,w:180,r:0,s:.8,m:1},rev:{x:.65,y:.76,z:.55,p:0,w:180,r:0,s:.4,m:1},
-  sigF:{x:.74,y:.62,z:-3.16,p:0,w:0,r:0,s:.42,m:1},sigR:{x:.76,y:.77,z:.537,p:0,w:180,r:0,s:.42,m:1},
-  exh:{x:.37,y:.24,z:.65,p:5,w:180,r:0,s:.55,m:0}};
+ LPDEF.civic={"headBeam":{"x":0.52,"y":0.58,"z":-3.29,"p":-5.2,"w":0,"r":0,"s":1,"m":1},"headGlow":{"x":0.52,"y":0.6,"z":-3.26,"p":0,"w":0,"r":0,"s":0.9,"m":1},"brake":{"x":0.67,"y":0.77,"z":0.58,"p":0,"w":180,"r":0,"s":0.8,"m":1},"rev":{"x":0.65,"y":0.76,"z":0.55,"p":0,"w":180,"r":0,"s":0.4,"m":1},"sigF":{"x":0.74,"y":0.62,"z":-3.16,"p":0,"w":0,"r":0,"s":0.42,"m":1},"sigR":{"x":0.76,"y":0.77,"z":0.537,"p":0,"w":180,"r":0,"s":0.42,"m":1},"exh":{"x":0.37,"y":0.24,"z":0.65,"p":5,"w":180,"r":0,"s":0.55,"m":0}};
  VP.civic.spot=[.52,.6,-3.26]}
 act.beam=()=>{if(!lightsOn){msg('Ligue os faróis (L) primeiro');return}hiB=!hiB;msg(hiB?'Farol alto':'Farol baixo')};
 /* ===== fumaça de pneu e marcas no asfalto (pool de sprites e de faixas) ===== */
