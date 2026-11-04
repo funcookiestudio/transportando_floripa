@@ -1,5 +1,5 @@
 // ---- sombras do cenário, feixes e brilho dos faróis ----
-[trunk,leaf,rock,coneM,bushes].forEach(m=>{m.castShadow=m.receiveShadow=true});
+[...pines,rock,coneM,bushes].forEach(m=>{m.castShadow=m.receiveShadow=true});
 spots.forEach(sp=>{Object.assign(sp.shadow,{bias:-.001,normalBias:.03});sp.shadow.mapSize.set(1024,1024);sp.shadow.camera.near=1;sp.shadow.camera.far=70});
 const bm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,fog:false,uniforms:{k:{value:0}},
  vertexShader:'varying float t;varying float ed;void main(){t=-position.z/34.;vec3 n=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.);ed=pow(abs(dot(n,normalize(-mv.xyz))),1.4);gl_Position=projectionMatrix*mv;}',

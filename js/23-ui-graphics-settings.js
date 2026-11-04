@@ -16,7 +16,7 @@ function applyGfx(){
  if(bloom)bloom.enabled=GS.bloom;
  if(comp)for(const rt of[comp.renderTarget1,comp.renderTarget2])if(rt&&rt.isWebGLMultisampleRenderTarget){const sm=GS.msaa?4:0;if(rt.samples!==sm){rt.samples=sm;rt.dispose()}}
  envOff=!GS.reflex;if(envOff&&envTex)scene.environment=envTex;
- trunk.visible=leaf.visible=rock.visible=GS.trees;bushes.visible=GS.bushes;pts.visible=GS.parts;
+ pines.forEach(m=>m.visible=GS.trees);rock.visible=GS.trees;bushes.visible=GS.bushes;pts.visible=GS.parts;
  const tm=GS.tone?THREE.ACESFilmicToneMapping:THREE.NoToneMapping;if(R.toneMapping!==tm){R.toneMapping=tm;scene.traverse(o=>{const m=o.material;if(m)(Array.isArray(m)?m:[m]).forEach(x=>{x.needsUpdate=true})})}
  document.body.classList.toggle('hmin',!!GS.hudmin);applyTOD();qAuto=GS.auto;
  if(GS.fps||gfxOpen){fpsStart();if(fpsEl)fpsEl.style.display=GS.fps?'block':'none'}else if(fpsEl)fpsEl.style.display='none'}
