@@ -22,6 +22,8 @@ function coFuelZone(){for(const c of COACT){const dx=pos.x-c.x,dz=pos.z-c.z;if(M
 function coFuelMenu(c){const btns=[],need=FUELMAX-fuel,pr=CPRICE.toFixed(2).replace('.',',');
  if(need>2){for(const l of[100,Math.round(need)]){const q=Math.min(l,need),cost=Math.round(q*CPRICE);if(l===100&&need<=105)continue;btns.push({html:'<b>'+(l===100?'Abastecer 100 L':'Encher o tanque · '+Math.round(q)+' L')+'</b><span>'+money(cost)+'</span><small>R$ '+pr+' por litro (mais caro que no posto)</small>',fn:()=>{if(score<cost){msg('Dinheiro insuficiente');return}score-=cost;fuel=Math.min(FUELMAX,fuel+q);saveG();msg('Abastecido '+Math.round(q)+' L');coFuelMenu(c)}})}}
  else btns.push({html:'<b>Tanque cheio</b><small>'+Math.round(fuel)+' L</small>',fn:()=>coFuelMenu(c)});
+ /* reparo rápido na bomba da empresa: conserta só metade do dano (o reparo completo é na oficina dos postos) */
+ if(dmg>1){const rep=Math.max(1,Math.round(dmg/2)),cost=Math.round(rep*30*1.6);btns.push({html:'<b>Reparo rápido</b><span>'+money(cost)+'</span><small>Repara '+rep+'% do dano ('+Math.round(dmg)+'% → '+Math.round(dmg-rep)+'%) · só metade</small>',fn:()=>{if(score<cost){msg('Dinheiro insuficiente');return}score-=cost;dmg=Math.max(0,dmg-rep);saveG();msg('Reparo rápido feito');coFuelMenu(c)}})}
  btns.push({html:'<b>Fechar</b><small>Esc</small>',fn:closeCm});
  cmShow(c.name+' · bomba','Combustível '+Math.round(fuel)+' / '+FUELMAX+' L · '+money(score),btns,'Toque, clique ou tecle 1–'+btns.length)}
 let coPIn=false;
