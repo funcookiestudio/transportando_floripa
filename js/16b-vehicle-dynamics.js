@@ -57,7 +57,7 @@ function dynGuard(){const G=DYN.good;
  if(dynFinite()){G.x=pos.x;G.z=pos.z;G.hd=hd;G.th=th;G.set=true;return}
  DYN.nanHits++;DYN.snap=true;
  if(G.set){pos.x=G.x;pos.z=G.z;hd=G.hd;th=G.th}else{pos.x=pos.z=0;hd=th=0}
- vel.x=vel.z=0;steer=yawKick=wT=tipS=brkP=thrS=slipS=0;eRpm=VEH.idle;vTp=decS=0;
+ vel.x=vel.z=0;steer=yawKick=wT=tipS=brkP=thrS=slipS=0;eRpm=VEH.idle;vTp=decS=trailerBrakeP=0;
  if(DYN.nanHits<4)console.warn('Física: valor inválido detectado e recuperado ('+DYN.nanHits+')')}
 /* Estados visuais (cabine/chassi): reinicia se algum virar NaN, para não ficar travado para sempre */
 function dynVisGuard(){if(dynVisFinite())return;

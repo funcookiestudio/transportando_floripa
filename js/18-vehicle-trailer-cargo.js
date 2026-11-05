@@ -11,6 +11,14 @@ try{const tex=(w,h,fn,rx,ry)=>{const c=document.createElement('canvas');c.width=
  for(const x of[-1.1,1.1])for(const z of[1.12,13.08])for(const y of[1.49,3.9]){const f=new THREE.Mesh(new THREE.BoxGeometry(.26,.18,.26),dk);f.position.set(x,y,z);f.castShadow=true;cargoBox.add(f)}
  trl.add(cargoBox);setCont()}catch(e){console.warn('container',e)}
 const SA=new THREE.Vector3(),SB=new THREE.Vector3(),SD=new THREE.Vector3(),SZ=new THREE.Vector3(0,0,1);
+/* Pressão aproximada do freio da carreta: acompanha o comando pneumático com atraso próprio. */
+var trailerBrakeP=0,trailerReverseMsg=0;
+function trailerBrakePressure(current,target,dt){return current+(target-current)*Math.min(1,dt*(target>current?3.5:5.5))}
+function trailerBrakeReaction(tractorPressure,trailerPressure){return 1+.35*Math.max(0,tractorPressure-trailerPressure)-.65*trailerPressure}
+/* A velocidade lateral no referencial da carreta já inclui a articulação.
+   O sinal da velocidade longitudinal faz a ré amplificar o erro angular,
+   enquanto o avanço tende a alinhá-la: não aplicar assistência artificial. */
+function trailerReverseRisk(longitudinalSpeed,articulation){return longitudinalSpeed<-.8&&Math.abs(articulation)>.75}
 function suspLink(m,a,b,xz){SD.copy(b).sub(a);const L=SD.length()||.01;m.position.set((a.x+b.x)/2,(a.y+b.y)/2,(a.z+b.z)/2);SD.multiplyScalar(1/L);m.quaternion.setFromUnitVectors(m.userData.ax,SD);m.scale.set(xz,m.userData.ax.z?1:L,m.userData.ax.z?L:1);if(m.userData.ax.z)m.scale.set(1,1,L);else m.scale.set(xz,L,xz)}
 /* suspensão independente por roda: braço oscilante + mola + amortecedor; cada roda segue o terreno sozinha */
 function susp(o,dt,sT,cT,yk){const wx=pos.x+o.cx*cT+o.z*sT,wz=pos.z-o.cx*sT+o.z*cT,r=tipSg*tipS*.28+rollT,body=yk+.1+o.cx*Math.sin(r)-o.z*Math.sin(pitchT),nom=o.cy-.1;
@@ -18,16 +26,33 @@ function susp(o,dt,sT,cT,yk){const wx=pos.x+o.cx*cT+o.z*sT,wz=pos.z-o.cx*sT+o.z*
  const s=o.s,P=SA.set(s*.5,.95,o.z-.75),Hb=SB.set(s*.55,o.y,o.z);suspLink(o.arm,P,Hb,1);
  const A=SA.set(s*.4,P.y+(Hb.y-P.y)*.8+.04,o.z-.15),B=SB.set(s*.4,1.25,o.z-.15);suspLink(o.coil,A,B,.8);
  A.z+=.14;B.z+=.14;suspLink(o.dmp,A,B,1)}
-function trailerStep(dt){if(!hitched){th=hd;wT=0;rollT=0;vTp=0;decS=0;return}const sT=Math.sin(th),cT=Math.cos(th),vkl=vel.x*cT-vel.z*sT,vkf=-(vel.x*sT+vel.z*cT),r=(7000+cargo*1000)/(23000+cargo*1000);
- // yaw ideal (sem escorregar) x yaw real: limitado pelo atrito do eixo da carreta (freio de mão trava a carreta)
- const wD=-vkl/TLEN,mu=(onRoad?.8:.5)*(K.hb?.4:1)*(1-.3*Math.min(1,tipS)),aM=mu*17.6/TLEN/(1+.02*cargo);
- wT+=Math.max(-aM*dt,Math.min(aM*dt,(wD-wT)*Math.min(1,dt*9/(1+.04*cargo))));th+=wT*dt;
+/* Controlador angular da carreta: resposta amortecida de segunda ordem.
+   A carga aumenta a inércia efetiva; o limite de aceleração angular continua
+   condicionado à aderência disponível no eixo da carreta. */
+function trailerYawAccel(targetRate,currentRate,loadTons,grip){
+ const inertia=1+Math.max(0,loadTons)*.035;
+ const omega=3.2/Math.sqrt(inertia),zeta=1.0;
+ const maxAccel=Math.max(.05,grip)*17.6/TLEN/inertia;
+ const requested=omega*omega*(targetRate-currentRate)-2*zeta*omega*currentRate;
+ return Math.max(-maxAccel,Math.min(maxAccel,requested));
+}
+function trailerStep(dt){if(!hitched){th=hd;wT=0;rollT=0;vTp=0;decS=0;trailerBrakeP=0;trailerReverseMsg=0;return}
+ trailerBrakeP=trailerBrakePressure(trailerBrakeP,brkP,dt);
+ const sT=Math.sin(th),cT=Math.cos(th),vkl=vel.x*cT-vel.z*sT,vkf=-(vel.x*sT+vel.z*cT),r=(7000+cargo*1000)/(23000+cargo*1000);
+ // A carreta tem taxa de guinada própria: aproxima a condição de rolamento
+ // sem escorregamento, mas respeita a aderência e a inércia da carga.
+ const wD=-vkl/TLEN,mu=(onRoad?.8:.5)*(K.hb?.4:1)*(1-.3*Math.min(1,tipS));
+ wT+=trailerYawAccel(wD,wT,cargo,mu)*dt;th+=wT*dt;
  const lag=wD-wT,slip=Math.abs(lag)*TLEN;
  // reação na quinta roda: a carreta empurra/puxa a traseira do caminhão
  yawKick=Math.max(-1.5,Math.min(1.5,yawKick+lag*r*7*dt));
  const dec=vTp>0&&vkf>.5?Math.max(0,Math.min(9,(vTp-vkf)/dt)):0;vTp=vkf;decS+=(dec-decS)*Math.min(1,dt*8);
  let f=th-hd;f=Math.atan2(Math.sin(f),Math.cos(f));
- yawKick=Math.max(-1.5,Math.min(1.5,yawKick-(7000+cargo*1000)*decS*Math.sin(f)*2.5/85000*dt)); // frenagem: carreta empurra (risco de jackknife)
+ // Aviso antecipado de articulação excessiva durante a ré; não altera a física.
+ if(trailerReverseRisk(vkf,f)&&trailerReverseMsg<=0){msg('Atenção: ângulo da carreta na ré! Corrija suavemente');trailerReverseMsg=2.5}
+ if(trailerReverseMsg>0)trailerReverseMsg=Math.max(0,trailerReverseMsg-dt);
+ const brakeReaction=trailerBrakeReaction(brkP,trailerBrakeP);
+ yawKick=Math.max(-1.5,Math.min(1.5,yawKick-(7000+cargo*1000)*decS*Math.sin(f)*2.5/85000*brakeReaction*dt)); // freios da carreta reduzem a força de empurrão; atraso pneumático aumenta a reação transitória
  if(slip>1.5){const k=Math.exp(-.15*Math.min(slip,4)*dt);vel.x*=k;vel.z*=k;if(skMsg<=0&&Math.abs(vkf)>8){msg('Carreta derrapando!');skMsg=3}}
  rollT+=(-wT*vkf*.008-rollT)*Math.min(1,dt*6);
  if(Math.abs(f)>1.85){th=hd+Math.sign(f)*1.85;wT*=.2;vel.x*=Math.exp(-3*dt);vel.z*=Math.exp(-3*dt);if(jkMsg<=0){msg('Jackknife!');jkMsg=3}}
