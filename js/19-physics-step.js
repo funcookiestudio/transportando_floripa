@@ -26,7 +26,12 @@ function phys(dt){
   if(Math.abs(dv)>ach){const k=Math.max(0,Math.min(1,(s-1)*2));vf-=Math.sign(vf)*Math.min(Math.abs(vf),.3*ach*k);dv=Math.sign(dv)*ach}}
  else if(Math.abs(dv)>dvMax){dv=Math.sign(dv)*dvMax;vf-=Math.sign(vf)*Math.min(Math.abs(vf),.3*dvMax)}vl+=dv;slipS=vl;
  vel.x=fx*vf+rx*vl;vel.z=fz*vf+rz*vl;
- const ms=VEH.st/(1+Math.abs(vf)/VEH.stv),tg2=(typeof K.sa==='number'?K.sa:((K.left?1:0)-(K.right?1:0)))*ms+(dmg>30?(dmg-30)*.0003:0);steer+=(tg2-steer)*Math.min(1,dt*VEH.sr);
+ const steerInput=(typeof K.sa==='number'?K.sa:((K.left?1:0)-(K.right?1:0))),ms=VEH.st/(1+Math.abs(vf)/VEH.stv),
+  /* A direção do caminhão retorna um pouco mais rápido quando o motorista solta o comando.
+     O Civic mantém exatamente a resposta original. */
+  steerRate=VEH.car?VEH.sr:(Math.abs(steerInput)>.02?VEH.sr:VEH.sr*1.35),
+  tg2=steerInput*ms+(dmg>30?(dmg-30)*.0003:0);
+ steer+=(tg2-steer)*Math.min(1,dt*steerRate);
  const yMax=(VEH.car?1.02:1.15)*(VEH.car?aF*Math.max(.55,Math.min(1.15,FFr/.6)):aF*gFd)/Math.max(Math.abs(vf),1),yawD=vf/L*Math.tan(steer)/(1+vf*vf/VEH.vch2)*(K.hb?(VEH.car?1.8:1.35):1)*(1-.012*cargo),yaw=dyn?dynYaw(yawD,vf,yMax):Math.max(-yMax,Math.min(yMax,yawD)); /* caminhão com suspensão: guinada limitada pela aderência dianteira de forma progressiva (subesterço) · subesterço: a velocidade característica reduz a curva em alta */ hd+=(yaw+yawKick)*dt;yawKick*=Math.exp(-4*dt);yawS=yaw;
  pos.x+=vel.x*dt;pos.z+=vel.z*dt;collide();trailerStep(dt);rollover(dt,Math.abs(wT*1.25)>Math.abs(yawS)?wT*1.25*vf:yawS*vf);
  dynStep(dt);dynGuard();

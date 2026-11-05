@@ -62,6 +62,21 @@ function dynGuard(){const G=DYN.good;
 /* Estados visuais (cabine/chassi): reinicia se algum virar NaN, para não ficar travado para sempre */
 function dynVisGuard(){if(dynVisFinite())return;
  pitch=roll=xp=xr=hz=pitchT=rollT=0;sv.p=sv.r=sv.h=0;yrP=H(pos.x,pos.z);yvP=0;prevVf=0;acc=0;DYN.nanHits++;DYN.snap=true}
+
+/* Reinicializa o estado dinâmico após reset/teleporte/troca de veículo.
+   Evita reaproveitar compressão, velocidades e memória de derrapagem de uma pose anterior. */
+function dynReset(){
+ const D=DYN;
+ D.on=false;D.snap=true;
+ D.fz.fill(0);D.W.fill(0);D.k.fill(0);D.cC.fill(0);D.cR.fill(0);
+ D.d.fill(0);D.y.fill(0);D.g.fill(0);D.gP.fill(0);D.c.fill(0);D.cv.fill(0);D.F.fill(0);
+ D.z=D.zd=D.p=D.pd=D.r=D.rd=0;
+ D.zdd=D.pdd=D.rdd=D.ax=D.ay=D.vf0=0;
+ D.px=pos.x;D.pz=pos.z;
+ D.gF=D.gR=1;D.mR=6500;
+ D.uF=D.uR=D.uTr=D.sF=D.sR=0;
+}
+
 /* Passo da suspensão: chamado em phys() depois de mover o veículo. Calcula as cargas por canto e as aderências relativas dos eixos
    usadas no passo seguinte. */
 function dynStep(dt){const P=VEH.phys,D=DYN;
