@@ -15,11 +15,12 @@ function phys(dt){
  if(K.down&&vf<=.5&&engineOn&&engCrank<=0){vf-=revAccel(Math.max(0,-vf),dt,thrR=(K.ba||1),onRoad)*dt;if(vf>-.5)thrS*=.9}
  else if(brkP>.01){brkA=brkP*brakeCap(onRoad);absOn=0;if(VEH.car&&brkP>.9&&vf>4){absOn=1;absT+=dt*16;brkA*=.9+.1*Math.sin(absT)} /* ABS: pedal pulsa perto do limite de aderência */vf-=Math.min(Math.max(0,vf),brkA*dt)}else absOn=0; // ABS: limita a 92% do atrito
  const rr=dragA(Math.abs(vf),onRoad)*dt;vf-=Math.sign(vf)*Math.min(Math.abs(vf),rr);
- vf-=9.8*Math.sin(pitch)*dt*.8;
+ // Caminhão: usa a inclinação longitudinal medida nos quatro apoios; Civic preserva o cálculo anterior.
+ vf-=9.8*(VEH.phys&&DYN.on?DYN.gradeLong:Math.sin(pitch))*dt*.8;
  if(VEH.car&&K.hb&&!hbL&&vf>8)yawKick+=steer*Math.min(1,vf/22)*1.4; /* puxar o freio de mão em curva joga a traseira */
  hbL=!!K.hb;if(K.hb){vf*=Math.exp((VEH.car?-.55:-1.1)*dt)}
  const dyn=!!VEH.phys&&DYN.on,gFd=dyn?DYN.gF:1,gRd=dyn?DYN.gR:1, /* suspensão (Fase 2): a carga vertical de cada eixo escala a aderência dianteira/traseira */
- muF=VEH.car?(onRoad?1.08:.7):(dyn?DYN.mu:(onRoad?.85:.55)),aF=muF*9.8*Math.sqrt(Math.max(.15,1-Math.pow(brkA/(muF*9.8),2))),aR=(VEH.car?aF*Math.max(.45,Math.min(1.2,(1-FFr)/.4)):aF*gRd)*(K.hb?(VEH.car?.26:.4):1),dvMax=aR*dt;let dv=-vl*(1-Math.exp(-(VEH.car?14:7)*dt));
+ muF=VEH.car?(onRoad?1.08:.7):(dyn?DYN.mu*dynTerrainGrip():(onRoad?.85:.55)),aF=muF*9.8*Math.sqrt(Math.max(.15,1-Math.pow(brkA/(muF*9.8),2))),aR=(VEH.car?aF*Math.max(.45,Math.min(1.2,(1-FFr)/.4)):aF*gRd)*(K.hb?(VEH.car?.26:.4):1),dvMax=aR*dt;let dv=-vl*(1-Math.exp(-(VEH.car?14:7)*dt));
  if(dyn){ /* Fase 3 · eixo traseiro: a força lateral segue a curva do pneu (satura, cai um pouco ao deslizar e recupera aos poucos); a tração em uso e o deslizamento recente reduzem o limite */
   const cp=Math.max(.5,aR*(1-TYRE.mem*DYN.uR)*Math.sqrt(Math.max(.4,1-.8*DYN.uTr*DYN.uTr))),s=Math.abs(dv)/dt/cp,ach=cp*tyreF(s)*dt;DYN.sR=s;
   DYN.uR+=((s>.9?Math.min(1,(s-.9)*2.5):0)-DYN.uR)*(1-Math.exp(-dt*(s>.9?10:2.2)));

@@ -19,6 +19,7 @@ const DYN={
  yO:0,pB:0,rB:0,           // pose do chassi para o desenho: altura na origem, arfagem e rolagem (rad)
  good:{x:0,z:0,hd:0,th:0,set:false}, // última pose válida (recuperação de NaN)
  surf:0,mu:.85,muT:.75,wet:0, // piso atual (0 asfalto · 1 pátio · 2 grama · 3 terra/areia), μ lateral/frenagem e μ de tração suavizados, umidade (reservada: 0 até existir clima)
+ gradeLong:0,gradeLat:0,rough:0, // inclinações locais e irregularidade residual estimadas pelos quatro pontos de apoio (m/m, m)
  uF:0,uR:0,uTr:0,sF:0,sR:0,   // memória de deslizamento (0–1) dianteira/traseira, uso da tração do eixo motriz (0–1), uso de aderência lateral (1 = no limite)
  nanHits:0
 };
@@ -44,6 +45,17 @@ VP.civic.phys=null;
    satura suavemente, passa por um pico em s = 1,2 e cai até ~88% (atrito de deslizamento). Sem corte abrupto. */
 const TYRE={mem:.10}; // mem: perda extra de aderência enquanto o eixo está deslizando (recupera em ~0,5 s)
 function tyreF(s){if(s<=.8)return s;if(s<=1.2){const t=s-.8;return s-t*t/.8}const q=(s-1.2)*1.4;return .88+.12/(1+q*q)}
+/* Ajuste de terreno sem uma segunda malha: ajusta um plano aos quatro pontos já amostrados pela suspensão.
+   O resíduo representa torção/irregularidade local que não pode ser explicada por uma rampa uniforme. */
+function dynTerrainFit(g,d,y,Lw,tF,tR,D,dt,snap){
+ const front=(g[0]+g[1])*.5,rear=(g[2]+g[3])*.5,left=(g[0]+g[2])*.5,right=(g[1]+g[3])*.5,
+  gl=Math.max(-.35,Math.min(.35,(front-rear)/Math.max(.1,Lw))),
+  gt=Math.max(-.5,Math.min(.5,(right-left)/Math.max(.1,tF+tR))),mid=(front+rear)*.5;
+ let rr=0;for(let i=0;i<4;i++){const pred=mid+(d[i]-Lw*.5)*gl+y[i]*gt,e=g[i]-pred;rr+=e*e}
+ const rough=Math.min(.25,Math.sqrt(rr*.25)),a=1-Math.exp(-dt*12);
+ if(snap){D.gradeLong=gl;D.gradeLat=gt;D.rough=rough}else{D.gradeLong+=(gl-D.gradeLong)*a;D.gradeLat+=(gt-D.gradeLat)*a;D.rough+=(rough-D.rough)*a}
+}
+function dynTerrainGrip(){return Math.max(.72,1-Math.min(.28,DYN.rough*1.5))}
 /* Direção: o eixo dianteiro entrega a guinada pedida até perto do limite de aderência e depois cede de forma progressiva (subesterço).
    yd = guinada pedida (rad/s), ym = guinada máxima do limite de aderência atual. */
 function dynYaw(yd,vf,ym){const D=DYN,av=Math.max(Math.abs(vf),1),cap=Math.max(.5,ym*av*(1-TYRE.mem*D.uF)),s=Math.abs(yd*vf)/cap;
@@ -73,7 +85,7 @@ function dynReset(){
  D.z=D.zd=D.p=D.pd=D.r=D.rd=0;
  D.zdd=D.pdd=D.rdd=D.ax=D.ay=D.vf0=0;
  D.px=pos.x;D.pz=pos.z;
- D.gF=D.gR=1;D.mR=6500;
+ D.gF=D.gR=1;D.mR=6500;D.gradeLong=D.gradeLat=D.rough=0;
  D.uF=D.uR=D.uTr=D.sF=D.sR=0;
 }
 
@@ -96,6 +108,7 @@ function dynStep(dt){const P=VEH.phys,D=DYN;
   if(gm-gm!==0)return;
   D.p=((g[0]+g[1])-(g[2]+g[3]))/(2*Lw);D.r=((g[1]-g[0])*tF+(g[3]-g[2])*tR)/(2*(tF*tF+tR*tR));D.z=gm-xm*D.p;D.zd=D.pd=D.rd=0;
   for(let i=0;i<4;i++)gP[i]=g[i];D.ax=D.ay=D.zdd=D.pdd=D.rdd=0;D.vf0=vfE;D.snap=false;D.uF=D.uR=D.uTr=0;snapped=true}
+ dynTerrainFit(g,d,y,Lw,tF,tR,D,dt,snapped);
  D.px=pos.x;D.pz=pos.z;
  // piso sob o veículo (eixo traseiro) e μ suavizado: sem salto ao sair da pista
  {const sf=onRoad?0:(typeof padW==='function'&&padW(pos.x,pos.z)>.6?1:(typeof riverBank==='function'&&riverBank(pos.x,pos.z)>.5?3:2)),T=P.surf[sf],wk=1-P.wetK*D.wet,ks=snapped?1:1-Math.exp(-dt*8);

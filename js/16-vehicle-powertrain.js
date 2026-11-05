@@ -22,9 +22,9 @@ function powertrainMass(){return VEH.car?MASS:(VEH.m0+((typeof hitched!=='undefi
 // Resistência (m/s²): o arrasto aerodinâmico é força dividida pela massa física total.
 function dragA(v,road){const v2=v*v,cda=(typeof hitched!=='undefined'&&hitched)?VEH.cda[1]:VEH.cda[0];return (road?.0075+.00006*v:.06)*9.8+.5*1.2*cda*v2/powertrainMass()}
 // freio de ar: capacidade fixa em N; carga pesada = frenagem mais longa (limitada também pelo atrito)
-function brakeCap(road){const mt=powertrainMass();return VEH.car?(road?9.2:5.5):Math.min(6.8,(VEH.phys&&DYN.on?DYN.mu:(road?.85:.55))*9.8*.92,200000/mt)}
+function brakeCap(road){const mt=powertrainMass();return VEH.car?(road?9.2:5.5):Math.min(6.8,(VEH.phys&&DYN.on?DYN.mu*dynTerrainGrip():(road?.85:.55))*9.8*.92,200000/mt)}
 // peso sobre o eixo trator: limita a arrancada (carga pesa mais no cavalo mecânico)
-function tracCap(road,v){const Mt=(typeof hitched!=='undefined'&&hitched)?7000+cargo*1000:0,Wd=VEH.car?MASS*FFr:(VEH.phys&&DYN.on?DYN.mR:6500+.3*Mt); /* com a suspensão ativa, o peso no eixo trator vem das cargas por canto (transferência de peso) */return (VEH.car?(road?.95:.6):(VEH.phys&&DYN.on?DYN.muT:(road?.75:.45)))*9.8*Math.min(1,Wd/powertrainMass())*(.75+.25*Math.min(1,Math.max(0,v)/4))}
+function tracCap(road,v){const Mt=(typeof hitched!=='undefined'&&hitched)?7000+cargo*1000:0,Wd=VEH.car?MASS*FFr:(VEH.phys&&DYN.on?DYN.mR:6500+.3*Mt); /* com a suspensão ativa, o peso no eixo trator vem das cargas por canto (transferência de peso) */return (VEH.car?(road?.95:.6):(VEH.phys&&DYN.on?DYN.muT*dynTerrainGrip():(road?.75:.45)))*9.8*Math.min(1,Wd/powertrainMass())*(.75+.25*Math.min(1,Math.max(0,v)/4))}
 function powertrain(v,dt,nit,thr,road){DYN.uTr=0; /* uso da tração do eixo motriz neste passo (0–1), lido pela aderência lateral traseira */
  if(!engineOn||engCrank>0){ // motor desligado ou na partida: sem torque, sem freio-motor; a rotação cai a zero ou sobe até a marcha lenta
   if(engCrank>0){engCrank-=dt;eRpm+=(650-eRpm)*Math.min(1,dt*2.2)}else eRpm+=(0-eRpm)*Math.min(1,dt*2.5);
