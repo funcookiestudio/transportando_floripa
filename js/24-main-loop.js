@@ -1,5 +1,5 @@
-function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000);last=now;const pvOn=typeof PV!=='undefined'&&PV.on;todStep(dt);if(!pvOn)qStep(raw);if(window.netFrame)netFrame(dt,now);if(!ready||menuOpen||window.HOME){if(ready&&window.HOME)homeFrame(dt,now);if(!pvOn)draw();return} // painel de fretes em tela cheia cobre o mundo: não renderiza o jogo por trás
- accT=Math.min(.1,accT+dt);for(let n=0;n<12&&accT>=SDT;n++){phys(SDT);accT-=SDT}
+function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(.05,raw/1000),dtP=Math.min(.1,raw/1000);last=now; /* dt: passo visual (molas da cabine, câmera, áudio) · dtP: tempo real entregue à física, até 100 ms (12 passos de 120 Hz): sem câmera lenta até ~10 FPS */const pvOn=typeof PV!=='undefined'&&PV.on;todStep(dt);if(!pvOn)qStep(raw);if(window.netFrame)netFrame(dt,now);if(!ready||menuOpen||window.HOME){if(ready&&window.HOME)homeFrame(dt,now);if(!pvOn)draw();return} // painel de fretes em tela cheia cobre o mundo: não renderiza o jogo por trás
+ accT=Math.min(.1,accT+dtP);for(let n=0;n<12&&accT>=SDT;n++){phys(SDT);accT-=SDT}dynVisGuard();
  const thr=K.up?1:0;
  let fx=-Math.sin(hd),fz=-Math.cos(hd),rx=Math.cos(hd),rz=-Math.sin(hd);
  let vf=vel.x*fx+vel.z*fz,vl=vel.x*rx+vel.z*rz;
@@ -7,14 +7,14 @@ function frame(now){requestAnimationFrame(frame);const raw=now-last,dt=Math.min(
  acc+=((vf-prevVf)/Math.max(dt,.001)-acc)*Math.min(1,dt*5);prevVf=vf;
  if(RESTY){HREF=RESTY.y;RESTY.t-=dt}const yr=H(pos.x,pos.z);if(RESTY&&(Math.abs(yr-RESTY.y)<1.2||RESTY.t<=0))RESTY=null;HREF=RESTY?RESTY.y:yr;const yf=H(pos.x+fx*L,pos.z+fz*L),mx=pos.x+fx*2,mz=pos.z+fz*2,hr=H(mx+rx*1.1,mz+rz*1.1),hl=H(mx-rx*1.1,mz-rz*1.1);
  pitch+=(Math.atan2(yf-yr,L)-pitch)*Math.min(1,dt*10);roll+=(Math.atan2(hr-hl,2.2)-roll)*Math.min(1,dt*10);
- const lat=yawS*vf;{const trqP=trqS;trqS+=(trqCab-trqS)*Math.min(1,dt*9);const trqD=(trqS-trqP)/Math.max(dt,.001); // torque do motor: cabine senta (pitch) e balança de lado ao pisar/aliviar
+ const lat=yawS*vf,dyn=!!VEH.phys&&DYN.on;{const trqP=trqS;trqS+=(trqCab-trqS)*Math.min(1,dt*9);const trqD=(trqS-trqP)/Math.max(dt,.001); // torque do motor: cabine senta (pitch) e balança de lado ao pisar/aliviar
  if(shiftKick){sv.p+=shiftKick;sv.r+=shiftKick*(VEH.car?0:.35)*(gear&1?1:-1);shiftKick=0}trqCab*=Math.exp(-dt*6);
- const BP=VEH.bp,BR=VEH.br,BH=VEH.bh,tp=Math.max(-BP.pm*1.3,Math.min(BP.pm*1.3,acc*BP.pc+trqS*BP.tq)),tr=Math.max(-BR.rm,Math.min(BR.rm,-lat*BR.rc+(VEH.car?0:Math.max(-.01,Math.min(.01,trqD*.0012)))));
- const yv=(yr-yrP)/Math.max(dt,.001),ya=(yv-yvP)/Math.max(dt,.001);yrP=yr;yvP=yv;
+ const BP=VEH.bp,BR=VEH.br,BH=VEH.bh,tp=Math.max(-BP.pm*1.3,Math.min(BP.pm*1.3,acc*BP.pc+trqS*BP.tq-(dyn?DYN.pdd*.008:0))),tr=Math.max(-BR.rm,Math.min(BR.rm,-lat*BR.rc-(dyn?DYN.rdd*.008:0)+(VEH.car?0:Math.max(-.01,Math.min(.01,trqD*.0012)))));
+ const yv=(yr-yrP)/Math.max(dt,.001),ya=dyn?DYN.zdd+DYN.xCab*DYN.pdd:(yv-yvP)/Math.max(dt,.001);yrP=yr;yvP=yv; /* cabine: com a suspensão ativa, reage à aceleração vertical do chassi no ponto da cabine */
  sv.p+=((tp-xp)*BP.k-sv.p*BP.c)*dt;xp+=sv.p*dt;sv.r+=((tr-xr)*BR.k-sv.r*BR.c)*dt;xr+=sv.r*dt;
  sv.h+=(-hz*BH.k-sv.h*BH.c-Math.max(-60,Math.min(60,ya))*.5)*dt;hz+=sv.h*dt;hz=Math.max(-BH.m,Math.min(BH.m,hz))}
  const bob=hz-xp*2+(VEH.car?0:Math.sin(now*.02)*.01*Math.min(1,Math.abs(vf)/10));
- pivot.position.set(pos.x,yr+bob,pos.z);pivot.rotation.set(pitch+xp,hd,roll+xr+tipSg*tipS*.28,'YXZ');
+ pivot.position.set(pos.x,(dyn?DYN.yO:yr)+bob,pos.z);pivot.rotation.set((dyn?DYN.pB:pitch)+xp,hd,(dyn?DYN.rB:roll)+xr+tipSg*tipS*.28,'YXZ'); /* dyn: o chassi desenhado é o corpo suspenso (altura, arfagem e rolagem da suspensão) */
  spin-=vf*dt;updWheels();civStep(dt,vf);
  {const sT=Math.sin(th),cT=Math.cos(th),ax=pos.x+TLEN*sT,az=pos.z+TLEN*cT,yk=H(pos.x,pos.z);let tx=pos.x,tz=pos.z;if(hb){hb.t+=dt*2.2;const k=Math.min(1,hb.t),e=k*k*(3-2*k);tx=hb.x+(pos.x-hb.x)*e;tz=hb.z+(pos.z-hb.z)*e;if(hb.t>=1)hb=null}trl.position.set(tx,yk+.1,tz);
   pitchT+=(Math.atan2(yk-H(ax,az),TLEN)-pitchT)*Math.min(1,dt*8);trl.rotation.set(pitchT,th,tipSg*tipS*.28+rollT,'YXZ');gearStep(dt);tS.forEach(o=>{o.sp.rotation.x=spin/o.cy;susp(o,dt,sT,cT,yk)})}

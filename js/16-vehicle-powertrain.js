@@ -19,10 +19,10 @@ var engineOn=true,engCrank=0,inRev=false,torRamp=1,trqCab=0,shiftKick=0,trqS=0; 
 // resistência (m/s²): rolamento ∝ massa + arrasto aerodinâmico (força fixa, dividida pela massa)
 function dragA(v,road){const v2=v*v,cda=(typeof hitched!=='undefined'&&hitched)?VEH.cda[1]:VEH.cda[0];return (road?.0075+.00006*v:.06)*9.8+.5*1.2*cda*v2/MASS}
 // freio de ar: capacidade fixa em N; carga pesada = frenagem mais longa (limitada também pelo atrito)
-function brakeCap(road){return VEH.car?(road?9.2:5.5):Math.min(6.8,(road?.85:.55)*9.8*.92,200000/MASS)}
+function brakeCap(road){return VEH.car?(road?9.2:5.5):Math.min(6.8,(VEH.phys&&DYN.on?DYN.mu:(road?.85:.55))*9.8*.92,200000/MASS)}
 // peso sobre o eixo trator: limita a arrancada (carga pesa mais no cavalo mecânico)
-function tracCap(road,v){const Mt=(typeof hitched!=='undefined'&&hitched)?7000+cargo*1000:0,Wd=VEH.car?MASS*FFr:6500+.3*Mt;return (road?(VEH.car?.95:.75):(VEH.car?.6:.45))*9.8*Math.min(1,Wd/MASS)*(.75+.25*Math.min(1,Math.max(0,v)/4))}
-function powertrain(v,dt,nit,thr,road){
+function tracCap(road,v){const Mt=(typeof hitched!=='undefined'&&hitched)?7000+cargo*1000:0,Wd=VEH.car?MASS*FFr:(VEH.phys&&DYN.on?DYN.mR:6500+.3*Mt); /* com a suspensão ativa, o peso no eixo trator vem das cargas por canto (transferência de peso) */return (VEH.car?(road?.95:.6):(VEH.phys&&DYN.on?DYN.muT:(road?.75:.45)))*9.8*Math.min(1,Wd/MASS)*(.75+.25*Math.min(1,Math.max(0,v)/4))}
+function powertrain(v,dt,nit,thr,road){DYN.uTr=0; /* uso da tração do eixo motriz neste passo (0–1), lido pela aderência lateral traseira */
  if(!engineOn||engCrank>0){ // motor desligado ou na partida: sem torque, sem freio-motor; a rotação cai a zero ou sobe até a marcha lenta
   if(engCrank>0){engCrank-=dt;eRpm+=(650-eRpm)*Math.min(1,dt*2.2)}else eRpm+=(0-eRpm)*Math.min(1,dt*2.5);
   trqCab=0;torRamp=0;inRev=false;return 0}
@@ -45,7 +45,8 @@ function powertrain(v,dt,nit,thr,road){
  trqCab=shiftT>0?0:thr*tqAt(eRpm)/VEH.tqMax*torRamp*(.35+.65*Math.min(1,GR[gear]/VEH.gref));
  const meff=MASS+JE*Math.pow(GR[gear]*FD/WR,2);
  if(thr<.1&&v>1&&shiftT<=0)return -Math.min(1.8,VEH.eb*Math.min(1,eRpm/VEH.lim)*GR[gear]*FD*EFF/WR/meff); // freio motor
- const cap=tracCap(road,v)*(nit?1.3:1),want=F/meff;wsp=VEH.car&&thr>.3&&shiftT<=0?Math.max(0,Math.min(1,(want/cap-.9)*2.2)):0;if(wsp>0)eRpm=Math.min(lim,eRpm+wsp*900*dt); /* rodas patinam quando o torque pedido passa do limite de tração */
+ const cap=tracCap(road,v)*(nit?1.3:1),want=F/meff;wsp=(VEH.car||(VEH.phys&&DYN.on))&&thr>.3&&shiftT<=0?Math.max(0,Math.min(1,(want/cap-.9)*2.2)):0;if(wsp>0)eRpm=Math.min(lim,eRpm+wsp*900*dt); /* rodas patinam quando o torque pedido passa do limite de tração */
+ if(!VEH.car&&VEH.phys&&DYN.on){const ach=cap*tyreF(want/cap);DYN.uTr=Math.min(1,ach/cap);return Math.min(want,ach)} // caminhão: a força de tração satura de forma progressiva (curva do pneu) e consome aderência lateral do eixo motriz
  return Math.min(want,cap*(1-.12*wsp)); // teto de tração (peso no eixo trator)
 }
 // ré: marcha de ré dedicada (relação curta), força limitada por tração e velocidade máxima ~19 km/h
